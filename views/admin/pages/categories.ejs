@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/categories' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+
+<div class="page-header">
+  <div>
+    <div class="page-title">Blog Categories</div>
+    <div class="page-subtitle">Manage and organise your post categories</div>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addCatModal')">
+    <i class="bi bi-plus-lg"></i> Add Category
+  </button>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="bi bi-grid"></i> All Categories (<%= categories.length %>)</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Icon</th>
+          <th>Name / Hindi</th>
+          <th>Slug</th>
+          <th>Color</th>
+          <th>Sort</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% categories.forEach(function(c) { %>
+        <tr>
+          <td style="font-size:1.5rem"><%= c.icon || '📁' %></td>
+          <td>
+            <div style="font-weight:600"><%= c.name %></div>
+            <% if (c.name_hi) { %>
+              <div style="font-size:0.72rem;color:var(--text3);font-family:'Noto Sans Devanagari',sans-serif"><%= c.name_hi %></div>
+            <% } %>
+          </td>
+          <td><code style="font-size:0.72rem;background:#f0f4f8;padding:2px 6px;border-radius:4px"><%= c.slug %></code></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:0.5rem">
+              <div style="width:18px;height:18px;border-radius:50%;background:<%= c.color || '#1a7a4a' %>;border:1px solid rgba(0,0,0,0.1)"></div>
+              <span style="font-size:0.75rem"><%= c.color || '#1a7a4a' %></span>
+            </div>
+          </td>
+          <td><%= c.sort_order %></td>
+          <td>
+            <span class="badge badge-<%= c.is_active ? 'success' : 'secondary' %>">
+              <%= c.is_active ? 'Active' : 'Inactive' %>
+            </span>
+          </td>
+          <td>
+            <div style="display:flex;gap:0.3rem">
+              <button class="btn btn-xs btn-outline" onclick="openEditCat(this)"
+                data-id="<%= c.id %>"
+                data-name="<%= (c.name || '').replace(/'/g,'&#39;') %>"
+                data-name-hi="<%= (c.name_hi || '').replace(/'/g,'&#39;') %>"
+                data-description="<%= (c.description || '').replace(/'/g,'&#39;') %>"
+                data-icon="<%= (c.icon || '').replace(/'/g,'&#39;') %>"
+                data-color="<%= c.color || '#1a7a4a' %>"
+                data-sort="<%= c.sort_order || 0 %>"
+                data-active="<%= c.is_active ? '1' : '0' %>">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <form method="POST" action="/admin/categories/<%= c.id %>?_method=DELETE"
+                onsubmit="return confirm('Delete this category? Posts inside will lose their category.')">
+                <button class="btn btn-xs btn-danger"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        <% }) %>
+        <% if (!categories.length) { %>
+        <tr><td colspan="7" class="empty-state"><i class="bi bi-grid"></i><h3>No categories yet</h3></td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── ADD MODAL ── -->
+<div class="modal-overlay" id="addCatModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-plus-circle"></i> Add Category</div>
+      <button class="modal-close" onclick="closeModal('addCatModal')"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <form method="POST" action="/admin/categories">
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label>Name (English) <span style="color:#dc2626">*</span></label>
+            <input type="text" name="name" class="form-control" required placeholder="e.g. Technology">
+          </div>
+          <div class="form-group">
+            <label>Name (Hindi)</label>
+            <input type="text" name="name_hi" class="form-control"
+              style="font-family:'Noto Sans Devanagari',sans-serif" placeholder="हिंदी नाम">
+          </div>
+          <div class="form-group">
+            <label>Icon (Emoji)</label>
+            <input type="text" name="icon" class="form-control" placeholder="💰">
+          </div>
+          <div class="form-group">
+            <label>Color</label>
+            <input type="color" name="color" class="form-control" value="#1a7a4a" style="padding:0.3rem 0.5rem;height:42px">
+          </div>
+          <div class="form-group">
+            <label>Sort Order</label>
+            <input type="number" name="sort_order" class="form-control" value="0" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" class="form-control" rows="2" placeholder="Short description…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Meta Title</label>
+          <input type="text" name="meta_title" class="form-control" placeholder="SEO title">
+        </div>
+        <div class="form-group">
+          <label>Meta Description</label>
+          <textarea name="meta_desc" class="form-control" rows="2" placeholder="SEO description…"></textarea>
+        </div>
+        <div class="modal-footer" style="padding:0;border:none">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addCatModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT MODAL ── -->
+<div class="modal-overlay" id="editCatModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-pencil"></i> Edit Category</div>
+      <button class="modal-close" onclick="closeModal('editCatModal')"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <form method="POST" id="editCatForm">
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label>Name (English) <span style="color:#dc2626">*</span></label>
+            <input type="text" name="name" id="ec_name" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>Name (Hindi)</label>
+            <input type="text" name="name_hi" id="ec_name_hi" class="form-control"
+              style="font-family:'Noto Sans Devanagari',sans-serif">
+          </div>
+          <div class="form-group">
+            <label>Icon (Emoji)</label>
+            <input type="text" name="icon" id="ec_icon" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Color</label>
+            <input type="color" name="color" id="ec_color" class="form-control" style="padding:0.3rem 0.5rem;height:42px">
+          </div>
+          <div class="form-group">
+            <label>Sort Order</label>
+            <input type="number" name="sort_order" id="ec_sort" class="form-control" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" id="ec_desc" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="form-check mb-3">
+          <input type="checkbox" name="is_active" id="ec_active" value="1">
+          <label for="ec_active" style="cursor:pointer">Active</label>
+        </div>
+        <div class="modal-footer" style="padding:0;border:none">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('editCatModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Edit category: read from data-* attributes (no inline JSON — avoids quote issues) ──
+function openEditCat(btn) {
+  var id       = btn.getAttribute('data-id');
+  var name     = btn.getAttribute('data-name');
+  var nameHi   = btn.getAttribute('data-name-hi');
+  var desc     = btn.getAttribute('data-description');
+  var icon     = btn.getAttribute('data-icon');
+  var color    = btn.getAttribute('data-color');
+  var sort     = btn.getAttribute('data-sort');
+  var isActive = btn.getAttribute('data-active');
+
+  document.getElementById('editCatForm').action = '/admin/categories/' + id + '?_method=PUT';
+  document.getElementById('ec_name').value   = name;
+  document.getElementById('ec_name_hi').value = nameHi;
+  document.getElementById('ec_icon').value   = icon;
+  document.getElementById('ec_color').value  = color;
+  document.getElementById('ec_sort').value   = sort;
+  document.getElementById('ec_desc').value   = desc;
+  document.getElementById('ec_active').checked = (isActive === '1');
+
+  openModal('editCatModal');
+}
+</script>
+
+<%- include('../partials/scripts') %>
+</body></html>

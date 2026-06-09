@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<%- include('../partials/head') %>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/finance' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+
+<div class="page-header">
+  <div><div class="page-title">Finance Management</div><div class="page-subtitle">Track income, expenses, and bank accounts</div></div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-primary" onclick="openModal('txnModal')"><i class="bi bi-plus-lg"></i> Add Transaction</button>
+    <button class="btn btn-secondary" onclick="openModal('accountModal')"><i class="bi bi-bank"></i> Add Account</button>
+  </div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="grid grid-4 mb-4">
+  <div class="stat-card"><div class="stat-icon bg-success-soft"><i class="bi bi-arrow-down-circle"></i></div><div class="stat-info"><div class="stat-val text-success">₹<%= Math.round(totalIncome/1000) %>K</div><div class="stat-lbl">Total Income</div></div></div>
+  <div class="stat-card"><div class="stat-icon bg-danger-soft"><i class="bi bi-arrow-up-circle"></i></div><div class="stat-info"><div class="stat-val text-danger">₹<%= Math.round(totalExpense/1000) %>K</div><div class="stat-lbl">Total Expense</div></div></div>
+  <div class="stat-card"><div class="stat-icon bg-primary-soft"><i class="bi bi-wallet2"></i></div><div class="stat-info"><div class="stat-val" style="color:var(--primary)">₹<%= Math.round((totalIncome-totalExpense)/1000) %>K</div><div class="stat-lbl">Net Profit</div></div></div>
+  <div class="stat-card"><div class="stat-icon bg-info-soft"><i class="bi bi-bank"></i></div><div class="stat-info"><div class="stat-val text-info"><%= accounts.length %></div><div class="stat-lbl">Bank Accounts</div></div></div>
+</div>
+
+<!-- BANK ACCOUNT CARDS -->
+<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));margin-bottom:1.5rem">
+  <% accounts.forEach(acc => { %>
+  <div class="card" style="border-left:4px solid <%= acc.color %>">
+    <div class="card-body" style="padding:1.1rem">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
+        <div style="width:40px;height:40px;border-radius:10px;background:<%= acc.color %>22;color:<%= acc.color %>;display:flex;align-items:center;justify-content:center;font-size:1.2rem"><i class="bi <%= acc.icon %>"></i></div>
+        <div><div style="font-weight:700;font-size:0.85rem"><%= acc.bank_name %></div><div style="font-size:0.7rem;color:var(--text3)"><%= acc.account_type %><% if(acc.account_number){ %> • ****<%= acc.account_number.slice(-4) %><% } %></div></div>
+      </div>
+      <div style="font-size:1.4rem;font-weight:800;color:<%= acc.color %>">₹<%= parseFloat(acc.current_balance).toLocaleString('en-IN') %></div>
+      <div style="font-size:0.7rem;color:var(--text3)">Current Balance</div>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<div class="grid grid-2">
+  <!-- CHART -->
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="bi bi-bar-chart"></i> Monthly Overview</div></div>
+    <div class="card-body"><canvas id="finChart" height="120"></canvas></div>
+  </div>
+
+  <!-- CATEGORY WISE -->
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="bi bi-pie-chart"></i> By Category</div></div>
+    <div class="card-body"><canvas id="catChart" height="120"></canvas></div>
+  </div>
+</div>
+
+<!-- TRANSACTIONS TABLE -->
+<div class="card mt-4">
+  <div class="card-header">
+    <div class="card-title"><i class="bi bi-list-ul"></i> Transactions (<%= transactions.length %>)</div>
+    <form method="GET" style="display:flex;gap:0.5rem">
+      <select name="type" class="form-control" style="height:32px;font-size:0.78rem">
+        <option value="">All Types</option>
+        <option value="income" <%= type==='income'?'selected':'' %>>Income</option>
+        <option value="expense" <%= type==='expense'?'selected':'' %>>Expense</option>
+        <option value="transfer" <%= type==='transfer'?'selected':'' %>>Transfer</option>
+      </select>
+      <select name="account" class="form-control" style="height:32px;font-size:0.78rem">
+        <option value="">All Accounts</option>
+        <% accounts.forEach(a=>{ %><option value="<%= a.id %>" <%= account==a.id?'selected':'' %>><%= a.bank_name %></option><% }) %>
+      </select>
+      <button class="btn btn-primary btn-sm">Filter</button>
+    </form>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Description</th><th>Account</th><th>Category</th><th>Method</th><th>Amount</th><th></th></tr></thead>
+      <tbody>
+        <% transactions.forEach(txn => { %>
+        <tr>
+          <td style="font-size:0.78rem;white-space:nowrap"><%= new Date(txn.transaction_date).toLocaleDateString('en-IN') %></td>
+          <td style="font-size:0.8rem;max-width:200px"><%= txn.description ? txn.description.substring(0,50) : '—' %></td>
+          <td><% if(txn.account){ %><span style="font-size:0.75rem;font-weight:600"><i class="bi <%= txn.account.icon||'bi-bank' %>"></i> <%= txn.account.bank_name %></span><% } %></td>
+          <td><% if(txn.category){ %><span class="badge badge-secondary"><%= txn.category.name %></span><% } %></td>
+          <td><span class="badge badge-info" style="font-size:0.65rem"><%= txn.payment_method %></span></td>
+          <td style="font-weight:700;font-size:0.9rem;color:<%= txn.type==='income'?'#16a34a':'#dc2626' %>">
+            <%= txn.type==='income'?'+':'-' %>₹<%= parseFloat(txn.amount).toLocaleString('en-IN') %>
+          </td>
+          <td>
+            <form method="POST" action="/admin/finance/transaction/<%= txn.id %>?_method=DELETE" onsubmit="return confirm('Delete transaction?')">
+              <button class="btn btn-xs btn-danger"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+        <% if(!transactions.length){ %><tr><td colspan="7"><div class="empty-state"><i class="bi bi-wallet2"></i><h3>No transactions</h3></div></td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADD TRANSACTION MODAL -->
+<div class="modal-overlay" id="txnModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title"><i class="bi bi-plus-circle"></i> Add Transaction</div><button class="modal-close" onclick="closeModal('txnModal')"><i class="bi bi-x"></i></button></div>
+    <div class="modal-body">
+      <form method="POST" action="/admin/finance/transaction" enctype="multipart/form-data">
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label>Type *</label>
+            <select name="type" class="form-control" required>
+              <option value="income">💰 Income</option>
+              <option value="expense">💸 Expense</option>
+              <option value="transfer">🔄 Transfer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount (₹) *</label>
+            <input type="number" name="amount" class="form-control" placeholder="0.00" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label>From Account *</label>
+            <select name="bank_account_id" class="form-control" required>
+              <% accounts.forEach(a=>{ %><option value="<%= a.id %>"><%= a.bank_name %></option><% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select name="category_id" class="form-control">
+              <option value="">— Select Category —</option>
+              <% categories.forEach(c=>{ %><option value="<%= c.id %>"><%= c.type==='income'?'💰':'💸' %> <%= c.name %></option><% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date *</label>
+            <input type="date" name="transaction_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+          </div>
+          <div class="form-group">
+            <label>Payment Method</label>
+            <select name="payment_method" class="form-control">
+              <option value="cash">Cash</option><option value="upi">UPI</option><option value="neft">NEFT</option>
+              <option value="imps">IMPS</option><option value="cheque">Cheque</option><option value="card">Card</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" name="description" class="form-control" placeholder="Transaction description...">
+        </div>
+        <div class="form-group">
+          <label>Tags</label>
+          <input type="text" name="tags" class="form-control" placeholder="salary, rent, ads...">
+        </div>
+        <div class="form-group">
+          <label>Receipt Image</label>
+          <input type="file" name="receipt_image" class="form-control" accept="image/*">
+        </div>
+        <div class="modal-footer" style="padding:0;border:none;margin-top:1rem">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('txnModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check"></i> Add Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ACCOUNT MODAL -->
+<div class="modal-overlay" id="accountModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title"><i class="bi bi-bank"></i> Add Bank Account</div><button class="modal-close" onclick="closeModal('accountModal')"><i class="bi bi-x"></i></button></div>
+    <div class="modal-body">
+      <form method="POST" action="/admin/finance/account">
+        <div class="grid grid-2">
+          <div class="form-group"><label>Bank Name *</label><input type="text" name="bank_name" class="form-control" placeholder="e.g. HDFC Bank" required></div>
+          <div class="form-group"><label>Account Name</label><input type="text" name="account_name" class="form-control" placeholder="Account holder name"></div>
+          <div class="form-group"><label>Account Number</label><input type="text" name="account_number" class="form-control" placeholder="Account number"></div>
+          <div class="form-group"><label>IFSC Code</label><input type="text" name="ifsc_code" class="form-control" placeholder="HDFC0001234"></div>
+          <div class="form-group">
+            <label>Account Type</label>
+            <select name="account_type" class="form-control">
+              <option value="savings">Savings</option><option value="current">Current</option>
+              <option value="business">Business</option><option value="upi">UPI</option><option value="cash">Cash</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Opening Balance (₹)</label><input type="number" name="opening_balance" class="form-control" placeholder="0.00" step="0.01"></div>
+          <div class="form-group"><label>Color</label><input type="color" name="color" class="form-control" value="#1a7a4a"></div>
+          <div class="form-group">
+            <label>Icon</label>
+            <select name="icon" class="form-control">
+              <option value="bi-bank">🏦 Bank</option><option value="bi-credit-card">💳 Card</option>
+              <option value="bi-cash-stack">💵 Cash</option><option value="bi-phone">📱 UPI/Mobile</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding:0;border:none;margin-top:0.5rem">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('accountModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+const monthlyData = <%- JSON.stringify(monthlyChart) %>;
+const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const inc=Array(12).fill(0), exp=Array(12).fill(0);
+monthlyData.forEach(d=>{
+  const i=parseInt(d.month)-1;
+  if(d.type==='income') inc[i]=parseFloat(d.total)||0;
+  if(d.type==='expense') exp[i]=parseFloat(d.total)||0;
+});
+new Chart(document.getElementById('finChart'),{type:'bar',data:{labels:months,datasets:[{label:'Income',data:inc,backgroundColor:'rgba(22,163,74,0.8)',borderRadius:4},{label:'Expense',data:exp,backgroundColor:'rgba(220,38,38,0.7)',borderRadius:4}]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'₹'+Math.round(v/1000)+'K'}}}}});
+new Chart(document.getElementById('catChart'),{type:'doughnut',data:{labels:['Income','Expense'],datasets:[{data:[<%- totalIncome %>,<%- totalExpense %>],backgroundColor:['#16a34a','#dc2626'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
+</script>
+<%- include('../partials/scripts') %>
+</body></html>

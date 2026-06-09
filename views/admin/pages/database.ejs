@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+<style>
+.db-sidebar { width:220px; flex-shrink:0; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.db-sidebar-head { padding:0.75rem 1rem; background:var(--primary); color:#fff; font-size:0.82rem; font-weight:700; }
+.db-table-list { max-height:calc(100vh - 280px); overflow-y:auto; }
+.db-table-item { padding:0.6rem 1rem; font-size:0.78rem; cursor:pointer; border-bottom:1px solid var(--border); transition:background 0.15s; display:flex; align-items:center; gap:0.5rem; }
+.db-table-item:hover { background:var(--accent-light); color:var(--primary); }
+.db-table-item.active { background:var(--accent-light); color:var(--primary); font-weight:600; }
+.db-table-item:last-child { border-bottom:none; }
+.sql-editor { background:#1a2332; color:#a8ff78; font-family:'Courier New',monospace; font-size:0.82rem; border:none; border-radius:8px; padding:1rem; width:100%; resize:vertical; min-height:80px; }
+.sql-editor:focus { outline:2px solid var(--primary); }
+</style>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/database' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+<div class="page-header">
+  <div><div class="page-title">Database Manager</div><div class="page-subtitle">Browse tables, run queries – phpMyAdmin style</div></div>
+  <div style="display:flex;gap:0.5rem">
+    <span class="badge badge-success" style="font-size:0.75rem;padding:0.4rem 0.8rem"><i class="bi bi-database-check"></i> MySQL Connected</span>
+    <span class="badge badge-primary" style="font-size:0.75rem;padding:0.4rem 0.8rem"><%= tableList.length %> Tables</span>
+  </div>
+</div>
+
+<div style="display:flex;gap:1.25rem;align-items:start">
+  <!-- TABLE LIST -->
+  <div class="db-sidebar">
+    <div class="db-sidebar-head"><i class="bi bi-database"></i> Tables (<%= tableList.length %>)</div>
+    <div class="db-table-list">
+      <% tableList.forEach(t=>{ %>
+      <a href="/admin/database?table=<%= t %>" class="db-table-item <%= selectedTable===t?'active':'' %>">
+        <i class="bi bi-table" style="font-size:0.8rem"></i> <%= t %>
+      </a>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div style="flex:1;min-width:0">
+    <!-- SQL QUERY BOX -->
+    <div class="card mb-3">
+      <div class="card-header"><div class="card-title"><i class="bi bi-terminal"></i> SQL Query Runner <span style="font-size:0.7rem;color:#dc2626;font-weight:400">(Super Admin only)</span></div></div>
+      <div class="card-body">
+        <form method="POST" action="/admin/database/query">
+          <textarea class="sql-editor" name="sql" placeholder="SELECT * FROM users LIMIT 10;"><% if(typeof querySQL !== 'undefined' && querySQL){ %><%= querySQL %><% } %></textarea>
+          <div style="display:flex;gap:0.75rem;margin-top:0.75rem">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-play-fill"></i> Run Query</button>
+            <button type="button" class="btn btn-secondary" onclick="document.querySelector('.sql-editor').value=''">Clear</button>
+            <div style="flex:1"></div>
+            <div style="font-size:0.72rem;color:var(--text3);align-self:center"><i class="bi bi-exclamation-triangle" style="color:#d97706"></i> Be careful with UPDATE/DELETE</div>
+          </div>
+        </form>
+        <% if(typeof queryResult !== 'undefined' && queryResult){ %>
+        <div style="margin-top:1rem">
+          <div style="font-size:0.78rem;font-weight:600;margin-bottom:0.5rem;color:#16a34a"><i class="bi bi-check-circle"></i> Query returned <%= queryResult.length %> rows</div>
+          <div class="table-wrap" style="max-height:300px;overflow-y:auto">
+            <table>
+              <% if(queryResult.length>0){ %>
+              <thead><tr><% Object.keys(queryResult[0]).forEach(k=>{ %><th><%= k %></th><% }) %></tr></thead>
+              <tbody>
+                <% queryResult.slice(0,100).forEach(row=>{ %>
+                <tr><% Object.values(row).forEach(v=>{ %><td style="font-size:0.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="<%= v!=null?String(v):'' %>"><%= v!=null?String(v).substring(0,100):'NULL' %></td><% }) %></tr>
+                <% }) %>
+              </tbody>
+              <% } else { %><thead><tr><th>No results</th></tr></thead><% } %>
+            </table>
+          </div>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <% if(selectedTable){ %>
+    <!-- TABLE STRUCTURE -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-table"></i> <%= selectedTable %> <span style="font-size:0.75rem;color:var(--text3)">(<%= rowCount %> rows)</span></div>
+        <div style="display:flex;gap:0.5rem">
+          <span class="badge badge-info"><%= columns.length %> columns</span>
+          <span class="badge badge-secondary"><%= rowCount %> rows</span>
+        </div>
+      </div>
+      <!-- TABS -->
+      <div style="border-bottom:1px solid var(--border)">
+        <div class="tabs" style="margin:0;padding:0 1rem;border:none">
+          <button class="tab-btn active" onclick="switchTab(this,'tab-structure')">Structure</button>
+          <button class="tab-btn" onclick="switchTab(this,'tab-data')">Data</button>
+          <button class="tab-btn" onclick="switchTab(this,'tab-operations')">Operations</button>
+        </div>
+      </div>
+      <!-- STRUCTURE -->
+      <div id="tab-structure" class="tab-content active">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Column</th><th>Type</th><th>Null</th><th>Key</th><th>Default</th><th>Extra</th></tr></thead>
+            <tbody>
+              <% columns.forEach(col=>{ %>
+              <tr>
+                <td style="font-weight:600;font-family:monospace;font-size:0.8rem"><%= col.Field %></td>
+                <td><code style="font-size:0.75rem;background:#f0f4f8;padding:2px 6px;border-radius:4px"><%= col.Type %></code></td>
+                <td><span class="badge badge-<%= col.Null==='YES'?'warning':'success' %>"><%= col.Null %></span></td>
+                <td><% if(col.Key){ %><span class="badge badge-<%= col.Key==='PRI'?'danger':col.Key==='UNI'?'info':'secondary' %>"><%= col.Key %></span><% } %></td>
+                <td style="font-size:0.75rem;color:var(--text3)"><%= col.Default!=null?col.Default:'NULL' %></td>
+                <td style="font-size:0.72rem;color:var(--text3)"><%= col.Extra %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- DATA -->
+      <div id="tab-data" class="tab-content">
+        <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+          <% if(tableData.length>0){ %>
+          <table>
+            <thead><tr><% Object.keys(tableData[0]).forEach(k=>{ %><th><%= k %></th><% }) %></tr></thead>
+            <tbody>
+              <% tableData.forEach(row=>{ %>
+              <tr><% Object.values(row).forEach(v=>{ %><td style="font-size:0.75rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="<%= v!=null?String(v):'' %>"><%= v!=null?String(v).substring(0,80):'NULL' %></td><% }) %></tr>
+              <% }) %>
+            </tbody>
+          </table>
+          <% } else { %><div class="empty-state"><i class="bi bi-table"></i><h3>Empty table</h3></div><% } %>
+        </div>
+        <div style="padding:0.75rem 1rem;font-size:0.75rem;color:var(--text3);border-top:1px solid var(--border)">
+          Showing <%= tableData.length %> of <%= rowCount %> rows
+          <% if(rowCount>50){ %> — <a href="?table=<%= selectedTable %>&offset=50" style="color:var(--primary)">Next 50 →</a><% } %>
+        </div>
+      </div>
+      <!-- OPERATIONS -->
+      <div id="tab-operations" class="tab-content">
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:0.75rem">
+            <button class="btn btn-secondary" onclick="document.querySelector('.sql-editor').value='SELECT * FROM `<%= selectedTable %>` LIMIT 50;'"><i class="bi bi-eye"></i> SELECT All</button>
+            <button class="btn btn-secondary" onclick="document.querySelector('.sql-editor').value='SELECT COUNT(*) as total FROM `<%= selectedTable %>`;'"><i class="bi bi-hash"></i> COUNT Rows</button>
+            <button class="btn btn-secondary" onclick="document.querySelector('.sql-editor').value='DESCRIBE `<%= selectedTable %>`;'"><i class="bi bi-info-circle"></i> DESCRIBE Table</button>
+            <button class="btn btn-secondary" onclick="document.querySelector('.sql-editor').value='SELECT * FROM `<%= selectedTable %>` ORDER BY id DESC LIMIT 10;'"><i class="bi bi-sort-down"></i> Latest 10 Rows</button>
+            <button class="btn btn-warning" onclick="if(confirm('Truncate table <%= selectedTable %>? All data will be deleted!')) document.querySelector('.sql-editor').value='TRUNCATE TABLE `<%= selectedTable %>`;'"><i class="bi bi-trash"></i> Truncate Table</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% } else { %>
+    <div class="card"><div class="card-body"><div class="empty-state"><i class="bi bi-database"></i><h3>Select a table from the left</h3><p>Click any table name to browse its structure and data</p></div></div></div>
+    <% } %>
+  </div>
+</div>
+</main></div>
+<%- include('../partials/scripts') %>
+</body></html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/posts' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+
+<div class="page-header">
+  <div>
+    <div class="breadcrumb"><a href="/admin/posts">Posts</a><span class="sep">/</span><span><%= post ? 'Edit Post' : 'Create Post' %></span></div>
+    <div class="page-title"><%= post ? 'Edit Post' : 'Create New Post' %></div>
+  </div>
+  <a href="/admin/posts" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<form method="POST" action="<%= post ? '/admin/posts/'+post.id+'?_method=PUT' : '/admin/posts' %>" enctype="multipart/form-data">
+<div class="grid" style="grid-template-columns:1fr 320px;align-items:start">
+
+  <!-- MAIN CONTENT -->
+  <div style="display:flex;flex-direction:column;gap:1.25rem">
+    <!-- TITLES -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-type"></i> Post Title</div></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>English Title <span style="color:#dc2626">*</span></label>
+          <input type="text" name="title" class="form-control" placeholder="Enter post title in English" value="<%= post ? post.title : '' %>" required>
+        </div>
+        <div class="form-group mb-1">
+          <label>Hindi Title (हिंदी शीर्षक)</label>
+          <input type="text" name="title_hi" class="form-control" placeholder="हिंदी में शीर्षक दर्ज करें" value="<%= post ? (post.title_hi||'') : '' %>" style="font-family:'Noto Sans Devanagari',sans-serif">
+        </div>
+      </div>
+    </div>
+
+    <!-- SHORT DESCRIPTION -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-card-text"></i> Short Description</div></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>English</label>
+          <textarea name="short_description" class="form-control" rows="2" placeholder="Brief description for SEO and card preview..."><%= post ? (post.short_description||'') : '' %></textarea>
+        </div>
+        <div class="form-group mb-1">
+          <label>Hindi (संक्षिप्त विवरण)</label>
+          <textarea name="short_description_hi" class="form-control" rows="2" placeholder="हिंदी में संक्षिप्त विवरण..." style="font-family:'Noto Sans Devanagari',sans-serif"><%= post ? (post.short_description_hi||'') : '' %></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-file-richtext"></i> Content</div></div>
+      <div class="card-body">
+        <div class="tabs">
+          <button type="button" class="tab-btn active" onclick="switchTab(this,'tab-en')">🇬🇧 English</button>
+          <button type="button" class="tab-btn" onclick="switchTab(this,'tab-hi')">🇮🇳 Hindi</button>
+        </div>
+        <div id="tab-en" class="tab-content active">
+          <textarea name="content" class="form-control" rows="15" placeholder="Write your post content in English... Use HTML tags for formatting."><%= post ? (post.content||'') : '' %></textarea>
+        </div>
+        <div id="tab-hi" class="tab-content">
+          <textarea name="content_hi" class="form-control" rows="15" placeholder="हिंदी में पोस्ट सामग्री लिखें..." style="font-family:'Noto Sans Devanagari',sans-serif"><%= post ? (post.content_hi||'') : '' %></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOM FIELDS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-plus-square"></i> Custom Fields</div>
+        <button type="button" class="btn btn-sm btn-outline" onclick="addCustomField()"><i class="bi bi-plus"></i> Add Field</button>
+      </div>
+      <div class="card-body">
+        <div id="customFields">
+          <% if(post && post.customFields && post.customFields.length) { %>
+            <% post.customFields.forEach((field, i) => { %>
+            <div class="custom-field-row" style="display:grid;grid-template-columns:1fr 120px 1fr 36px;gap:0.5rem;margin-bottom:0.75rem;align-items:start">
+              <input type="text" name="custom_labels[]" class="form-control" placeholder="Field Label" value="<%= field.field_label %>">
+              <select name="custom_types[]" class="form-control">
+                <option value="text" <%= field.field_type==='text'?'selected':'' %>>Text</option>
+                <option value="textarea" <%= field.field_type==='textarea'?'selected':'' %>>Textarea</option>
+                <option value="number" <%= field.field_type==='number'?'selected':'' %>>Number</option>
+                <option value="url" <%= field.field_type==='url'?'selected':'' %>>URL</option>
+                <option value="date" <%= field.field_type==='date'?'selected':'' %>>Date</option>
+              </select>
+              <input type="text" name="custom_values[]" class="form-control" placeholder="Field Value" value="<%= field.field_value %>">
+              <button type="button" class="btn btn-xs btn-danger" onclick="this.closest('.custom-field-row').remove()"><i class="bi bi-trash"></i></button>
+            </div>
+            <% }) %>
+          <% } %>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text3);margin-top:0.5rem"><i class="bi bi-info-circle"></i> Add extra data fields like price, duration, eligibility, etc.</div>
+      </div>
+    </div>
+
+    <!-- SUGGESTED POSTS -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-link"></i> Suggested Posts</div></div>
+      <div class="card-body">
+        <% for(let i=0; i<4; i++) { %>
+        <div class="form-group" style="margin-bottom:0.5rem">
+          <select name="suggested_posts[]" class="form-control" style="font-size:0.8rem">
+            <option value="">-- Select Suggested Post --</option>
+            <% allPosts.forEach(p => { %>
+              <% const suggId = post && post.suggestions && post.suggestions[i] ? post.suggestions[i].suggested_post_id : null; %>
+              <option value="<%= p.id %>" <%= suggId==p.id?'selected':'' %>><%= p.title.substring(0,60) %></option>
+            <% }) %>
+          </select>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- SEO -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-search"></i> SEO Settings</div></div>
+      <div class="card-body">
+        <div class="form-group"><label>Meta Title</label><input type="text" name="meta_title" class="form-control" placeholder="SEO title (60 chars recommended)" value="<%= post ? (post.meta_title||'') : '' %>"></div>
+        <div class="form-group"><label>Meta Description</label><textarea name="meta_desc" class="form-control" rows="2" placeholder="SEO description (160 chars)..."><%= post ? (post.meta_desc||'') : '' %></textarea></div>
+        <div class="form-group mb-1"><label>Meta Keywords</label><input type="text" name="meta_keywords" class="form-control" placeholder="keyword1, keyword2, keyword3" value="<%= post ? (post.meta_keywords||'') : '' %>"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR OPTIONS -->
+  <div style="display:flex;flex-direction:column;gap:1.25rem;position:sticky;top:80px">
+    <!-- PUBLISH -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-send"></i> Publish</div></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>Status</label>
+          <select name="status" class="form-control">
+            <option value="draft" <%= !post||post.status==='draft'?'selected':'' %>>Draft</option>
+            <option value="published" <%= post&&post.status==='published'?'selected':'' %>>Published</option>
+            <option value="archived" <%= post&&post.status==='archived'?'selected':'' %>>Archived</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Language</label>
+          <select name="language" class="form-control">
+            <option value="both" <%= !post||post.language==='both'?'selected':'' %>>Both (EN + HI)</option>
+            <option value="en" <%= post&&post.language==='en'?'selected':'' %>>English Only</option>
+            <option value="hi" <%= post&&post.language==='hi'?'selected':'' %>>Hindi Only</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem">
+          <div class="form-check">
+            <input type="checkbox" name="is_featured" id="is_featured" value="1" <%= post&&post.is_featured?'checked':'' %>>
+            <label for="is_featured" style="font-size:0.8rem;font-weight:500;cursor:pointer"><i class="bi bi-star" style="color:#f59e0b"></i> Featured Post</label>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" name="is_breaking" id="is_breaking" value="1" <%= post&&post.is_breaking?'checked':'' %>>
+            <label for="is_breaking" style="font-size:0.8rem;font-weight:500;cursor:pointer"><i class="bi bi-lightning" style="color:#dc2626"></i> Breaking News</label>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> <%= post ? 'Update Post' : 'Publish Post' %></button>
+      </div>
+    </div>
+
+    <!-- CATEGORY -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-grid"></i> Category</div></div>
+      <div class="card-body">
+        <select name="category_id" class="form-control">
+          <option value="">-- Select Category --</option>
+          <% categories.forEach(c => { %>
+            <option value="<%= c.id %>" <%= post&&post.category_id==c.id?'selected':'' %>><%= c.icon||'' %> <%= c.name %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+
+    <!-- TAGS -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-tags"></i> Tags</div></div>
+      <div class="card-body">
+        <input type="text" name="tags" class="form-control" placeholder="tag1, tag2, tag3" value="<%= post ? (post.tags||'') : '' %>">
+        <div style="font-size:0.72rem;color:var(--text3);margin-top:0.4rem">Comma separated tags</div>
+      </div>
+    </div>
+
+    <!-- FEATURED IMAGE -->
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-image"></i> Featured Image</div></div>
+      <div class="card-body">
+        <% if(post && post.featured_image){ %>
+          <img src="<%= post.featured_image %>" style="width:100%;border-radius:8px;margin-bottom:0.75rem" alt="Featured">
+        <% } %>
+        <input type="file" name="featured_image" class="form-control" accept="image/*">
+      </div>
+    </div>
+  </div>
+</div>
+</form>
+</main></div>
+
+<script>
+function addCustomField(){
+  const container = document.getElementById('customFields');
+  const div = document.createElement('div');
+  div.className = 'custom-field-row';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 120px 1fr 36px;gap:0.5rem;margin-bottom:0.75rem;align-items:start';
+  div.innerHTML = `
+    <input type="text" name="custom_labels[]" class="form-control" placeholder="Field Label (e.g. Price, Duration)">
+    <select name="custom_types[]" class="form-control">
+      <option value="text">Text</option><option value="textarea">Textarea</option>
+      <option value="number">Number</option><option value="url">URL</option><option value="date">Date</option>
+    </select>
+    <input type="text" name="custom_values[]" class="form-control" placeholder="Field Value">
+    <button type="button" class="btn btn-xs btn-danger" onclick="this.closest('.custom-field-row').remove()"><i class="bi bi-trash"></i></button>
+  `;
+  container.appendChild(div);
+}
+function switchTab(btn, tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tab).classList.add('active');
+}
+</script>
+<%- include('../partials/scripts') %>
+</body></html>

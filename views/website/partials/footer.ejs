@@ -1,0 +1,87 @@
+<footer class="footer">
+  <div class="wrapper">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <h3>💰 EarnMoney.com</h3>
+        <p>India's #1 Hindi blog for online earning, freelancing, investment, and business ideas. हम आपको सही दिशा में गाइड करते हैं।</p>
+        <div class="social-links" style="margin-top:1rem">
+          <% const socials = [
+            {key:'facebook_url', icon:'bi-facebook', bg:'#1877f2'},
+            {key:'youtube_url', icon:'bi-youtube', bg:'#ff0000'},
+            {key:'telegram_url', icon:'bi-telegram', bg:'#0088cc'},
+            {key:'whatsapp_url', icon:'bi-whatsapp', bg:'#25d366'},
+            {key:'instagram_url', icon:'bi-instagram', bg:'#e4405f'}
+          ]; %>
+          <% socials.forEach(s=>{ if(siteSettings[s.key]){ %>
+          <a href="<%= siteSettings[s.key] %>" target="_blank" class="social-btn" style="background:<%= s.bg %>"><i class="bi <%= s.icon %>"></i></a>
+          <% } }) %>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>📂 Categories</h4>
+        <ul>
+          <% if(typeof categories !== 'undefined'){ categories.slice(0,6).forEach(c=>{ %>
+          <li><a href="/category/<%= c.slug %>"><%= c.icon||'•' %> <%= c.name_hi||c.name %></a></li>
+          <% }) } %>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>🔗 Quick Links</h4>
+        <ul>
+          <li><a href="/">🏠 Home</a></li>
+          <li><a href="/blog">📝 All Posts</a></li>
+          <li><a href="/page/about-us">ℹ️ About Us</a></li>
+          <li><a href="/page/contact-us">📞 Contact</a></li>
+          <li><a href="/page/privacy-policy">🔒 Privacy Policy</a></li>
+          <li><a href="/page/disclaimer">⚠️ Disclaimer</a></li>
+          <li><a href="/sitemap.xml" target="_blank">🗺️ Sitemap</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>📬 Newsletter</h4>
+        <p style="font-size:0.75rem;margin-bottom:0.75rem;font-family:var(--font-hi)">नई पोस्ट की जानकारी पाएं सीधे अपने Email पर</p>
+        <input type="email" placeholder="आपका Email..." style="width:100%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:0.5rem 0.75rem;border-radius:6px;font-size:0.78rem;margin-bottom:0.5rem;font-family:var(--font-hi)">
+        <button style="width:100%;background:var(--accent2);color:#fff;border:none;padding:0.5rem;border-radius:6px;font-size:0.78rem;font-weight:700;cursor:pointer">Subscribe करें</button>
+        <div style="font-size:0.68rem;opacity:0.6;margin-top:0.5rem">No spam • Unsubscribe anytime</div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div><%= siteSettings.copyright_text || `© ${new Date().getFullYear()} EarnMoney.com | Dreams Technology. All rights reserved.` %></div>
+      <div style="display:flex;gap:1rem;font-size:0.72rem">
+        <a href="/page/privacy-policy" style="color:rgba(255,255,255,0.5)">Privacy</a>
+        <a href="/page/disclaimer" style="color:rgba(255,255,255,0.5)">Disclaimer</a>
+        <a href="/page/contact-us" style="color:rgba(255,255,255,0.5)">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- SUBSCRIBE MODAL -->
+<div id="subscribeModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="background:linear-gradient(135deg,var(--accent),var(--accent-dark));padding:1.5rem;color:#fff;text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:0.5rem">📬</div>
+      <h3 style="font-family:var(--font-hi);font-size:1.1rem">Newsletter Subscribe करें</h3>
+      <p style="font-size:0.8rem;opacity:0.85;font-family:var(--font-hi)">नई पोस्ट की जानकारी पाएं</p>
+    </div>
+    <div style="padding:1.5rem">
+      <input type="text" placeholder="आपका नाम" style="width:100%;padding:0.65rem;border:1.5px solid #e5e7eb;border-radius:8px;font-size:0.85rem;margin-bottom:0.75rem;font-family:var(--font-hi)">
+      <input type="email" placeholder="Email Address" style="width:100%;padding:0.65rem;border:1.5px solid #e5e7eb;border-radius:8px;font-size:0.85rem;margin-bottom:0.75rem">
+      <button style="width:100%;background:var(--accent);color:#fff;border:none;padding:0.75rem;border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:var(--font-hi)" onclick="closeSubscribeModal()">✅ Subscribe करें</button>
+      <button onclick="closeSubscribeModal()" style="width:100%;background:transparent;border:none;padding:0.5rem;font-size:0.78rem;color:#6b7280;cursor:pointer;margin-top:0.5rem">बाद में करूंगा</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function setLang(l){ localStorage.setItem('lang',l); location.reload(); }
+function openSubscribeModal(){ document.getElementById('subscribeModal').style.display='flex'; }
+function closeSubscribeModal(){ document.getElementById('subscribeModal').style.display='none'; }
+document.getElementById('subscribeModal').addEventListener('click',function(e){ if(e.target===this) closeSubscribeModal(); });
+// Ad impression tracking
+document.querySelectorAll('[data-ad-id]').forEach(ad=>{
+  fetch('/ad-click/'+ad.dataset.adId,{method:'POST'}).catch(()=>{});
+});
+</script>
+<% if(siteSettings && siteSettings.footer_script){ %><%- siteSettings.footer_script %><% } %>
+</body></html>

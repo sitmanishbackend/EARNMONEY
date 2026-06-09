@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+<style>
+  /* ── Permission-page specific ── */
+  .role-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.85rem 1.25rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--text2);
+    border-left: 3px solid transparent;
+    border-radius: 0;
+    transition: all 0.2s;
+    width: 100%;
+    text-align: left;
+  }
+  .role-tab-btn:hover { background: var(--bg); color: var(--text); }
+  .role-tab-btn.active { background: var(--accent-light); color: var(--primary); border-left-color: var(--primary); }
+  .role-tab-btn .role-badge {
+    margin-left: auto;
+    font-size: 0.62rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+  .role-pane { display: none; }
+  .role-pane.active { display: block; }
+
+  /* permission toggle */
+  .perm-toggle {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+  }
+  .perm-toggle input { opacity: 0; width: 0; height: 0; }
+  .perm-slider {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: #cbd5e1;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .perm-slider::before {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    left: 3px; bottom: 3px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s;
+  }
+  .perm-toggle input:checked + .perm-slider { background: var(--primary); }
+  .perm-toggle input:checked + .perm-slider::before { transform: translateX(16px); }
+
+  /* perm row */
+  .perm-row {
+    display: grid;
+    grid-template-columns: 1fr 110px 110px 110px 110px;
+    align-items: center;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    gap: 0.5rem;
+  }
+  .perm-row:last-child { border-bottom: none; }
+  .perm-row:hover { background: #fafbfc; }
+  .perm-col { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+  .perm-col-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--text3); letter-spacing: 0.06em; }
+
+  .perm-header-row {
+    display: grid;
+    grid-template-columns: 1fr 110px 110px 110px 110px;
+    padding: 0.6rem 1.25rem;
+    background: #f8fafc;
+    border-bottom: 2px solid var(--border);
+    gap: 0.5rem;
+  }
+  .perm-header-col { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text3); text-align: center; letter-spacing: 0.06em; }
+
+  .check-all-btn {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    color: var(--text3);
+    font-family: inherit;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .check-all-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .check-all-btn.all-on { background: var(--accent-light); color: var(--primary); border-color: var(--primary); }
+
+  .role-color-super { background:#fee2e2; color:#dc2626; }
+  .role-color-admin { background:#fef9c3; color:#ca8a04; }
+  .role-color-developer { background:#e0f2fe; color:#0369a1; }
+  .role-color-default { background:#f1f5f9; color:#64748b; }
+</style>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/permissions' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+
+<div class="page-header">
+  <div>
+    <div class="page-title">Role Permissions</div>
+    <div class="page-subtitle">Control what each role can see and do across the platform</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:0.75rem">
+    <span style="font-size:0.78rem;color:var(--text3)"><%= roles.length %> roles &middot; <%= menuItems.length %> menu items</span>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem">
+  <% roles.forEach(function(r, idx) {
+    var roleColors = ['bg-danger-soft','bg-warning-soft','bg-info-soft','bg-purple-soft','bg-success-soft'];
+    var roleIcons  = ['bi-person-fill-gear','bi-person-badge','bi-code-slash','bi-person','bi-person-check'];
+    var colorClass = roleColors[idx] || 'bg-primary-soft';
+    var iconClass  = roleIcons[idx]  || 'bi-person';
+  %>
+  <div class="stat-card" style="cursor:pointer" onclick="switchRoleTab('<%= r.id %>')">
+    <div class="stat-icon <%= colorClass %>"><i class="bi <%= iconClass %>"></i></div>
+    <div class="stat-info">
+      <div class="stat-val" style="font-size:1.1rem"><%= r.name %></div>
+      <div class="stat-lbl"><%= r.slug %></div>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<form method="POST" action="/admin/permissions">
+<div style="display:grid;grid-template-columns:220px 1fr;gap:1.25rem;align-items:start">
+
+  <!-- ── Left: Role List ── -->
+  <div class="card" style="overflow:hidden">
+    <div class="card-header"><div class="card-title"><i class="bi bi-people-fill"></i> Roles</div></div>
+    <div style="padding:0.5rem 0">
+      <% roles.forEach(function(r, idx) {
+        var slugColors = {
+          'super_admin':'role-color-super',
+          'admin':'role-color-admin',
+          'developer':'role-color-developer'
+        };
+        var bc = slugColors[r.slug] || 'role-color-default';
+      %>
+      <button type="button" class="role-tab-btn <%= idx === 0 ? 'active' : '' %>"
+        onclick="switchRoleTab('<%= r.id %>')" id="rtab-btn-<%= r.id %>">
+        <i class="bi bi-shield-shaded" style="font-size:1rem"></i>
+        <%= r.name %>
+        <span class="role-badge <%= bc %>"><%= r.slug.replace('_',' ') %></span>
+      </button>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- ── Right: Permission Panes ── -->
+  <div>
+    <% roles.forEach(function(r, idx) { %>
+    <div class="role-pane card <%= idx === 0 ? 'active' : '' %>" id="rtab-<%= r.id %>">
+
+      <!-- Role Header -->
+      <div class="card-header" style="flex-wrap:wrap;gap:0.75rem">
+        <div>
+          <div class="card-title" style="font-size:1rem"><i class="bi bi-shield-check"></i> <%= r.name %> Permissions</div>
+          <div style="font-size:0.72rem;color:var(--text3);margin-top:0.2rem">Configure access for <strong><%= r.slug %></strong> role</div>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <button type="button" class="check-all-btn" onclick="toggleAllPerms('<%= r.id %>',true)">
+            <i class="bi bi-check-all"></i> Grant All
+          </button>
+          <button type="button" class="check-all-btn" onclick="toggleAllPerms('<%= r.id %>',false)">
+            <i class="bi bi-x-lg"></i> Revoke All
+          </button>
+        </div>
+      </div>
+
+      <!-- Column Headers -->
+      <div class="perm-header-row">
+        <div class="perm-header-col" style="text-align:left">Menu Item</div>
+        <div class="perm-header-col">View</div>
+        <div class="perm-header-col">Create</div>
+        <div class="perm-header-col">Edit</div>
+        <div class="perm-header-col">Delete</div>
+      </div>
+
+      <!-- Permission Rows -->
+      <% menuItems.forEach(function(item) {
+        var perm = permMap[r.id + '_' + item.id];
+        var key  = r.id + '_' + item.id;
+      %>
+      <div class="perm-row">
+        <!-- Menu Item Info -->
+        <div style="display:flex;align-items:center;gap:0.6rem">
+          <div style="width:32px;height:32px;border-radius:8px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i class="bi <%= item.icon %>" style="color:var(--primary);font-size:0.9rem"></i>
+          </div>
+          <div>
+            <div style="font-size:0.82rem;font-weight:600"><%= item.label %></div>
+            <div style="font-size:0.68rem;color:var(--text3)"><%= item.route %></div>
+          </div>
+        </div>
+
+        <!-- View -->
+        <div class="perm-col">
+          <div class="perm-col-label">View</div>
+          <label class="perm-toggle" title="Can View">
+            <input type="checkbox" name="permissions[<%= key %>][view]" value="1"
+              class="perm-check-<%= r.id %>" <%= perm && perm.can_view ? 'checked' : '' %>>
+            <span class="perm-slider"></span>
+          </label>
+        </div>
+
+        <!-- Create -->
+        <div class="perm-col">
+          <div class="perm-col-label">Create</div>
+          <label class="perm-toggle" title="Can Create">
+            <input type="checkbox" name="permissions[<%= key %>][create]" value="1"
+              class="perm-check-<%= r.id %>" <%= perm && perm.can_create ? 'checked' : '' %>>
+            <span class="perm-slider"></span>
+          </label>
+        </div>
+
+        <!-- Edit -->
+        <div class="perm-col">
+          <div class="perm-col-label">Edit</div>
+          <label class="perm-toggle" title="Can Edit">
+            <input type="checkbox" name="permissions[<%= key %>][edit]" value="1"
+              class="perm-check-<%= r.id %>" <%= perm && perm.can_edit ? 'checked' : '' %>>
+            <span class="perm-slider"></span>
+          </label>
+        </div>
+
+        <!-- Delete -->
+        <div class="perm-col">
+          <div class="perm-col-label">Delete</div>
+          <label class="perm-toggle" title="Can Delete">
+            <input type="checkbox" name="permissions[<%= key %>][delete]" value="1"
+              class="perm-check-<%= r.id %>" <%= perm && perm.can_delete ? 'checked' : '' %>>
+            <span class="perm-slider"></span>
+          </label>
+        </div>
+      </div>
+      <% }) %>
+
+      <!-- Footer -->
+      <div style="padding:1rem 1.25rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#fafbfc">
+        <span style="font-size:0.78rem;color:var(--text3)">
+          <i class="bi bi-info-circle"></i> Changes apply immediately after save
+        </span>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save"></i> Save All Permissions
+        </button>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+
+</div>
+</form>
+
+</main></div>
+
+<script>
+function switchRoleTab(roleId) {
+  // Buttons
+  document.querySelectorAll('.role-tab-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('rtab-btn-' + roleId);
+  if (btn) btn.classList.add('active');
+  // Panes
+  document.querySelectorAll('.role-pane').forEach(p => p.classList.remove('active'));
+  const pane = document.getElementById('rtab-' + roleId);
+  if (pane) pane.classList.add('active');
+}
+
+function toggleAllPerms(roleId, state) {
+  document.querySelectorAll('.perm-check-' + roleId).forEach(cb => { cb.checked = state; });
+  // Visual feedback on buttons
+  document.querySelectorAll('#rtab-' + roleId + ' .check-all-btn').forEach(b => b.classList.remove('all-on'));
+}
+
+// Init first tab active on load
+document.addEventListener('DOMContentLoaded', function() {
+  const firstBtn = document.querySelector('.role-tab-btn');
+  if (firstBtn) firstBtn.classList.add('active');
+});
+</script>
+
+<%- include('../partials/scripts') %>
+</body></html>

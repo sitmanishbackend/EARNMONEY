@@ -1,0 +1,72 @@
+<%- include('../partials/header', { breaking: [], categories: categories }) %>
+
+<div class="wrapper">
+  <div class="breadcrumb">
+    <a href="/">Home</a><span class="sep">/</span>
+    <span><%= category.name_hi||category.name %></span>
+  </div>
+
+  <!-- CATEGORY HEADER -->
+  <div style="background:linear-gradient(135deg,var(--accent),var(--accent-dark));border-radius:16px;padding:2rem;color:#fff;margin-bottom:2rem;display:flex;align-items:center;gap:1.5rem">
+    <div style="font-size:4rem"><%= category.icon||'📁' %></div>
+    <div>
+      <h1 style="font-size:1.6rem;font-weight:800;font-family:var(--font-hi);margin-bottom:0.25rem"><%= category.name_hi||category.name %></h1>
+      <% if(category.name_hi){ %><div style="font-size:1rem;opacity:0.85"><%= category.name %></div><% } %>
+      <% if(category.description){ %><p style="font-size:0.82rem;opacity:0.8;margin-top:0.5rem;font-family:var(--font-hi)"><%= category.description %></p><% } %>
+      <div style="font-size:0.78rem;opacity:0.7;margin-top:0.5rem"><%= count %> posts</div>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <div>
+      <% if(posts.length){ %>
+      <div class="cards-grid">
+        <% posts.forEach((post, idx) => { %>
+        <a href="/blog/<%= post.slug %>" class="post-card">
+          <div class="pc-thumb" style="<% if(!post.featured_image){ %>background:linear-gradient(135deg,var(--accent-light),#c8e6c9)<% } %>">
+            <% if(post.featured_image){ %><img src="<%= post.featured_image %>" alt="<%= post.title %>"><% } else { %>
+            <span style="font-size:3rem"><%= category.icon||'📰' %></span><% } %>
+          </div>
+          <div class="pc-body">
+            <div class="pc-cat"><%= category.name_hi||category.name %></div>
+            <div class="pc-title"><%= post.title_hi||post.title %></div>
+            <div class="pc-desc"><%= (post.short_description_hi||post.short_description||'').substring(0,100) %>...</div>
+            <div class="pc-meta">
+              <span><i class="bi bi-eye"></i> <%= (post.views||0).toLocaleString() %></span>
+              <span><i class="bi bi-calendar3"></i> <%= post.published_at ? new Date(post.published_at).toLocaleDateString('en-IN') : '' %></span>
+            </div>
+          </div>
+        </a>
+        <% }) %>
+      </div>
+      <% const totalPages = Math.ceil(count / limit); %>
+      <% if(totalPages > 1){ %>
+      <div class="pagination">
+        <% if(page > 1){ %><a href="?page=<%= page-1 %>" class="pag-btn">← Prev</a><% } %>
+        <% for(let i = Math.max(1, page-2); i <= Math.min(totalPages, page+2); i++){ %>
+          <a href="?page=<%= i %>" class="pag-btn <%= i===page?'active':'' %>"><%= i %></a>
+        <% } %>
+        <% if(page < totalPages){ %><a href="?page=<%= page+1 %>" class="pag-btn">Next →</a><% } %>
+      </div>
+      <% } %>
+      <% } else { %>
+      <div style="text-align:center;padding:3rem;color:var(--text3)"><div style="font-size:3rem;margin-bottom:1rem">📭</div><h3>No posts in this category yet</h3></div>
+      <% } %>
+    </div>
+    <div class="sidebar-section">
+      <div class="ad-slot" style="min-height:250px;flex-direction:column;gap:0.5rem"><i class="bi bi-megaphone" style="font-size:2rem;opacity:0.3"></i>Advertisement</div>
+      <div class="widget">
+        <div class="widget-head"><i class="bi bi-grid"></i> All Categories</div>
+        <div class="widget-body" style="padding:0">
+          <% categories.forEach(c=>{ %>
+          <a href="/category/<%= c.slug %>" style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;border-bottom:1px solid var(--border);font-size:0.82rem;color:<%= c.id===category.id?'var(--accent)':'var(--text)' %>;background:<%= c.id===category.id?'var(--accent-light)':'' %>;font-weight:<%= c.id===category.id?'700':'400' %>">
+            <span><%= c.icon||'📁' %> <%= c.name_hi||c.name %></span>
+          </a>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer', { categories: categories }) %>

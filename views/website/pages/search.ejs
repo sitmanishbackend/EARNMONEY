@@ -1,0 +1,29 @@
+<%- include('../partials/header', { breaking: [], categories: [] }) %>
+<div class="wrapper">
+  <div class="breadcrumb"><a href="/">Home</a><span class="sep">/</span><span>Search: "<%= q %>"</span></div>
+  <h1 style="font-size:1.4rem;font-weight:800;margin-bottom:1.5rem">🔍 Search Results for "<%= q %>"</h1>
+  <% if(posts.length){ %>
+  <div class="cards-grid">
+    <% posts.forEach((post,idx)=>{ %>
+    <a href="/blog/<%= post.slug %>" class="post-card">
+      <div class="pc-thumb" style="background:linear-gradient(135deg,var(--accent-light),#c8e6c9)">
+        <% if(post.featured_image){ %><img src="<%= post.featured_image %>" alt="<%= post.title %>"><% }else{ %><span style="font-size:3rem">📰</span><% } %>
+      </div>
+      <div class="pc-body">
+        <div class="pc-title"><%= post.title_hi||post.title %></div>
+        <div class="pc-desc"><%= (post.short_description_hi||post.short_description||'').substring(0,100) %>...</div>
+        <div class="pc-meta"><span><i class="bi bi-eye"></i> <%= (post.views||0).toLocaleString() %></span></div>
+      </div>
+    </a>
+    <% }) %>
+  </div>
+  <% }else{ %>
+  <div style="text-align:center;padding:4rem;color:var(--text3)">
+    <div style="font-size:4rem;margin-bottom:1rem">🔍</div>
+    <h2>No results found for "<%= q %>"</h2>
+    <p style="margin:0.75rem 0">Try different keywords or browse our categories</p>
+    <a href="/blog" style="color:var(--accent);font-weight:600">← Browse All Posts</a>
+  </div>
+  <% } %>
+</div>
+<%- include('../partials/footer', { categories: [] }) %>

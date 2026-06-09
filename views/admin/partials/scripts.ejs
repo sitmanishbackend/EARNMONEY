@@ -1,0 +1,29 @@
+<script>
+  // Sidebar
+  let collapsed = localStorage.getItem('sidebarCollapsed')==='true';
+  function applyCollapsed(){ document.getElementById('sidebar').classList.toggle('collapsed',collapsed); document.getElementById('mainContent').classList.toggle('expanded',collapsed); }
+  applyCollapsed();
+  function toggleSidebar(){ collapsed=!collapsed; localStorage.setItem('sidebarCollapsed',collapsed); applyCollapsed(); }
+  // Highlight active nav
+  const cp = window.location.pathname;
+  document.querySelectorAll('.nav-link').forEach(l=>{
+    const h=l.getAttribute('href');
+    if(h&&h!=='#'&&h!=='/admin/logout'&&h!=='/'&&cp.startsWith(h)&&h.length>1) l.classList.add('active');
+  });
+  // Auto-hide alerts
+  setTimeout(()=>{ document.querySelectorAll('.alert').forEach(a=>{ a.style.transition='opacity 0.5s'; a.style.opacity='0'; setTimeout(()=>a.remove(),500); }); },4000);
+  // Modal helpers
+  function openModal(id){ document.getElementById(id).classList.add('show'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+  document.querySelectorAll('.modal-overlay').forEach(m=>{ m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); }); });
+  // Tab switch
+  function switchTab(btn, tab, scope){
+    const p = scope ? document.getElementById(scope) : document;
+    p.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    p.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    const el=document.getElementById(tab); if(el) el.classList.add('active');
+  }
+  // Confirm delete
+  function confirmDelete(form, msg){ if(confirm(msg||'Are you sure you want to delete this?')) form.submit(); }
+</script>

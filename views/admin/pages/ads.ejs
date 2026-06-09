@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/ads' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+
+<div class="page-header">
+  <div><div class="page-title">Advertisement Manager</div><div class="page-subtitle">Manage ads across your website – globally, by location or category</div></div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-secondary" onclick="openModal('addZoneModal')"><i class="bi bi-plus-square"></i> Add Zone</button>
+    <button class="btn btn-primary" onclick="openModal('addAdModal')"><i class="bi bi-plus-lg"></i> Create Ad</button>
+  </div>
+</div>
+
+<!-- AD ZONES -->
+<div class="card mb-4">
+  <div class="card-header"><div class="card-title"><i class="bi bi-grid-3x3-gap"></i> Ad Zones (<%= zones.length %>)</div></div>
+  <div class="card-body">
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem">
+      <% zones.forEach(z=>{ %>
+      <div style="padding:1rem;background:var(--bg);border-radius:10px;border:1.5px solid var(--border);text-align:center">
+        <div style="font-size:1.5rem;margin-bottom:0.5rem">
+          <%= z.location==='header'?'📢':z.location==='sidebar'?'📰':z.location==='popup'?'🔔':z.location==='footer'?'🦶':'📍' %>
+        </div>
+        <div style="font-weight:700;font-size:0.85rem"><%= z.name %></div>
+        <div style="font-size:0.7rem;color:var(--text3);margin:0.25rem 0"><%= z.location %> • <%= z.width||'auto' %>×<%= z.height||'auto' %></div>
+        <span class="badge badge-<%= z.is_active?'success':'secondary' %>"><%= z.is_active?'Active':'Inactive' %></span>
+        <div style="font-size:0.72rem;color:var(--primary);margin-top:0.4rem"><%= ads.filter(a=>a.ad_zone_id===z.id).length %> ads running</div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<!-- ADS LIST -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="bi bi-megaphone"></i> All Advertisements (<%= ads.length %>)</div>
+    <div style="display:flex;gap:0.5rem">
+      <span class="badge badge-success">Active: <%= ads.filter(a=>a.is_active).length %></span>
+      <span class="badge badge-secondary">Inactive: <%= ads.filter(a=>!a.is_active).length %></span>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Ad Title</th><th>Zone</th><th>Type</th><th>Scope</th><th>Device</th><th>Impressions</th><th>Clicks</th><th>CTR</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        <% ads.forEach(ad=>{ %>
+        <% const ctr = ad.impressions>0 ? ((ad.clicks/ad.impressions)*100).toFixed(2) : '0.00'; %>
+        <tr>
+          <td>
+            <div style="font-weight:600;font-size:0.82rem"><%= ad.title.substring(0,40) %></div>
+            <div style="font-size:0.7rem;color:var(--text3)"><%= ad.ad_type %></div>
+          </td>
+          <td><% if(ad.zone){ %><span class="badge badge-info"><%= ad.zone.location %></span><% } %></td>
+          <td><span class="badge badge-<%= ad.ad_type==='adsense'?'warning':ad.ad_type==='html'?'info':'secondary' %>"><%= ad.ad_type %></span></td>
+          <td><span class="badge badge-<%= ad.scope==='global'?'success':ad.scope==='category'?'primary':'secondary' %>"><%= ad.scope %></span></td>
+          <td style="font-size:0.75rem"><i class="bi bi-<%= ad.device==='desktop'?'display':ad.device==='mobile'?'phone':'grid' %>"></i> <%= ad.device %></td>
+          <td style="font-size:0.8rem"><%= (ad.impressions||0).toLocaleString() %></td>
+          <td style="font-size:0.8rem"><%= (ad.clicks||0).toLocaleString() %></td>
+          <td><span class="badge badge-<%= parseFloat(ctr)>2?'success':'secondary' %>"><%= ctr %>%</span></td>
+          <td>
+            <form method="POST" action="/admin/ads/<%= ad.id %>/toggle?_method=PUT" style="display:inline">
+              <button class="btn btn-xs btn-<%= ad.is_active?'success':'secondary' %>">
+                <i class="bi bi-<%= ad.is_active?'check-circle':'pause-circle' %>"></i> <%= ad.is_active?'Live':'Paused' %>
+              </button>
+            </form>
+          </td>
+          <td>
+            <form method="POST" action="/admin/ads/<%= ad.id %>?_method=DELETE" onsubmit="return confirm('Delete ad?')">
+              <button class="btn btn-xs btn-danger"><i class="bi bi-trash"></i></button>
+            </form>
+          </td>
+        </tr>
+        <% }) %>
+        <% if(!ads.length){ %><tr><td colspan="10"><div class="empty-state"><i class="bi bi-megaphone"></i><h3>No ads yet</h3><button class="btn btn-primary mt-2" onclick="openModal('addAdModal')">Create First Ad</button></div></td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADD AD MODAL -->
+<div class="modal-overlay" id="addAdModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header"><div class="modal-title"><i class="bi bi-megaphone"></i> Create Advertisement</div><button class="modal-close" onclick="closeModal('addAdModal')"><i class="bi bi-x"></i></button></div>
+    <div class="modal-body">
+      <form method="POST" action="/admin/ads" enctype="multipart/form-data">
+        <div class="grid grid-2">
+          <div class="form-group"><label>Ad Title *</label><input type="text" name="title" class="form-control" placeholder="Google AdSense Header" required></div>
+          <div class="form-group"><label>Ad Zone *</label>
+            <select name="ad_zone_id" class="form-control" required>
+              <% zones.forEach(z=>{ %><option value="<%= z.id %>"><%= z.name %> (<%= z.location %>)</option><% }) %>
+            </select>
+          </div>
+          <div class="form-group"><label>Ad Type</label>
+            <select name="ad_type" class="form-control" onchange="showAdFields(this.value)">
+              <option value="html">HTML Code</option>
+              <option value="adsense">Google AdSense</option>
+              <option value="image">Image Banner</option>
+              <option value="video">Video</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Scope (Where to show?)</label>
+            <select name="scope" class="form-control">
+              <option value="global">🌍 Global (all pages)</option>
+              <option value="category">📂 Category Specific</option>
+              <option value="post">📄 Post Specific</option>
+              <option value="page">📃 Page Specific</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Device Target</label>
+            <select name="device" class="form-control">
+              <option value="all">📱💻 All Devices</option>
+              <option value="desktop">💻 Desktop Only</option>
+              <option value="mobile">📱 Mobile Only</option>
+              <option value="tablet">📟 Tablet Only</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Priority (1-10)</label><input type="number" name="priority" class="form-control" value="1" min="1" max="10"></div>
+          <div class="form-group"><label>Start Date</label><input type="date" name="start_date" class="form-control"></div>
+          <div class="form-group"><label>End Date</label><input type="date" name="end_date" class="form-control"></div>
+        </div>
+        <div id="field-html" class="form-group">
+          <label>HTML / AdSense Code</label>
+          <textarea name="content" class="form-control" rows="4" placeholder="Paste your HTML code or AdSense code here..."></textarea>
+        </div>
+        <div id="field-image" class="form-group" style="display:none">
+          <label>Upload Image</label>
+          <input type="file" name="ad_image" class="form-control" accept="image/*">
+        </div>
+        <div class="form-group"><label>Target URL</label><input type="url" name="target_url" class="form-control" placeholder="https://example.com"></div>
+        <div class="form-check mb-3"><input type="checkbox" name="target_blank" id="tb" value="1" checked><label for="tb">Open in new tab</label></div>
+        <div class="modal-footer" style="padding:0;border:none">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addAdModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-plus"></i> Create Ad</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ZONE MODAL -->
+<div class="modal-overlay" id="addZoneModal">
+  <div class="modal" style="max-width:450px">
+    <div class="modal-header"><div class="modal-title"><i class="bi bi-plus-square"></i> Add Ad Zone</div><button class="modal-close" onclick="closeModal('addZoneModal')"><i class="bi bi-x"></i></button></div>
+    <div class="modal-body">
+      <form method="POST" action="/admin/ads/zone">
+        <div class="form-group"><label>Zone Name *</label><input type="text" name="name" class="form-control" placeholder="e.g. Hero Banner" required></div>
+        <div class="form-group"><label>Description</label><input type="text" name="description" class="form-control" placeholder="728x90 Leaderboard"></div>
+        <div class="grid grid-2">
+          <div class="form-group"><label>Width (px)</label><input type="number" name="width" class="form-control" placeholder="728"></div>
+          <div class="form-group"><label>Height (px)</label><input type="number" name="height" class="form-control" placeholder="90"></div>
+        </div>
+        <div class="form-group"><label>Location *</label>
+          <select name="location" class="form-control" required>
+            <option value="header">Header</option><option value="footer">Footer</option>
+            <option value="sidebar">Sidebar</option><option value="between_posts">Between Posts</option>
+            <option value="popup">Popup</option><option value="after_content">After Content</option>
+            <option value="before_content">Before Content</option><option value="floating">Floating</option>
+          </select>
+        </div>
+        <div class="modal-footer" style="padding:0;border:none">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addZoneModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Zone</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function showAdFields(type){
+  document.getElementById('field-html').style.display = ['html','adsense'].includes(type)?'block':'none';
+  document.getElementById('field-image').style.display = type==='image'?'block':'none';
+}
+</script>
+<%- include('../partials/scripts') %>
+</body></html>

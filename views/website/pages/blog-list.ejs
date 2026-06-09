@@ -1,0 +1,133 @@
+<%- include('../partials/header', { breaking: [], categories: categories }) %>
+
+<div class="wrapper">
+  <div class="breadcrumb">
+    <a href="/">Home</a><span class="sep">/</span>
+    <span>Blog<% if(q){ %> – Search: "<%= q %>"<% } %></span>
+  </div>
+
+  <div class="main-layout">
+    <!-- POSTS -->
+    <div>
+      <div class="section-head">
+        <div class="section-title">
+          <% if(q){ %>🔍 Search: "<%= q %>"
+          <% } else if(cat){ %>📂 Category Posts
+          <% } else { %>📝 All Posts<% } %>
+        </div>
+        <span style="font-size:0.78rem;color:var(--text3)"><%= count %> posts found</span>
+      </div>
+
+      <!-- FILTERS -->
+      <div style="background:var(--bg3);border-radius:10px;padding:1rem;margin-bottom:1.5rem;display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center">
+        <span style="font-size:0.78rem;font-weight:600;color:var(--text2)">Filter:</span>
+        <form method="GET" action="/blog" style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;flex:1">
+          <input type="hidden" name="q" value="<%= q %>">
+          <select name="cat" class="form-control" style="height:34px;font-size:0.78rem;padding:0 0.75rem;width:auto" onchange="this.form.submit()">
+            <option value="">All Categories</option>
+            <% categories.forEach(c=>{ %><option value="<%= c.id %>" <%= cat==c.id?'selected':'' %>><%= c.name_hi||c.name %></option><% }) %>
+          </select>
+          <select name="lang" class="form-control" style="height:34px;font-size:0.78rem;padding:0 0.75rem;width:auto" onchange="this.form.submit()">
+            <option value="">All Languages</option>
+            <option value="hi" <%= lang==='hi'?'selected':'' %>>Hindi</option>
+            <option value="en" <%= lang==='en'?'selected':'' %>>English</option>
+          </select>
+          <% if(cat||lang||q){ %>
+          <a href="/blog" style="font-size:0.75rem;color:var(--accent);font-weight:600">✕ Clear</a>
+          <% } %>
+        </form>
+      </div>
+
+      <% if(posts.length){ %>
+      <div class="cards-grid">
+        <% posts.forEach((post, idx) => { %>
+        <a href="/blog/<%= post.slug %>" class="post-card">
+          <div class="pc-thumb" style="<% if(!post.featured_image){ %>background:linear-gradient(135deg,<%= ['#e8f5ee,#c8e6c9','#e3f2fd,#bbdefb','#f3e5f5,#e1bee7','#fff3e0,#ffe0b2'][idx%4] %>)<% } %>">
+            <% if(post.featured_image){ %><img src="<%= post.featured_image %>" alt="<%= post.title %>"><% } else { %>
+            <span style="font-size:3rem"><%= post.category ? post.category.icon||'📰' : '📰' %></span><% } %>
+          </div>
+          <div class="pc-body">
+            <div class="pc-cat"><%= post.category ? (post.category.name_hi||post.category.name) : '' %></div>
+            <div class="pc-title"><%= post.title_hi||post.title %></div>
+            <div class="pc-desc"><%= (post.short_description_hi||post.short_description||'').substring(0,100) %>...</div>
+            <div class="pc-meta">
+              <span><i class="bi bi-eye"></i> <%= (post.views||0).toLocaleString() %></span>
+              <span><i class="bi bi-calendar3"></i> <%= post.published_at ? new Date(post.published_at).toLocaleDateString('en-IN') : '' %></span>
+            </div>
+          </div>
+        </a>
+        <% }) %>
+      </div>
+
+      <!-- PAGINATION -->
+      <% const totalPages = Math.ceil(count / limit); %>
+      <% if(totalPages > 1){ %>
+      <div class="pagination">
+        <% if(page > 1){ %><a href="?page=<%= page-1 %>&cat=<%= cat||'' %>&q=<%= q %>" class="pag-btn">← Prev</a><% } %>
+        <% for(let i = Math.max(1, page-2); i <= Math.min(totalPages, page+2); i++){ %>
+          <a href="?page=<%= i %>&cat=<%= cat||'' %>&q=<%= q %>" class="pag-btn <%= i===page?'active':'' %>"><%= i %></a>
+        <% } %>
+        <% if(page < totalPages){ %><a href="?page=<%= page+1 %>&cat=<%= cat||'' %>&q=<%= q %>" class="pag-btn">Next →</a><% } %>
+      </div>
+      <% } %>
+      <% } else { %>
+      <div style="text-align:center;padding:3rem;color:var(--text3)">
+        <div style="font-size:3rem;margin-bottom:1rem">📭</div>
+        <h3>No posts found</h3>
+        <p>Try a different search or category</p>
+        <a href="/blog" style="color:var(--accent);font-weight:600;margin-top:1rem;display:inline-block">← View All Posts</a>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar-section">
+      <div class="ad-slot" style="min-height:250px;flex-direction:column;gap:0.5rem"><i class="bi bi-megaphone" style="font-size:2rem;opacity:0.3"></i>Advertisement</div>
+
+      <div class="widget">
+        <div class="widget-head"><i class="bi bi-fire"></i> Most Read</div>
+        <div class="widget-body">
+          <% popular.forEach(post=>{ %>
+          <a href="/blog/<%= post.slug %>" class="rp-item" style="display:flex">
+            <div class="rp-thumb">
+              <% if(post.featured_image){ %><img src="<%= post.featured_image %>" alt=""><% } else { %>
+              <span><%= post.category ? post.category.icon||'📰' : '📰' %></span><% } %>
+            </div>
+            <div>
+              <div class="rp-cat"><%= post.category ? (post.category.name_hi||post.category.name) : '' %></div>
+              <div class="rp-title"><%= (post.title_hi||post.title).substring(0,55) %>...</div>
+              <div class="rp-date"><i class="bi bi-eye"></i> <%= (post.views||0).toLocaleString() %></div>
+            </div>
+          </a>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-head"><i class="bi bi-grid"></i> Categories</div>
+        <div class="widget-body" style="padding:0">
+          <% categories.forEach(c=>{ %>
+          <a href="/category/<%= c.slug %>" style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;border-bottom:1px solid var(--border);font-size:0.82rem;color:var(--text);transition:background 0.2s" onmouseover="this.style.background='var(--accent-light)'" onmouseout="this.style.background=''">
+            <span><%= c.icon||'📁' %> <%= c.name_hi||c.name %></span>
+            <span style="font-size:0.7rem;background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:10px;font-weight:600">→</span>
+          </a>
+          <% }) %>
+        </div>
+      </div>
+
+      <div class="nl-widget">
+        <h4>📬 Newsletter</h4>
+        <p>नई पोस्ट Email पर पाएं</p>
+        <input type="email" placeholder="Email Address...">
+        <button>Subscribe Free!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.form-control { width:100%; padding:0.55rem 0.9rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.83rem; font-family:inherit; color:var(--text); background:var(--bg2); }
+.form-control:focus { outline:none; border-color:var(--accent); }
+</style>
+
+<%- include('../partials/footer', { categories: categories }) %>

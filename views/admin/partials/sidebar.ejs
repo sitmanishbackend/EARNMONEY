@@ -1,0 +1,55 @@
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">DT</div>
+    <div class="logo-text">Dreams Technology<small>CMS Platform</small></div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">Main Menu</div>
+    <% if (typeof adminMenu !== 'undefined' && adminMenu && adminMenu.length) { %>
+      <% adminMenu.forEach(item => { %>
+        <a href="<%= item.route %>" class="nav-link <%= (typeof currentRoute !== 'undefined' && currentRoute === item.route) ? 'active' : '' %>">
+          <i class="nav-icon bi <%= item.icon %>"></i>
+          <span class="nav-label"><%= item.label %></span>
+          <% if (item.badge) { %><span class="nav-badge"><%= item.badge %></span><% } %>
+        </a>
+      <% }) %>
+    <% } else { %>
+      <a href="/admin/dashboard" class="nav-link"><i class="nav-icon bi bi-speedometer2"></i><span class="nav-label">Dashboard</span></a>
+      <a href="/admin/posts" class="nav-link"><i class="nav-icon bi bi-file-earmark-text"></i><span class="nav-label">Blog Posts</span></a>
+      <a href="/admin/categories" class="nav-link"><i class="nav-icon bi bi-grid"></i><span class="nav-label">Categories</span></a>
+      <a href="/admin/users" class="nav-link"><i class="nav-icon bi bi-people"></i><span class="nav-label">Users</span></a>
+      <a href="/admin/attendance" class="nav-link"><i class="nav-icon bi bi-calendar-check"></i><span class="nav-label">Attendance</span></a>
+      <a href="/admin/finance" class="nav-link"><i class="nav-icon bi bi-wallet2"></i><span class="nav-label">Finance</span></a>
+      <a href="/admin/ads" class="nav-link"><i class="nav-icon bi bi-megaphone"></i><span class="nav-label">Advertisements</span></a>
+      <a href="/admin/themes" class="nav-link"><i class="nav-icon bi bi-palette"></i><span class="nav-label">Theme Manager</span></a>
+      <a href="/admin/seo" class="nav-link"><i class="nav-icon bi bi-rocket"></i><span class="nav-label">Blog Booster</span></a>
+      <a href="/admin/database" class="nav-link"><i class="nav-icon bi bi-database"></i><span class="nav-label">Database</span></a>
+      <a href="/admin/pages" class="nav-link"><i class="nav-icon bi bi-file-earmark"></i><span class="nav-label">Pages</span></a>
+      <a href="/admin/settings" class="nav-link"><i class="nav-icon bi bi-gear"></i><span class="nav-label">Settings</span></a>
+      <a href="/admin/menus" class="nav-link"><i class="nav-icon bi bi-list-ul"></i><span class="nav-label">Menu Manager</span></a>
+      <a href="/admin/permissions" class="nav-link"><i class="nav-icon bi bi-shield-check"></i><span class="nav-label">Role Permissions</span></a>
+    <% } %>
+    <div class="nav-section-title">System</div>
+    <a href="/admin/profile" class="nav-link"><i class="nav-icon bi bi-person-circle"></i><span class="nav-label">Profile</span></a>
+    <a href="/" target="_blank" class="nav-link"><i class="nav-icon bi bi-globe"></i><span class="nav-label">View Website</span></a>
+    <a href="/admin/logout" class="nav-link" style="color:rgba(239,68,68,0.85)"><i class="nav-icon bi bi-box-arrow-left"></i><span class="nav-label">Logout</span></a>
+  </nav>
+
+  <% if (typeof authUser !== 'undefined' && authUser) { %>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <% if (authUser.avatar) { %>
+        <img src="<%= authUser.avatar %>" class="user-avatar user-avatar-img" alt="<%= authUser.name %>" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="user-avatar" style="display:none"><%= authUser.name.charAt(0).toUpperCase() %></div>
+      <% } else { %>
+        <div class="user-avatar"><%= authUser.name.charAt(0).toUpperCase() %></div>
+      <% } %>
+      <div class="user-info">
+        <div class="uname"><%= authUser.name %></div>
+        <div class="urole"><%= authUser.role_slug %></div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+</aside>

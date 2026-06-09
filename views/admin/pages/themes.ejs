@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+<style>
+.theme-card { border-radius:12px; overflow:hidden; border:2px solid var(--border); cursor:pointer; transition:all 0.25s; }
+.theme-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,0.15); }
+.theme-card.active { border-color:var(--primary); box-shadow:0 0 0 3px rgba(26,122,74,0.2); }
+.theme-preview { height:140px; position:relative; overflow:hidden; }
+.preview-sidebar { position:absolute; left:0; top:0; bottom:0; width:70px; display:flex; flex-direction:column; padding:8px 6px; gap:4px; }
+.preview-nav { height:28px; position:absolute; top:0; left:70px; right:0; display:flex; align-items:center; padding:0 8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+.preview-content { position:absolute; top:28px; left:70px; right:0; bottom:0; padding:8px; display:flex; flex-direction:column; gap:4px; }
+.preview-nav-item { height:16px; border-radius:4px; margin-bottom:2px; }
+.preview-card { height:28px; border-radius:4px; background:rgba(255,255,255,0.9); }
+.preview-btn { height:14px; width:50px; border-radius:3px; margin-top:4px; }
+.desktop-wrap { background:#f5f5f5; border-radius:8px; padding:8px; border:2px solid #ddd; }
+.desktop-screen { background:#fff; border-radius:4px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+</style>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/themes' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+
+<div class="page-header">
+  <div><div class="page-title">Theme Manager</div><div class="page-subtitle">Customize the look of your website and admin panel</div></div>
+  <button class="btn btn-primary" onclick="openModal('createThemeModal')"><i class="bi bi-plus-lg"></i> Create Theme</button>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 380px;align-items:start">
+  <!-- THEME GRID -->
+  <div>
+    <div class="grid grid-2" style="gap:1.25rem">
+      <% themes.forEach(t => { %>
+      <div class="theme-card <%= t.is_active ? 'active' : '' %>" onclick="previewTheme(<%- JSON.stringify(t) %>)">
+        <!-- PREVIEW -->
+        <div class="theme-preview" style="background:<%= t.accent_light %>">
+          <div class="preview-sidebar" style="background:<%= t.sidebar_bg %>">
+            <div style="width:30px;height:20px;background:<%= t.primary_color %>;border-radius:4px;margin-bottom:6px"></div>
+            <% for(let i=0;i<5;i++){ %>
+            <div class="preview-nav-item" style="background:rgba(255,255,255,<%= i===0?0.25:0.1 %>)"></div>
+            <% } %>
+          </div>
+          <div class="preview-nav" style="background:<%= t.nav_bg %>">
+            <div style="flex:1;height:6px;background:<%= t.accent_light %>;border-radius:3px;margin-right:8px"></div>
+            <div style="width:40px;height:18px;background:<%= t.primary_color %>;border-radius:4px"></div>
+          </div>
+          <div class="preview-content">
+            <div style="display:flex;gap:4px">
+              <% ['#16a34a','#dc2626','#d97706','#0369a1'].forEach(c=>{ %>
+              <div style="flex:1;height:32px;background:#fff;border-radius:4px;border-top:3px solid <%= c %>"></div>
+              <% }) %>
+            </div>
+            <div class="preview-card"></div>
+            <div style="height:10px;background:<%= t.primary_color %>;border-radius:3px;width:60%"></div>
+          </div>
+        </div>
+        <!-- INFO -->
+        <div style="padding:1rem;background:white">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+            <div style="font-weight:700;font-size:0.9rem"><%= t.name %></div>
+            <% if(t.is_active){ %><span class="badge badge-success"><i class="bi bi-check-circle"></i> Active</span><% } %>
+          </div>
+          <div style="display:flex;gap:0.4rem;margin-bottom:0.75rem">
+            <% [t.primary_color, t.secondary_color, t.sidebar_bg, t.accent_light].forEach(c=>{ %>
+            <div style="width:20px;height:20px;border-radius:50%;background:<%= c %>;border:1px solid rgba(0,0,0,0.1)" title="<%= c %>"></div>
+            <% }) %>
+          </div>
+          <div style="display:flex;gap:0.5rem">
+            <% if(!t.is_active){ %>
+            <form method="POST" action="/admin/themes/<%= t.id %>/activate" style="flex:1">
+              <button class="btn btn-primary btn-sm w-100"><i class="bi bi-check-circle"></i> Activate</button>
+            </form>
+            <% } else { %>
+            <button class="btn btn-success btn-sm" style="flex:1;cursor:default"><i class="bi bi-check-circle-fill"></i> Active</button>
+            <% } %>
+            <% if(!t.is_system && !t.is_active){ %>
+            <form method="POST" action="/admin/themes/<%= t.id %>?_method=DELETE" onsubmit="return confirm('Delete this theme?')">
+              <button class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+            </form>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- LIVE DESKTOP PREVIEW -->
+  <div style="position:sticky;top:80px">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-display"></i> Live Desktop Preview</div></div>
+      <div class="card-body" style="padding:1rem">
+        <div class="desktop-wrap">
+          <div style="display:flex;gap:4px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:#ff5f57"></div><div style="width:8px;height:8px;border-radius:50%;background:#febc2e"></div><div style="width:8px;height:8px;border-radius:50%;background:#28c840"></div></div>
+          <div class="desktop-screen" style="height:380px;display:flex">
+            <!-- Preview Sidebar -->
+            <div id="pvSidebar" style="width:90px;display:flex;flex-direction:column;padding:10px 8px;gap:4px;transition:background 0.4s">
+              <div style="height:24px;border-radius:6px;background:rgba(255,255,255,0.2);margin-bottom:8px"></div>
+              <% ['Dashboard','Posts','Users','Attendance','Finance','Ads','Themes','SEO','Database'].forEach((m,i)=>{ %>
+              <div id="pvNav<%= i %>" style="height:18px;border-radius:4px;background:rgba(255,255,255,<%= i===0?0.25:0.1 %>);display:flex;align-items:center;padding:0 4px;font-size:7px;color:rgba(255,255,255,0.7)"><%= m %></div>
+              <% }) %>
+            </div>
+            <!-- Preview Main -->
+            <div style="flex:1;display:flex;flex-direction:column;background:#f0f4f8;overflow:hidden">
+              <!-- Top bar -->
+              <div id="pvTopbar" style="height:36px;display:flex;align-items:center;padding:0 10px;justify-content:space-between;transition:background 0.4s">
+                <div style="display:flex;gap:6px;align-items:center">
+                  <div style="width:60px;height:14px;background:#f0f4f8;border-radius:7px"></div>
+                </div>
+                <div id="pvBtn" style="height:20px;width:50px;border-radius:4px;font-size:8px;display:flex;align-items:center;justify-content:center;color:#fff;transition:background 0.4s">Logout</div>
+              </div>
+              <!-- Content area -->
+              <div style="padding:8px;display:flex;flex-direction:column;gap:6px;flex:1;overflow:hidden">
+                <div style="display:flex;gap:6px">
+                  <% ['#16a34a','#dc2626','#d97706','#0369a1'].forEach(c=>{ %>
+                  <div style="flex:1;background:#fff;border-radius:6px;padding:6px;border-top:3px solid <%= c %>">
+                    <div style="height:12px;background:<%= c %>22;border-radius:2px;width:70%;margin-bottom:4px"></div>
+                    <div style="height:8px;background:#f0f4f8;border-radius:2px;width:50%"></div>
+                  </div>
+                  <% }) %>
+                </div>
+                <div style="flex:1;background:#fff;border-radius:6px;padding:8px">
+                  <div style="height:6px;background:#f0f4f8;border-radius:2px;width:30%;margin-bottom:6px"></div>
+                  <% for(let i=0;i<4;i++){ %><div style="height:5px;background:#f0f4f8;border-radius:2px;margin-bottom:4px;width:<%= [80,60,90,70][i] %>%"></div><% } %>
+                  <div id="pvCardBtn" style="height:18px;width:70px;border-radius:4px;margin-top:6px;transition:background 0.4s"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="previewInfo" style="margin-top:0.75rem;padding:0.75rem;background:var(--bg);border-radius:8px;font-size:0.78rem">
+          <div style="font-weight:700;margin-bottom:0.5rem">🎨 Click any theme to preview</div>
+          <div style="color:var(--text3)">The live preview shows how the theme will look on desktop.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE THEME MODAL -->
+<div class="modal-overlay" id="createThemeModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title"><i class="bi bi-palette"></i> Create New Theme</div><button class="modal-close" onclick="closeModal('createThemeModal')"><i class="bi bi-x"></i></button></div>
+    <div class="modal-body">
+      <form method="POST" action="/admin/themes">
+        <div class="form-group"><label>Theme Name *</label><input type="text" name="name" class="form-control" placeholder="e.g. Midnight Blue" required></div>
+        <div class="grid grid-2">
+          <div class="form-group"><label>Primary Color</label><input type="color" name="primary_color" class="form-control" value="#1a7a4a"></div>
+          <div class="form-group"><label>Secondary Color</label><input type="color" name="secondary_color" class="form-control" value="#e8a020"></div>
+          <div class="form-group"><label>Accent Dark</label><input type="color" name="accent_dark" class="form-control" value="#125c36"></div>
+          <div class="form-group"><label>Accent Light (bg)</label><input type="color" name="accent_light" class="form-control" value="#e8f5ee"></div>
+          <div class="form-group"><label>Sidebar Background</label><input type="color" name="sidebar_bg" class="form-control" value="#1a2332"></div>
+          <div class="form-group"><label>Sidebar Text</label><input type="color" name="sidebar_text" class="form-control" value="#ffffff"></div>
+          <div class="form-group"><label>Topbar Background</label><input type="color" name="nav_bg" class="form-control" value="#ffffff"></div>
+          <div class="form-group"><label>Button Color</label><input type="color" name="btn_color" class="form-control" value="#1a7a4a"></div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus"></i> Create Theme</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function previewTheme(t) {
+  // Update sidebar
+  document.getElementById('pvSidebar').style.background = t.sidebar_bg;
+  document.getElementById('pvTopbar').style.background = t.nav_bg;
+  document.getElementById('pvBtn').style.background = '#dc2626';
+  document.getElementById('pvCardBtn').style.background = t.primary_color;
+  document.querySelectorAll('[id^="pvNav"]').forEach((el,i)=>{
+    el.style.background = i===0 ? t.primary_color : 'rgba(255,255,255,0.1)';
+  });
+  // Update info
+  document.getElementById('previewInfo').innerHTML = `
+    <div style="font-weight:700;margin-bottom:0.5rem">🎨 ${t.name}</div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <span style="font-size:0.72rem;background:${t.primary_color}22;color:${t.primary_color};padding:2px 8px;border-radius:10px;font-weight:600">Primary: ${t.primary_color}</span>
+      <span style="font-size:0.72rem;background:${t.secondary_color}22;color:${t.secondary_color};padding:2px 8px;border-radius:10px;font-weight:600">Secondary: ${t.secondary_color}</span>
+      <span style="font-size:0.72rem;background:#f0f4f8;color:#64748b;padding:2px 8px;border-radius:10px;font-weight:600">Sidebar: ${t.sidebar_bg}</span>
+    </div>
+  `;
+}
+// Auto-preview active theme
+<% const activeT = themes.find(t=>t.is_active); %>
+<% if(activeT){ %>previewTheme(<%- JSON.stringify(activeT) %>);<% } %>
+</script>
+<%- include('../partials/scripts') %>
+</body></html>

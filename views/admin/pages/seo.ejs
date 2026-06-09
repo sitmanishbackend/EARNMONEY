@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/seo' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+
+<div class="page-header">
+  <div><div class="page-title">Blog Booster & SEO</div><div class="page-subtitle">Optimize your blog for search engines and rank faster</div></div>
+</div>
+
+<!-- SEO TIPS BANNER -->
+<div style="background:linear-gradient(135deg,var(--primary),var(--accent-dark));border-radius:12px;padding:1.5rem;color:#fff;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+  <div>
+    <div style="font-size:1.1rem;font-weight:800;margin-bottom:0.25rem">🚀 Rank in 3 Months Strategy</div>
+    <div style="font-size:0.82rem;opacity:0.9">Follow our proven strategy: Publish 30+ posts/month • Target low-competition Hindi keywords • Get Google AdSense approved • Build backlinks from edu/gov sites</div>
+  </div>
+  <button class="btn" style="background:#fff;color:var(--primary);font-weight:700" onclick="openModal('seoTipsModal')"><i class="bi bi-lightbulb"></i> View Full Strategy</button>
+</div>
+
+<!-- TABS -->
+<div class="tabs" id="seoTabs">
+  <button class="tab-btn <%= activeTab==='reports'?'active':'' %>" onclick="switchTab(this,'tab-reports')"><i class="bi bi-bar-chart"></i> Reports</button>
+  <button class="tab-btn <%= activeTab==='indexing'?'active':'' %>" onclick="switchTab(this,'tab-indexing')"><i class="bi bi-search"></i> Indexing</button>
+  <button class="tab-btn <%= activeTab==='xml'?'active':'' %>" onclick="switchTab(this,'tab-xml')"><i class="bi bi-file-code"></i> XML Sitemap</button>
+  <button class="tab-btn <%= activeTab==='suggestions'?'active':'' %>" onclick="switchTab(this,'tab-suggestions')"><i class="bi bi-link"></i> Suggestions</button>
+  <button class="tab-btn <%= activeTab==='meta'?'active':'' %>" onclick="switchTab(this,'tab-meta')"><i class="bi bi-tags"></i> Meta Overview</button>
+</div>
+
+<!-- REPORTS TAB -->
+<div id="tab-reports" class="tab-content <%= activeTab==='reports'?'active':'' %>">
+  <div class="grid grid-4 mb-4">
+    <div class="stat-card"><div class="stat-icon bg-success-soft"><i class="bi bi-check-circle"></i></div><div class="stat-info"><div class="stat-val text-success"><%= seoItems.filter(s=>s.status==='indexed').length %></div><div class="stat-lbl">Indexed URLs</div></div></div>
+    <div class="stat-card"><div class="stat-icon bg-warning-soft"><i class="bi bi-hourglass"></i></div><div class="stat-info"><div class="stat-val text-warning"><%= seoItems.filter(s=>s.status==='pending').length %></div><div class="stat-lbl">Pending</div></div></div>
+    <div class="stat-card"><div class="stat-icon bg-danger-soft"><i class="bi bi-x-circle"></i></div><div class="stat-info"><div class="stat-val text-danger"><%= seoItems.filter(s=>s.status==='failed').length %></div><div class="stat-lbl">Failed</div></div></div>
+    <div class="stat-card"><div class="stat-icon bg-primary-soft"><i class="bi bi-file-earmark-text"></i></div><div class="stat-info"><div class="stat-val"><%= posts.length %></div><div class="stat-lbl">Total Posts</div></div></div>
+  </div>
+  <!-- TOP POSTS BY VIEWS -->
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="bi bi-fire"></i> Top Performing Posts</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Post Title</th><th>Views</th><th>Meta Title</th><th>Meta Desc</th><th>SEO Score</th></tr></thead>
+        <tbody>
+          <% posts.slice(0,15).forEach((p,i)=>{ %>
+          <% const score = (p.meta_title?25:0)+(p.meta_desc?25:0)+(p.views>1000?25:p.views>100?15:5)+(p.status==='published'?25:0); %>
+          <tr>
+            <td style="color:var(--text3);font-size:0.75rem"><%= i+1 %></td>
+            <td style="font-size:0.8rem;max-width:250px"><a href="/blog/<%= p.slug %>" target="_blank" style="color:var(--primary)"><%= p.title.substring(0,55) %></a></td>
+            <td><strong><%= (p.views||0).toLocaleString() %></strong></td>
+            <td><% if(p.meta_title){ %><span class="badge badge-success">✓</span><% }else{ %><span class="badge badge-danger">✗</span><% } %></td>
+            <td><% if(p.meta_desc){ %><span class="badge badge-success">✓</span><% }else{ %><span class="badge badge-danger">✗</span><% } %></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:0.5rem">
+                <div style="flex:1;height:6px;background:#f0f4f8;border-radius:3px"><div style="height:100%;width:<%= score %>%;background:<%= score>=75?'#16a34a':score>=50?'#d97706':'#dc2626' %>;border-radius:3px"></div></div>
+                <span style="font-size:0.72rem;font-weight:700"><%= score %>%</span>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- INDEXING TAB -->
+<div id="tab-indexing" class="tab-content <%= activeTab==='indexing'?'active':'' %>">
+  <div class="grid grid-2" style="margin-bottom:1.25rem">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-plus-circle"></i> Add URL for Indexing</div></div>
+      <div class="card-body">
+        <form method="POST" action="/admin/seo/index">
+          <div class="form-group"><label>URL *</label><input type="text" name="url" class="form-control" placeholder="/blog/my-post-slug" required></div>
+          <div class="grid grid-2">
+            <div class="form-group"><label>Type</label>
+              <select name="type" class="form-control"><option value="post">Post</option><option value="category">Category</option><option value="page">Page</option><option value="tag">Tag</option></select>
+            </div>
+            <div class="form-group"><label>Priority</label>
+              <select name="priority" class="form-control"><option value="1.0">1.0 (High)</option><option value="0.8" selected>0.8 (Medium)</option><option value="0.5">0.5 (Low)</option><option value="0.3">0.3 (Minimal)</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label>Change Frequency</label>
+            <select name="change_freq" class="form-control"><option value="daily">Daily</option><option value="weekly" selected>Weekly</option><option value="monthly">Monthly</option></select>
+          </div>
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus"></i> Add to Queue</button>
+        </form>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-info-circle"></i> Indexing Guide</div></div>
+      <div class="card-body" style="font-size:0.82rem">
+        <div style="display:flex;flex-direction:column;gap:0.75rem">
+          <div style="padding:0.75rem;background:#dcfce7;border-radius:8px"><strong>✅ Step 1:</strong> Add your URL to the queue above</div>
+          <div style="padding:0.75rem;background:#fef9c3;border-radius:8px"><strong>⏳ Step 2:</strong> Status starts as "Pending" (deactivated)</div>
+          <div style="padding:0.75rem;background:#e0f2fe;border-radius:8px"><strong>▶️ Step 3:</strong> Click "Run Index" to activate and mark as indexed</div>
+          <div style="padding:0.75rem;background:#dcfce7;border-radius:8px"><strong>✅ Step 4:</strong> Submit sitemap to Google Search Console</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="bi bi-list-ul"></i> Indexing Queue (<%= seoItems.length %>)</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>URL</th><th>Type</th><th>Priority</th><th>Frequency</th><th>Status</th><th>Indexed At</th><th>Action</th></tr></thead>
+        <tbody>
+          <% seoItems.forEach(item=>{ %>
+          <tr>
+            <td style="font-size:0.8rem;font-family:monospace"><%= item.url %></td>
+            <td><span class="badge badge-secondary"><%= item.type %></span></td>
+            <td><span class="badge badge-info"><%= item.priority %></span></td>
+            <td style="font-size:0.75rem"><%= item.change_freq %></td>
+            <td><span class="badge badge-<%= item.status==='indexed'?'success':item.status==='pending'?'warning':'danger' %>"><%= item.status %></span></td>
+            <td style="font-size:0.72rem;color:var(--text3)"><%= item.indexed_at ? new Date(item.indexed_at).toLocaleDateString('en-IN') : '—' %></td>
+            <td>
+              <% if(item.status!=='indexed'){ %>
+              <form method="POST" action="/admin/seo/index/<%= item.id %>/run">
+                <button class="btn btn-xs btn-success">▶ Run Index</button>
+              </form>
+              <% } else { %>
+              <span class="badge badge-success">Indexed ✓</span>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+          <% if(!seoItems.length){ %><tr><td colspan="7"><div class="empty-state"><i class="bi bi-search"></i><h3>No URLs in queue</h3></div></td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- XML SITEMAP TAB -->
+<div id="tab-xml" class="tab-content <%= activeTab==='xml'?'active':'' %>">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="bi bi-file-code"></i> XML Sitemap Preview</div>
+      <a href="/sitemap.xml" target="_blank" class="btn btn-sm btn-outline"><i class="bi bi-box-arrow-up-right"></i> View Live Sitemap</a>
+    </div>
+    <div class="card-body">
+      <div style="background:#1a2332;color:#a8ff78;font-family:monospace;font-size:0.78rem;padding:1.5rem;border-radius:10px;overflow-x:auto;line-height:1.8">
+        <div style="color:#666">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div>
+        <div style="color:#4fc3f7">&lt;urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"&gt;</div>
+        <% posts.slice(0,5).forEach(p=>{ %>
+        <div style="margin-left:1rem">
+          <div style="color:#4fc3f7">&lt;url&gt;</div>
+          <div style="margin-left:1rem"><span style="color:#81c784">&lt;loc&gt;</span><span style="color:#fff"><%= siteSettings.site_url||'https://earnmoney.com' %>/blog/<%= p.slug %></span><span style="color:#81c784">&lt;/loc&gt;</span></div>
+          <div style="margin-left:1rem"><span style="color:#81c784">&lt;changefreq&gt;</span><span style="color:#fff">weekly</span><span style="color:#81c784">&lt;/changefreq&gt;</span></div>
+          <div style="margin-left:1rem"><span style="color:#81c784">&lt;priority&gt;</span><span style="color:#fff">0.8</span><span style="color:#81c784">&lt;/priority&gt;</span></div>
+          <div style="color:#4fc3f7">&lt;/url&gt;</div>
+        </div>
+        <% }) %>
+        <div style="color:#666">  ... and <%= seoItems.length %> more URLs</div>
+        <div style="color:#4fc3f7">&lt;/urlset&gt;</div>
+      </div>
+      <div class="mt-3" style="display:flex;gap:0.75rem">
+        <a href="/sitemap.xml" target="_blank" class="btn btn-primary"><i class="bi bi-download"></i> Download Sitemap</a>
+        <button class="btn btn-secondary" onclick="copyToClipboard('<%= (siteSettings.site_url||'https://earnmoney.com') %>/sitemap.xml')"><i class="bi bi-clipboard"></i> Copy URL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUGGESTIONS TAB -->
+<div id="tab-suggestions" class="tab-content <%= activeTab==='suggestions'?'active':'' %>">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="bi bi-link-45deg"></i> Post Suggestion Management</div></div>
+    <div class="card-body">
+      <div style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem">Configure which posts appear as "Related Posts" suggestions. Edit each post to set its suggestions.</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Post</th><th>Category</th><th>Views</th><th>Has Suggestions</th><th>Action</th></tr></thead>
+          <tbody>
+            <% posts.slice(0,10).forEach(p=>{ %>
+            <tr>
+              <td style="font-size:0.82rem;max-width:300px"><%= p.title.substring(0,60) %></td>
+              <td></td>
+              <td><%= (p.views||0).toLocaleString() %></td>
+              <td><span class="badge badge-secondary">Edit post to set</span></td>
+              <td><a href="/admin/posts/<%= p.id %>/edit" class="btn btn-xs btn-outline"><i class="bi bi-pencil"></i> Edit</a></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- META OVERVIEW TAB -->
+<div id="tab-meta" class="tab-content <%= activeTab==='meta'?'active':'' %>">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="bi bi-tags"></i> Meta Tags Overview</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Post</th><th>Meta Title</th><th>Meta Desc</th><th>Keywords</th><th>Score</th><th>Fix</th></tr></thead>
+        <tbody>
+          <% posts.forEach(p=>{ %>
+          <% const score = (p.meta_title?33:0)+(p.meta_desc?34:0)+(p.status==='published'?33:0); %>
+          <tr>
+            <td style="font-size:0.78rem;max-width:200px"><%= p.title.substring(0,45) %></td>
+            <td>
+              <% if(p.meta_title){ %>
+                <span style="font-size:0.72rem;color:#16a34a"><i class="bi bi-check-circle"></i> Set</span>
+              <% }else{ %>
+                <span style="font-size:0.72rem;color:#dc2626"><i class="bi bi-x-circle"></i> Missing</span>
+              <% } %>
+            </td>
+            <td>
+              <% if(p.meta_desc){ %>
+                <span style="font-size:0.72rem;color:#16a34a"><i class="bi bi-check-circle"></i> Set</span>
+              <% }else{ %>
+                <span style="font-size:0.72rem;color:#dc2626"><i class="bi bi-x-circle"></i> Missing</span>
+              <% } %>
+            </td>
+            <td><span style="font-size:0.72rem;color:var(--text3)">—</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:0.4rem">
+                <div style="width:50px;height:5px;background:#f0f4f8;border-radius:3px"><div style="height:100%;width:<%= score %>%;background:<%= score>=75?'#16a34a':'#dc2626' %>;border-radius:3px"></div></div>
+                <span style="font-size:0.7rem"><%= score %>%</span>
+              </div>
+            </td>
+            <td><a href="/admin/posts/<%= p.id %>/edit" class="btn btn-xs btn-outline">Fix</a></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SEO TIPS MODAL -->
+<div class="modal-overlay" id="seoTipsModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header"><div class="modal-title">🚀 3-Month AdSense Approval Strategy</div><button class="modal-close" onclick="closeModal('seoTipsModal')"><i class="bi bi-x"></i></button></div>
+    <div class="modal-body" style="font-size:0.83rem">
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div style="padding:1rem;background:#dcfce7;border-radius:10px;border-left:4px solid #16a34a">
+          <strong>Month 1: Foundation</strong><br>
+          • Publish 20-30 high-quality posts (min 1000 words each)<br>
+          • Target "make money online Hindi" type keywords (low competition)<br>
+          • Create About Us, Contact, Privacy Policy pages<br>
+          • Set up Google Search Console and submit sitemap
+        </div>
+        <div style="padding:1rem;background:#fef9c3;border-radius:10px;border-left:4px solid #ca8a04">
+          <strong>Month 2: Growth</strong><br>
+          • Continue publishing (30+ posts)<br>
+          • Focus on bilingual (Hindi + English) content<br>
+          • Get 100+ daily organic visitors<br>
+          • Build internal linking between posts<br>
+          • Share on WhatsApp groups, Telegram channels
+        </div>
+        <div style="padding:1rem;background:#e0f2fe;border-radius:10px;border-left:4px solid #0369a1">
+          <strong>Month 3: Monetization</strong><br>
+          • Apply for Google AdSense (need 250+ daily visitors)<br>
+          • Add affiliate links (Amazon, Flipkart)<br>
+          • Start sponsored posts for local businesses<br>
+          • Enable AdSense Auto Ads after approval
+        </div>
+        <div style="padding:1rem;background:#f3e8ff;border-radius:10px;border-left:4px solid #7c3aed">
+          <strong>Income Potential (Month 6+)</strong><br>
+          • AdSense: ₹15,000–50,000/month (10K daily visitors)<br>
+          • Affiliate: ₹20,000–80,000/month<br>
+          • Sponsored posts: ₹5,000–15,000 each<br>
+          • Total target: ₹1 Lakh+/month in 6 months
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyToClipboard(text){ navigator.clipboard.writeText(text).then(()=>alert('Copied: '+text)); }
+// Auto-activate first tab
+const activeTabName = '<%= activeTab %>';
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  const tabId = 'tab-'+activeTabName;
+  if(btn.nextElementSibling && btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) btn.classList.add('active');
+});
+</script>
+<%- include('../partials/scripts') %>
+</body></html>

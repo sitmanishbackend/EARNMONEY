@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/posts' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+<div class="page-header">
+  <div><div class="page-title">Blog Posts</div><div class="page-subtitle">Manage all blog content</div></div>
+  <a href="/admin/posts/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Post</a>
+</div>
+
+<!-- FILTERS -->
+<div class="card mb-3">
+  <div class="card-body" style="padding:1rem">
+    <form method="GET" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:1;min-width:180px">
+        <label style="font-size:0.72rem;font-weight:600;color:var(--text3);margin-bottom:0.25rem;display:block">Search</label>
+        <input type="text" name="q" value="<%= q %>" placeholder="Search posts..." class="form-control" style="height:36px;font-size:0.8rem">
+      </div>
+      <div>
+        <label style="font-size:0.72rem;font-weight:600;color:var(--text3);margin-bottom:0.25rem;display:block">Status</label>
+        <select name="status" class="form-control" style="height:36px;font-size:0.8rem">
+          <option value="">All Status</option>
+          <option value="published" <%= status==='published'?'selected':'' %>>Published</option>
+          <option value="draft" <%= status==='draft'?'selected':'' %>>Draft</option>
+          <option value="archived" <%= status==='archived'?'selected':'' %>>Archived</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.72rem;font-weight:600;color:var(--text3);margin-bottom:0.25rem;display:block">Category</label>
+        <select name="cat" class="form-control" style="height:36px;font-size:0.8rem">
+          <option value="">All Categories</option>
+          <% categories.forEach(c => { %><option value="<%= c.id %>" <%= cat==c.id?'selected':'' %>><%= c.name %></option><% }) %>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+      <a href="/admin/posts" class="btn btn-secondary btn-sm">Reset</a>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="bi bi-list-ul"></i> Posts (<%= posts.length %>)</div>
+    <div style="display:flex;gap:0.5rem">
+      <span class="badge badge-success">Published: <%= posts.filter(p=>p.status==='published').length %></span>
+      <span class="badge badge-secondary">Draft: <%= posts.filter(p=>p.status==='draft').length %></span>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Title</th><th>Category</th><th>Status</th><th>Views</th><th>Featured</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>
+        <% if(posts.length) { %>
+          <% posts.forEach((post,i) => { %>
+          <tr>
+            <td style="color:var(--text3);font-size:0.75rem"><%= i+1 %></td>
+            <td>
+              <div style="font-weight:600;font-size:0.82rem;max-width:300px"><%= post.title.substring(0,60) %><%= post.title.length>60?'...':'' %></div>
+              <% if(post.title_hi){ %><div style="font-size:0.7rem;color:var(--text3);font-family:'Noto Sans Devanagari',sans-serif"><%= post.title_hi.substring(0,50) %>...</div><% } %>
+            </td>
+            <td><% if(post.category){ %><span class="badge badge-primary"><%= post.category.name %></span><% } %></td>
+            <td><span class="badge badge-<%= post.status==='published'?'success':post.status==='draft'?'secondary':'warning' %>"><%= post.status %></span></td>
+            <td><i class="bi bi-eye" style="color:var(--text3)"></i> <%= (post.views||0).toLocaleString() %></td>
+            <td><% if(post.is_featured){ %><i class="bi bi-star-fill" style="color:#f59e0b"></i><% } else { %><i class="bi bi-star" style="color:var(--border)"></i><% } %></td>
+            <td style="font-size:0.75rem;color:var(--text3)"><%= post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-IN') : '-' %></td>
+            <td>
+              <div style="display:flex;gap:0.4rem">
+                <a href="/blog/<%= post.slug %>" target="_blank" class="btn btn-xs btn-secondary" title="View"><i class="bi bi-eye"></i></a>
+                <a href="/admin/posts/<%= post.id %>/edit" class="btn btn-xs btn-outline" title="Edit"><i class="bi bi-pencil"></i></a>
+                <form method="POST" action="/admin/posts/<%= post.id %>?_method=DELETE" onsubmit="return confirm('Delete this post?')">
+                  <button type="submit" class="btn btn-xs btn-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="8"><div class="empty-state"><i class="bi bi-file-earmark-text"></i><h3>No posts found</h3><p>Create your first blog post</p><a href="/admin/posts/create" class="btn btn-primary mt-2">Create Post</a></div></td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+</main></div>
+<%- include('../partials/scripts') %>
+</body></html>

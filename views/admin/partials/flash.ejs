@@ -1,0 +1,6 @@
+<% if (flash && flash.success) { %>
+  <div class="alert alert-success"><i class="bi bi-check-circle"></i> <%= flash.success %></div>
+<% } %>
+<% if (flash && flash.error) { %>
+  <div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> <%= flash.error %></div>
+<% } %>

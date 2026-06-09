@@ -1,0 +1,193 @@
+<%- include('../partials/header', { breaking: breaking, categories: categories, currentPage: 'home' }) %>
+
+<div class="wrapper">
+  <!-- HEADER ADS -->
+  <% if(headerAds && headerAds.length){ %>
+  <div style="text-align:center;padding:0.75rem 0">
+    <% headerAds.forEach(ad=>{ %>
+      <div data-ad-id="<%= ad.id %>"><%- ad.content %></div>
+    <% }) %>
+  </div>
+  <% } else { %>
+  <div class="ad-slot" style="margin:0.75rem 0">📢 Advertisement – 728×90</div>
+  <% } %>
+
+  <!-- HERO SECTION -->
+  <% if(featured && featured.length){ %>
+  <div class="hero-grid">
+    <!-- Main Featured -->
+    <a href="/blog/<%= featured[0].slug %>" class="hero-card hero-main">
+      <% if(featured[0].featured_image){ %>
+        <img src="<%= featured[0].featured_image %>" alt="<%= featured[0].title %>" style="width:100%;height:100%;object-fit:cover">
+      <% } else { %>
+        <div style="width:100%;height:100%;background:linear-gradient(135deg,var(--accent-light),#c8e6c9);display:flex;align-items:center;justify-content:center;font-size:5rem">
+          <%= featured[0].category ? featured[0].category.icon||'📰' : '📰' %>
+        </div>
+      <% } %>
+      <div class="hero-overlay">
+        <div class="ho-cat"><%= featured[0].category ? (featured[0].category.name_hi||featured[0].category.name) : 'Featured' %></div>
+        <div class="ho-title"><%= featured[0].title_hi||featured[0].title %></div>
+        <div style="font-size:0.72rem;opacity:0.7;margin-top:0.4rem"><i class="bi bi-eye"></i> <%= (featured[0].views||0).toLocaleString() %> views</div>
+      </div>
+    </a>
+    <!-- Side Featured -->
+    <div class="hero-side">
+      <% featured.slice(1,3).forEach(post=>{ %>
+      <a href="/blog/<%= post.slug %>" class="hero-card">
+        <% if(post.featured_image){ %>
+          <img src="<%= post.featured_image %>" alt="<%= post.title %>" style="width:100%;height:100%;object-fit:cover">
+        <% } else { %>
+          <div style="width:100%;height:100%;background:linear-gradient(135deg,#e3f2fd,#bbdefb);display:flex;align-items:center;justify-content:center;font-size:3rem">
+            <%= post.category ? post.category.icon||'📰' : '📰' %>
+          </div>
+        <% } %>
+        <div class="hero-overlay">
+          <div class="ho-cat"><%= post.category ? (post.category.name_hi||post.category.name) : '' %></div>
+          <div class="ho-title"><%= post.title_hi||post.title %></div>
+        </div>
+      </a>
+      <% }) %>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- MAIN LAYOUT -->
+  <div class="main-layout">
+    <div>
+      <!-- CATEGORIES ROW -->
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
+        <a href="/blog" style="padding:0.4rem 1rem;border-radius:20px;background:var(--accent);color:#fff;font-size:0.78rem;font-weight:700">All</a>
+        <% categories.forEach(c=>{ %>
+        <a href="/category/<%= c.slug %>" style="padding:0.4rem 1rem;border-radius:20px;background:var(--bg3);color:var(--text2);font-size:0.78rem;font-weight:600;border:1px solid var(--border);transition:all 0.2s" onmouseover="this.style.background='var(--accent)';this.style.color='#fff'" onmouseout="this.style.background='var(--bg3)';this.style.color='var(--text2)'">
+          <%= c.icon||'' %> <%= c.name_hi||c.name %>
+        </a>
+        <% }) %>
+      </div>
+
+      <!-- LATEST POSTS -->
+      <div class="section-head">
+        <div class="section-title">🔥 Latest Posts</div>
+        <a href="/blog" class="view-all">सभी देखें →</a>
+      </div>
+
+      <!-- BETWEEN POSTS AD -->
+      <div class="cards-grid">
+        <% latest.forEach((post, idx) => { %>
+          <% if(idx === 4) { %>
+          </div>
+          <div class="ad-slot" style="margin:1rem 0">📢 In-Feed Advertisement</div>
+          <div class="cards-grid">
+          <% } %>
+          <a href="/blog/<%= post.slug %>" class="post-card">
+            <div class="pc-thumb" style="<% if(!post.featured_image){ %>background:linear-gradient(135deg,<%= ['#e8f5ee,#c8e6c9','#e3f2fd,#bbdefb','#f3e5f5,#e1bee7','#fff3e0,#ffe0b2','#fce4ec,#f8bbd0','#e8eaf6,#c5cae9'][idx%6] %>)<% } %>">
+              <% if(post.featured_image){ %><img src="<%= post.featured_image %>" alt="<%= post.title %>"><% } else { %>
+              <span style="font-size:3rem"><%= post.category ? post.category.icon||'📰' : '📰' %></span>
+              <% } %>
+            </div>
+            <div class="pc-body">
+              <div class="pc-cat"><%= post.category ? (post.category.name_hi||post.category.name) : 'General' %></div>
+              <div class="pc-title"><%= post.title_hi||post.title %></div>
+              <div class="pc-desc"><%= (post.short_description_hi||post.short_description||'').substring(0,100) %><%= (post.short_description||'').length>100?'...':'' %></div>
+              <div class="pc-meta">
+                <span><i class="bi bi-eye"></i> <%= (post.views||0).toLocaleString() %></span>
+                <span><i class="bi bi-calendar3"></i> <%= post.published_at ? new Date(post.published_at).toLocaleDateString('en-IN') : '' %></span>
+                <% if(post.is_featured){ %><span style="color:var(--accent2)"><i class="bi bi-star-fill"></i> Featured</span><% } %>
+              </div>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+      <!-- END CARDS GRID -->
+      </div>
+
+      <% if(!latest.length){ %>
+      <div style="text-align:center;padding:3rem;color:var(--text3)">
+        <div style="font-size:3rem;margin-bottom:1rem">📝</div>
+        <h3>No posts yet</h3>
+        <p>Check back soon!</p>
+      </div>
+      <% } %>
+
+      <div style="text-align:center;margin-top:2rem">
+        <a href="/blog" style="background:var(--accent);color:#fff;padding:0.75rem 2rem;border-radius:24px;font-weight:700;font-size:0.9rem;display:inline-flex;align-items:center;gap:0.5rem">
+          <i class="bi bi-arrow-right-circle"></i> सभी पोस्ट देखें
+        </a>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar-section">
+      <!-- SIDEBAR ADS -->
+      <% if(sidebarAds && sidebarAds.length){ %>
+        <% sidebarAds.forEach(ad=>{ %><div data-ad-id="<%= ad.id %>"><%- ad.content %></div><% }) %>
+      <% } else { %>
+        <div class="ad-slot" style="min-height:250px;flex-direction:column;gap:0.5rem"><i class="bi bi-megaphone" style="font-size:2rem;opacity:0.3"></i>Advertisement 300×250</div>
+      <% } %>
+
+      <!-- POPULAR POSTS -->
+      <div class="widget">
+        <div class="widget-head"><i class="bi bi-fire"></i> Popular Posts</div>
+        <div class="widget-body">
+          <% latest.sort((a,b)=>b.views-a.views).slice(0,5).forEach(post=>{ %>
+          <a href="/blog/<%= post.slug %>" class="rp-item" style="display:flex">
+            <div class="rp-thumb">
+              <% if(post.featured_image){ %><img src="<%= post.featured_image %>" alt=""><% } else { %>
+              <span><%= post.category ? post.category.icon||'📰' : '📰' %></span><% } %>
+            </div>
+            <div>
+              <div class="rp-cat"><%= post.category ? (post.category.name_hi||post.category.name) : '' %></div>
+              <div class="rp-title"><%= (post.title_hi||post.title).substring(0,55) %>...</div>
+              <div class="rp-date"><i class="bi bi-eye"></i> <%= (post.views||0).toLocaleString() %></div>
+            </div>
+          </a>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- CATEGORIES WIDGET -->
+      <div class="widget">
+        <div class="widget-head"><i class="bi bi-grid"></i> Categories</div>
+        <div class="widget-body" style="padding:0">
+          <% categories.forEach(c=>{ %>
+          <a href="/category/<%= c.slug %>" style="display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;border-bottom:1px solid var(--border);font-size:0.82rem;color:var(--text);transition:background 0.2s" onmouseover="this.style.background='var(--accent-light)'" onmouseout="this.style.background=''">
+            <span><%= c.icon||'📁' %> <%= c.name_hi||c.name %></span>
+            <span style="font-size:0.7rem;background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:10px;font-weight:600">→</span>
+          </a>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- NEWSLETTER -->
+      <div class="nl-widget">
+        <h4>📬 Newsletter Subscribe</h4>
+        <p>नई पोस्ट की जानकारी Email पर पाएं</p>
+        <input type="email" placeholder="आपका Email Address...">
+        <button>✅ Subscribe करें - Free!</button>
+      </div>
+
+      <!-- TAGS -->
+      <div class="widget">
+        <div class="widget-head"><i class="bi bi-tags"></i> Popular Tags</div>
+        <div class="tag-cloud">
+          <% const allTags=['money','online','freelancing','investment','business','india','earn','startup','digital','marketing','seo','blog','youtube','adsense','jobs','career','government','scheme','loan','saving']; %>
+          <% allTags.forEach(t=>{ %><a href="/blog?tag=<%= t %>" class="tag"><%= t %></a><% }) %>
+        </div>
+      </div>
+
+      <!-- SOCIAL FOLLOW -->
+      <div class="widget">
+        <div class="widget-head"><i class="bi bi-share"></i> Follow Us</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;padding:1rem">
+          <% const sf=[{url:siteSettings.facebook_url,icon:'bi-facebook',bg:'#1877f2',label:'Facebook'},{url:siteSettings.youtube_url,icon:'bi-youtube',bg:'#ff0000',label:'YouTube'},{url:siteSettings.telegram_url,icon:'bi-telegram',bg:'#0088cc',label:'Telegram'},{url:siteSettings.whatsapp_url,icon:'bi-whatsapp',bg:'#25d366',label:'WhatsApp'}]; %>
+          <% sf.forEach(s=>{ if(s.url){ %>
+          <a href="<%= s.url %>" target="_blank" style="display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.75rem;border-radius:7px;font-size:0.75rem;font-weight:600;background:<%= s.bg %>;color:#fff;transition:all 0.2s">
+            <i class="bi <%= s.icon %>"></i><span><%= s.label %></span>
+          </a>
+          <% } }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer', { categories: categories }) %>

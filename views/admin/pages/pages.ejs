@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/pages' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+<div class="page-header">
+  <div><div class="page-title">Static Pages</div></div>
+  <button class="btn btn-primary" onclick="openModal('addPageModal')"><i class="bi bi-plus-lg"></i> Add Page</button>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Title</th><th>Slug</th><th>Template</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        <% pages.forEach(p=>{ %>
+        <tr>
+          <td style="font-weight:600"><%= p.title %></td>
+          <td><code style="font-size:0.72rem;background:#f0f4f8;padding:2px 6px;border-radius:4px">/<%= p.slug %></code></td>
+          <td><span class="badge badge-secondary"><%= p.template %></span></td>
+          <td><span class="badge badge-<%= p.is_active?'success':'secondary' %>"><%= p.is_active?'Active':'Hidden' %></span></td>
+          <td>
+            <div style="display:flex;gap:0.3rem">
+              <a href="/page/<%= p.slug %>" target="_blank" class="btn btn-xs btn-secondary"><i class="bi bi-eye"></i></a>
+              <button class="btn btn-xs btn-outline" onclick='openEditPage(<%- JSON.stringify({id:p.id,title:p.title,content:p.content||"",meta_title:p.meta_title||"",meta_desc:p.meta_desc||"",is_active:p.is_active,template:p.template}) %>')><i class="bi bi-pencil"></i></button>
+              <form method="POST" action="/admin/pages/<%= p.id %>?_method=DELETE" onsubmit="return confirm('Delete page?')">
+                <button class="btn btn-xs btn-danger"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADD PAGE MODAL -->
+<div class="modal-overlay" id="addPageModal">
+  <div class="modal" style="max-width:700px"><div class="modal-header"><div class="modal-title">Add Page</div><button class="modal-close" onclick="closeModal('addPageModal')"><i class="bi bi-x"></i></button></div>
+  <div class="modal-body">
+    <form method="POST" action="/admin/pages">
+      <div class="grid grid-2">
+        <div class="form-group"><label>Title *</label><input type="text" name="title" class="form-control" required></div>
+        <div class="form-group"><label>Slug (auto)</label><input type="text" name="slug" class="form-control" placeholder="leave-blank-for-auto"></div>
+        <div class="form-group"><label>Template</label>
+          <select name="template" class="form-control"><option value="default">Default</option><option value="contact">Contact</option><option value="legal">Legal</option></select>
+        </div>
+        <div class="form-group"><label>Meta Title</label><input type="text" name="meta_title" class="form-control"></div>
+      </div>
+      <div class="form-group"><label>Content (HTML)</label><textarea name="content" class="form-control" rows="8" placeholder="<h1>Page Title</h1><p>Content here...</p>"></textarea></div>
+      <div class="form-group"><label>Meta Description</label><textarea name="meta_desc" class="form-control" rows="2"></textarea></div>
+      <div class="form-check mb-3"><input type="checkbox" name="is_active" id="pa_active" value="1" checked><label for="pa_active">Active (visible on website)</label></div>
+      <div class="modal-footer" style="padding:0;border:none">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addPageModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Page</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+
+<!-- EDIT PAGE MODAL -->
+<div class="modal-overlay" id="editPageModal">
+  <div class="modal" style="max-width:700px"><div class="modal-header"><div class="modal-title">Edit Page</div><button class="modal-close" onclick="closeModal('editPageModal')"><i class="bi bi-x"></i></button></div>
+  <div class="modal-body">
+    <form method="POST" id="editPageForm">
+      <div class="form-group"><label>Title *</label><input type="text" name="title" id="ep_title" class="form-control" required></div>
+      <div class="form-group"><label>Content (HTML)</label><textarea name="content" id="ep_content" class="form-control" rows="10"></textarea></div>
+      <div class="form-group"><label>Meta Title</label><input type="text" name="meta_title" id="ep_meta_title" class="form-control"></div>
+      <div class="form-group"><label>Meta Desc</label><textarea name="meta_desc" id="ep_meta_desc" class="form-control" rows="2"></textarea></div>
+      <div class="form-check mb-3"><input type="checkbox" name="is_active" id="ep_active" value="1"><label for="ep_active">Active</label></div>
+      <div class="modal-footer" style="padding:0;border:none">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('editPageModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Page</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+
+<script>
+function openEditPage(p){
+  document.getElementById('editPageForm').action='/admin/pages/'+p.id+'?_method=PUT';
+  document.getElementById('ep_title').value=p.title||'';
+  document.getElementById('ep_content').value=p.content||'';
+  document.getElementById('ep_meta_title').value=p.meta_title||'';
+  document.getElementById('ep_meta_desc').value=p.meta_desc||'';
+  document.getElementById('ep_active').checked=!!p.is_active;
+  openModal('editPageModal');
+}
+</script>
+<%- include('../partials/scripts') %>
+</body></html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/attendance' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+
+<div class="page-header">
+  <div><div class="page-title">Attendance Management</div><div class="page-subtitle">Track employee attendance for <%= new Date(year, month-1).toLocaleString('en-IN',{month:'long'}) %> <%= year %></div></div>
+  <div class="d-flex gap-2">
+    <form method="GET" style="display:flex;gap:0.5rem;align-items:center">
+      <select name="month" class="form-control" style="height:36px;font-size:0.8rem">
+        <% ['January','February','March','April','May','June','July','August','September','October','November','December'].forEach((m,i)=>{ %>
+          <option value="<%= i+1 %>" <%= month==i+1?'selected':'' %>><%= m %></option>
+        <% }) %>
+      </select>
+      <select name="year" class="form-control" style="height:36px;font-size:0.8rem">
+        <% for(let y=2023; y<=2027; y++){ %><option value="<%= y %>" <%= year==y?'selected':'' %>><%= y %></option><% } %>
+      </select>
+      <button type="submit" class="btn btn-primary btn-sm">Go</button>
+    </form>
+  </div>
+</div>
+
+<!-- ATTENDANCE GRID -->
+<% users.forEach(user => { %>
+<div class="card mb-3">
+  <div class="card-header" style="cursor:pointer" onclick="toggleUser('<%= user.id %>')">
+    <div style="display:flex;align-items:center;gap:1rem">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0"><%= user.name.charAt(0).toUpperCase() %></div>
+      <div>
+        <div style="font-weight:700;font-size:0.9rem"><%= user.name %></div>
+        <div style="font-size:0.72rem;color:var(--text3)"><%= user.role ? user.role.name : 'User' %> • ₹<%= user.salary_amount %>/<%= user.salary_type %> • <a href="/admin/attendance/<%= user.id %>?month=<%= month %>&year=<%= year %>" onclick="event.stopPropagation()" style="color:var(--primary)">Full Report</a></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:1.5rem;align-items:center">
+      <% const ud = attendanceData[user.id] || {summary:{P:0,A:0,OT:0,advance:0}}; %>
+      <div style="text-align:center"><div style="font-size:1.1rem;font-weight:800;color:#16a34a"><%= ud.summary.P || 0 %></div><div style="font-size:0.65rem;color:var(--text3)">Present</div></div>
+      <div style="text-align:center"><div style="font-size:1.1rem;font-weight:800;color:#dc2626"><%= ud.summary.A || 0 %></div><div style="font-size:0.65rem;color:var(--text3)">Absent</div></div>
+      <div style="text-align:center"><div style="font-size:1.1rem;font-weight:800;color:#d97706">₹<%= (ud.summary.advance||0).toLocaleString() %></div><div style="font-size:0.65rem;color:var(--text3)">Advance</div></div>
+      <i class="bi bi-chevron-down" id="chevron-<%= user.id %>"></i>
+    </div>
+  </div>
+  <div id="user-<%= user.id %>" style="display:none">
+    <div style="padding:1rem;overflow-x:auto">
+      <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+        <% for(let d=1; d<=daysInMonth; d++) { %>
+          <% const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`; %>
+          <% const rec = ud.records && ud.records[dateStr]; %>
+          <% const dow = new Date(dateStr).getDay(); %>
+          <div style="text-align:center;min-width:42px">
+            <div style="font-size:0.6rem;color:var(--text3);margin-bottom:2px"><%= ['Su','Mo','Tu','We','Th','Fr','Sa'][dow] %></div>
+            <div onclick="openAttendModal('<%= user.id %>','<%= dateStr %>','<%= rec ? rec.status : '' %>','<%= rec ? rec.advance_amount : 0 %>','<%= rec ? (rec.notes||'') : '' %>')"
+              style="width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;cursor:pointer;border:2px solid;transition:all 0.2s;
+              <% if(!rec){ %>background:#f0f4f8;border-color:var(--border);color:var(--text3)
+              <% } else if(rec.status==='P'){ %>background:#dcfce7;border-color:#16a34a;color:#16a34a
+              <% } else if(rec.status==='A'){ %>background:#fee2e2;border-color:#dc2626;color:#dc2626
+              <% } else if(rec.status==='P+H'){ %>background:#fef9c3;border-color:#ca8a04;color:#ca8a04
+              <% } else if(rec.status==='P+P'){ %>background:#e0f2fe;border-color:#0369a1;color:#0369a1
+              <% } else if(rec.status==='OT'){ %>background:#f3e8ff;border-color:#7c3aed;color:#7c3aed
+              <% } else if(rec.status==='PA'){ %>background:#dcfce7;border-color:#059669;color:#059669
+              <% } else { %>background:#f0f4f8;border-color:var(--border);color:var(--text3)<% } %>
+              ">
+              <%= d %><br><% if(rec){ %><%= rec.status %><% } %>
+            </div>
+            <% if(rec && rec.advance_amount > 0){ %><div style="font-size:0.55rem;color:#dc2626;margin-top:1px">₹<%= rec.advance_amount %></div><% } %>
+          </div>
+        <% } %>
+      </div>
+      <!-- LEGEND -->
+      <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:1rem;font-size:0.72rem">
+        <span><span style="background:#dcfce7;border:1px solid #16a34a;padding:1px 6px;border-radius:4px;color:#16a34a;font-weight:600">P</span> Present</span>
+        <span><span style="background:#fee2e2;border:1px solid #dc2626;padding:1px 6px;border-radius:4px;color:#dc2626;font-weight:600">A</span> Absent</span>
+        <span><span style="background:#fef9c3;border:1px solid #ca8a04;padding:1px 6px;border-radius:4px;color:#ca8a04;font-weight:600">P+H</span> Half Day (1.5)</span>
+        <span><span style="background:#e0f2fe;border:1px solid #0369a1;padding:1px 6px;border-radius:4px;color:#0369a1;font-weight:600">P+P</span> Double (2x)</span>
+        <span><span style="background:#f3e8ff;border:1px solid #7c3aed;padding:1px 6px;border-radius:4px;color:#7c3aed;font-weight:600">OT</span> Overtime</span>
+        <span><span style="background:#dcfce7;border:1px solid #059669;padding:1px 6px;border-radius:4px;color:#059669;font-weight:600">PA</span> Paid Leave</span>
+      </div>
+    </div>
+  </div>
+</div>
+<% }) %>
+
+<!-- MARK ATTENDANCE MODAL -->
+<div class="modal-overlay" id="attendModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-calendar-check"></i> Mark Attendance</div>
+      <button class="modal-close" onclick="closeModal('attendModal')"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="attendModalInfo" style="font-size:0.8rem;color:var(--text3);margin-bottom:1rem"></div>
+      <form id="attendForm">
+        <input type="hidden" id="att_user_id" name="user_id">
+        <input type="hidden" id="att_date" name="attendance_date">
+        <div class="form-group">
+          <label>Status</label>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem" id="statusBtns">
+            <% ['A','½','P','P+½','P+P','OT','PA'].forEach(s => { %>
+              <button type="button" class="status-btn btn btn-secondary btn-sm" data-status="<%= s==='½'?'H':s==='P+½'?'P+H':s %>" onclick="selectStatus(this,'<%= s==='½'?'H':s==='P+½'?'P+H':s %>')"><%= s %></button>
+            <% }) %>
+          </div>
+          <input type="hidden" id="att_status" name="status" value="">
+        </div>
+        <div class="form-group">
+          <label>Advance Amount (₹)</label>
+          <input type="number" id="att_advance" name="advance_amount" class="form-control" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <input type="text" id="att_notes" name="notes" class="form-control" placeholder="Optional notes...">
+        </div>
+        <div style="font-size:0.72rem;color:var(--text3);margin-bottom:1rem">
+          <strong>Meanings:</strong> A=Absent | ½=Half day | P=Present | P+½=1.5 day | P+P=Double | OT=Overtime | PA=Paid Leave
+        </div>
+        <div style="display:flex;gap:0.75rem">
+          <button type="submit" class="btn btn-primary" style="flex:1"><i class="bi bi-check"></i> Save</button>
+          <button type="button" id="removeBtn" class="btn btn-danger" style="flex:1" onclick="removeAttendance()"><i class="bi bi-trash"></i> Remove</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleUser(id){
+  const el=document.getElementById('user-'+id);
+  const ch=document.getElementById('chevron-'+id);
+  if(el.style.display==='none'){ el.style.display='block'; ch.className='bi bi-chevron-up'; }
+  else{ el.style.display='none'; ch.className='bi bi-chevron-down'; }
+}
+function openAttendModal(userId, date, status, advance, notes){
+  document.getElementById('att_user_id').value=userId;
+  document.getElementById('att_date').value=date;
+  document.getElementById('att_advance').value=advance||'';
+  document.getElementById('att_notes').value=notes||'';
+  document.getElementById('att_status').value=status||'';
+  document.getElementById('attendModalInfo').textContent='Date: '+date;
+  document.querySelectorAll('.status-btn').forEach(b=>{
+    b.classList.toggle('btn-primary', b.dataset.status===status);
+    b.classList.toggle('btn-secondary', b.dataset.status!==status);
+  });
+  openModal('attendModal');
+}
+function selectStatus(btn, status){
+  document.getElementById('att_status').value=status;
+  document.querySelectorAll('.status-btn').forEach(b=>{ b.classList.remove('btn-primary'); b.classList.add('btn-secondary'); });
+  btn.classList.add('btn-primary'); btn.classList.remove('btn-secondary');
+}
+function removeAttendance(){
+  document.getElementById('att_status').value='';
+  document.getElementById('attendForm').dispatchEvent(new Event('submit'));
+}
+document.getElementById('attendForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const data = { user_id: document.getElementById('att_user_id').value, attendance_date: document.getElementById('att_date').value, status: document.getElementById('att_status').value, advance_amount: document.getElementById('att_advance').value, notes: document.getElementById('att_notes').value };
+  try {
+    const res = await fetch('/api/attendance/mark', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+    const result = await res.json();
+    if(result.success){ closeModal('attendModal'); location.reload(); }
+    else alert('Error: '+result.error);
+  } catch(err){ alert('Network error'); }
+});
+</script>
+<%- include('../partials/scripts') %>
+</body></html>

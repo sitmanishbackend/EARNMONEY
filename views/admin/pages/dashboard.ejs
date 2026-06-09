@@ -1,0 +1,182 @@
+<%
+  const layout = '../layout';
+  const currentRoute = '/admin/dashboard';
+  const extraHead = `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>`;
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title><%= title %> – Dreams Technology Admin</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <%- include('../partials/head') %>
+</head>
+<body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/dashboard' }) %>
+<div class="main-content" id="mainContent">
+  <%- include('../partials/topbar') %>
+  <main class="page-content">
+    <%- include('../partials/flash') %>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">Welcome back, <%= authUser ? authUser.name : 'Admin' %>! Here's what's happening.</div>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/admin/posts/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Post</a>
+        <a href="/" target="_blank" class="btn btn-secondary"><i class="bi bi-globe"></i> View Site</a>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="grid grid-stats mb-4">
+      <div class="stat-card">
+        <div class="stat-icon bg-primary-soft"><i class="bi bi-file-earmark-text"></i></div>
+        <div class="stat-info">
+          <div class="stat-val"><%= totalPosts %></div>
+          <div class="stat-lbl">Published Posts</div>
+          <div class="stat-change text-success"><i class="bi bi-arrow-up"></i> Active</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-success-soft"><i class="bi bi-people"></i></div>
+        <div class="stat-info">
+          <div class="stat-val"><%= totalUsers %></div>
+          <div class="stat-lbl">Total Users</div>
+          <div class="stat-change text-success"><i class="bi bi-arrow-up"></i> Active</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#dcfce7;color:#16a34a"><i class="bi bi-currency-rupee"></i></div>
+        <div class="stat-info">
+          <div class="stat-val">₹<%= Math.round(totalIncome/1000) %>K</div>
+          <div class="stat-lbl">Total Income</div>
+          <div class="stat-change text-success"><i class="bi bi-arrow-up"></i> Revenue</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-danger-soft"><i class="bi bi-graph-down"></i></div>
+        <div class="stat-info">
+          <div class="stat-val">₹<%= Math.round(totalExpense/1000) %>K</div>
+          <div class="stat-lbl">Total Expense</div>
+          <div class="stat-change text-danger"><i class="bi bi-arrow-down"></i> Costs</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-2 mb-4" style="grid-template-columns:2fr 1fr">
+      <!-- INCOME/EXPENSE CHART -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="bi bi-bar-chart-line"></i> Monthly Income vs Expense</div>
+          <span class="badge badge-primary">2024</span>
+        </div>
+        <div class="card-body">
+          <canvas id="financeChart" height="100"></canvas>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="bi bi-lightning"></i> Quick Actions</div></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:0.75rem">
+          <a href="/admin/posts/create" class="btn btn-primary w-100"><i class="bi bi-plus-circle"></i> Create Blog Post</a>
+          <a href="/admin/attendance" class="btn btn-secondary w-100"><i class="bi bi-calendar-check"></i> Mark Attendance</a>
+          <a href="/admin/finance" class="btn btn-secondary w-100"><i class="bi bi-wallet2"></i> Add Transaction</a>
+          <a href="/admin/users" class="btn btn-secondary w-100"><i class="bi bi-person-plus"></i> Add User</a>
+          <a href="/admin/ads" class="btn btn-secondary w-100"><i class="bi bi-megaphone"></i> Create Ad</a>
+          <a href="/admin/themes" class="btn btn-secondary w-100"><i class="bi bi-palette"></i> Change Theme</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <!-- RECENT POSTS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="bi bi-file-text"></i> Recent Posts</div>
+          <a href="/admin/posts" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Title</th><th>Category</th><th>Status</th></tr></thead>
+            <tbody>
+              <% recentPosts.forEach(post => { %>
+              <tr>
+                <td>
+                  <a href="/admin/posts/<%= post.id %>/edit" style="font-weight:600;color:var(--primary);font-size:0.8rem">
+                    <%= post.title.substring(0,45) %><%= post.title.length>45?'...':'' %>
+                  </a>
+                </td>
+                <td><% if(post.category){ %><span class="badge badge-primary"><%= post.category.name %></span><% } %></td>
+                <td><span class="badge badge-<%= post.status==='published'?'success':post.status==='draft'?'secondary':'warning' %>"><%= post.status %></span></td>
+              </tr>
+              <% }) %>
+              <% if(!recentPosts.length){ %><tr><td colspan="3" class="text-center text-muted">No posts yet</td></tr><% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TOP POSTS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="bi bi-fire"></i> Top Posts by Views</div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <% topPosts.forEach((post, i) => { %>
+          <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border)">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--accent-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0"><%= i+1 %></div>
+            <div style="flex:1;overflow:hidden">
+              <div style="font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= post.title %></div>
+              <div style="font-size:0.7rem;color:var(--text3)"><i class="bi bi-eye"></i> <%= post.views.toLocaleString() %> views</div>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Sidebar toggle
+  let collapsed = localStorage.getItem('sidebarCollapsed')==='true';
+  function applyCollapsed(){ document.getElementById('sidebar').classList.toggle('collapsed',collapsed); document.getElementById('mainContent').classList.toggle('expanded',collapsed); }
+  applyCollapsed();
+  function toggleSidebar(){ collapsed=!collapsed; localStorage.setItem('sidebarCollapsed',collapsed); applyCollapsed(); }
+
+  // Finance Chart
+  const monthlyData = <%- JSON.stringify(monthlyData) %>;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const incomeByMonth = Array(12).fill(0);
+  const expenseByMonth = Array(12).fill(0);
+  monthlyData.forEach(d => {
+    const idx = parseInt(d.month)-1;
+    if(d.type==='income') incomeByMonth[idx] = parseFloat(d.total)||0;
+    if(d.type==='expense') expenseByMonth[idx] = parseFloat(d.total)||0;
+  });
+  new Chart(document.getElementById('financeChart'), {
+    type:'bar',
+    data:{
+      labels: months,
+      datasets:[
+        { label:'Income', data:incomeByMonth, backgroundColor:'rgba(26,122,74,0.8)', borderRadius:6 },
+        { label:'Expense', data:expenseByMonth, backgroundColor:'rgba(220,38,38,0.7)', borderRadius:6 }
+      ]
+    },
+    options:{ responsive:true, plugins:{ legend:{ position:'top' } }, scales:{ y:{ beginAtZero:true, ticks:{ callback: v=>'₹'+Math.round(v/1000)+'K' } } } }
+  });
+
+  // Auto-hide alerts
+  setTimeout(()=>{ document.querySelectorAll('.alert').forEach(a=>{ a.style.opacity='0'; setTimeout(()=>a.remove(),500); }); },4000);
+
+  function openModal(id){ document.getElementById(id).classList.add('show'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+</script>
+</body>
+</html>
