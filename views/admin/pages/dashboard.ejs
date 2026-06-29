@@ -1,182 +1,1100 @@
-<%
-  const layout = '../layout';
-  const currentRoute = '/admin/dashboard';
-  const extraHead = `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>`;
-%>
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title><%= title %> – Dreams Technology Admin</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <%- include('../partials/head') %>
-</head>
-<body>
-<%- include('../partials/sidebar', { currentRoute: '/admin/dashboard' }) %>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title><%= title %> – Dreams Admin</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<%- include('../partials/head') %>
+</head><body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/categories' }) %>
 <div class="main-content" id="mainContent">
-  <%- include('../partials/topbar') %>
-  <main class="page-content">
-    <%- include('../partials/flash') %>
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
 
-    <!-- PAGE HEADER -->
-    <div class="page-header">
-      <div>
-        <div class="page-title">Dashboard</div>
-        <div class="page-subtitle">Welcome back, <%= authUser ? authUser.name : 'Admin' %>! Here's what's happening.</div>
-      </div>
-      <div class="d-flex gap-2">
-        <a href="/admin/posts/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Post</a>
-        <a href="/" target="_blank" class="btn btn-secondary"><i class="bi bi-globe"></i> View Site</a>
+<%
+  const role_slug = authUser ? authUser.role_slug : 'user';
+  const isSuperAdmin = role_slug === 'super_admin';
+  const isAdmin      = role_slug === 'admin';
+  const isDeveloper  = role_slug === 'developer';
+  const isUser       = role_slug === 'user';
+  const userName     = authUser ? authUser.name : 'User';
+  const roleLabel    = isSuperAdmin ? 'Super Admin' : isAdmin ? 'Admin' : isDeveloper ? 'Developer' : 'User';
+  const roleEmoji    = isSuperAdmin ? '👑' : isAdmin ? '🛡️' : isDeveloper ? '⚙️' : '👤';
+%>
+<%
+const safeRecentTransactions =
+  typeof recentTransactions !== 'undefined' ? recentTransactions : [];
+
+const safeBankAccounts =
+  typeof bankAccounts !== 'undefined' ? bankAccounts : [];
+
+const safeRecentPosts =
+  typeof recentPosts !== 'undefined' ? recentPosts : [];
+
+const safeTopPosts =
+  typeof topPosts !== 'undefined' ? topPosts : [];
+
+const safeRoleDistribution =
+  typeof roleDistribution !== 'undefined' ? roleDistribution : [];
+
+const safeMonthlyData =
+  typeof monthlyData !== 'undefined' ? monthlyData : [];
+%>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ══ THEME BRIDGE — picks up whatever theme is active ══ */
+:root {
+  --dp-primary:    var(--primary, #1a7a4a);
+  --dp-primary-d:  var(--accent-dark, #125c36);
+  --dp-primary-l:  var(--accent-light, #e8f5ee);
+  --dp-secondary:  var(--secondary, #e8a020);
+  --dp-sidebar-bg: var(--sidebar-bg, #1a2332);
+  --dp-text-h:     #0f172a;
+  --dp-text-b:     #334155;
+  --dp-text-m:     #64748b;
+  --dp-border:     #e8eaf2;
+  --dp-bg:         #f4f6fb;
+  --dp-card:       #ffffff;
+  --dp-radius:     14px;
+  --dp-radius-sm:  10px;
+  --dp-shadow:     0 2px 12px rgba(0,0,0,.06);
+  --dp-shadow-h:   0 8px 30px rgba(0,0,0,.12);
+  --dp-trans:      .2s cubic-bezier(.4,0,.2,1);
+
+  /* fixed palette for badges/charts */
+  --green:   #0ca678; --green-s:  #e6f7f3;
+  --amber:   #f59f00; --amber-s:  #fff8e1;
+  --rose:    #e03131; --rose-s:   #ffeaea;
+  --blue:    #4361ee; --blue-s:   #eef1fd;
+  --purple:  #7048e8; --purple-s: #f0ebff;
+  --teal:    #0891b2; --teal-s:   #e0f5fa;
+  --orange:  #ea580c; --orange-s: #fff7ed;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.dp {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--dp-text-b);
+  background: var(--dp-bg);
+  padding: 4px 0 40px;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+.a1{animation:fadeUp .35s ease .04s both}
+.a2{animation:fadeUp .35s ease .09s both}
+.a3{animation:fadeUp .35s ease .14s both}
+.a4{animation:fadeUp .35s ease .19s both}
+.a5{animation:fadeUp .35s ease .24s both}
+.a6{animation:fadeUp .35s ease .29s both}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes countUp{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+
+/* ══ BANNER ══ */
+.dp-banner {
+  background: linear-gradient(118deg, var(--dp-sidebar-bg) 0%, var(--dp-primary-d) 60%, var(--dp-primary) 100%);
+  border-radius: 20px;
+  padding: 28px 32px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,.2);
+}
+.dp-banner::before {
+  content:'';
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 320px 200px at 95% 60%, rgba(255,255,255,.08) 0%, transparent 70%),
+    radial-gradient(ellipse 200px 200px at 4% -10%, rgba(255,255,255,.06) 0%, transparent 55%);
+  pointer-events:none;
+}
+.dp-banner::after {
+  content:'';
+  position:absolute; right:-80px; top:-80px;
+  width:280px; height:280px; border-radius:50%;
+  border:54px solid rgba(255,255,255,.04);
+  pointer-events:none;
+}
+.dp-banner-left  { position:relative; z-index:1; }
+.dp-banner-right { position:relative; z-index:1; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.dp-bn-title { font-size:1.5rem; font-weight:800; color:#fff; margin:0 0 5px; }
+.dp-bn-sub   { color:rgba(255,255,255,.68); font-size:.82rem; margin:0; }
+.dp-bn-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  border-radius:50px; padding:5px 15px;
+  font-size:.72rem; font-weight:700; letter-spacing:.04em;
+}
+.dp-bn-role { background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.26); color:#fff; }
+.dp-bn-date { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); color:rgba(255,255,255,.85); }
+.dp-live    { width:7px; height:7px; border-radius:50%; background:#4ade80; animation:blink 1.6s infinite; flex-shrink:0; }
+
+/* ══ QUICK ACTION BAR ══ */
+.dp-qa { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; }
+.dp-qa a {
+  display:inline-flex; align-items:center; gap:7px;
+  background:var(--dp-card); border:1px solid var(--dp-border);
+  border-radius:50px; padding:7px 16px;
+  font-size:.78rem; font-weight:600; color:var(--dp-text-b);
+  text-decoration:none; box-shadow:var(--dp-shadow);
+  transition:all var(--dp-trans); white-space:nowrap;
+}
+.dp-qa a i { font-size:.9rem; color:var(--dp-primary); }
+.dp-qa a:hover {
+  background:var(--dp-primary); color:#fff;
+  border-color:var(--dp-primary);
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(0,0,0,.15);
+}
+.dp-qa a:hover i { color:#fff; }
+
+/* ══ STAT GRID ══ */
+.dp-sg {
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+  margin-bottom:22px;
+}
+@media(max-width:1100px){.dp-sg{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:540px) {.dp-sg{grid-template-columns:1fr}}
+
+/* ══ STAT CARD ══ */
+.dp-sc {
+  background:var(--dp-card); border:1px solid var(--dp-border);
+  border-radius:var(--dp-radius); padding:20px 18px 16px;
+  position:relative; overflow:hidden;
+  box-shadow:var(--dp-shadow);
+  transition:transform var(--dp-trans), box-shadow var(--dp-trans);
+  cursor:default;
+}
+.dp-sc:hover { transform:translateY(-4px); box-shadow:var(--dp-shadow-h); }
+.dp-sc::before {
+  content:''; position:absolute; top:0; right:0;
+  width:110px; height:110px; border-radius:0 var(--dp-radius) 0 110%;
+  opacity:.5; pointer-events:none;
+}
+/* accent-top bar using theme primary */
+.dp-sc.c-theme  { border-top:3px solid var(--dp-primary);   } .dp-sc.c-theme::before   { background:var(--dp-primary-l); }
+.dp-sc.c-green  { border-top:3px solid var(--green);  } .dp-sc.c-green::before  { background:var(--green-s); }
+.dp-sc.c-amber  { border-top:3px solid var(--amber);  } .dp-sc.c-amber::before  { background:var(--amber-s); }
+.dp-sc.c-blue   { border-top:3px solid var(--blue);   } .dp-sc.c-blue::before   { background:var(--blue-s); }
+.dp-sc.c-purple { border-top:3px solid var(--purple); } .dp-sc.c-purple::before { background:var(--purple-s); }
+.dp-sc.c-rose   { border-top:3px solid var(--rose);   } .dp-sc.c-rose::before   { background:var(--rose-s); }
+.dp-sc.c-teal   { border-top:3px solid var(--teal);   } .dp-sc.c-teal::before   { background:var(--teal-s); }
+.dp-sc.c-orange { border-top:3px solid var(--orange); } .dp-sc.c-orange::before { background:var(--orange-s); }
+
+.dp-sc-top  { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; }
+.dp-sc-ico  {
+  width:44px; height:44px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.15rem; flex-shrink:0; position:relative; z-index:1;
+}
+.c-theme  .dp-sc-ico { background:var(--dp-primary-l); color:var(--dp-primary); }
+.c-green  .dp-sc-ico { background:var(--green-s);  color:var(--green); }
+.c-amber  .dp-sc-ico { background:var(--amber-s);  color:var(--amber); }
+.c-blue   .dp-sc-ico { background:var(--blue-s);   color:var(--blue); }
+.c-purple .dp-sc-ico { background:var(--purple-s); color:var(--purple); }
+.c-rose   .dp-sc-ico { background:var(--rose-s);   color:var(--rose); }
+.c-teal   .dp-sc-ico { background:var(--teal-s);   color:var(--teal); }
+.c-orange .dp-sc-ico { background:var(--orange-s); color:var(--orange); }
+
+.dp-sc-trend {
+  font-size:.68rem; font-weight:700; padding:3px 9px; border-radius:50px;
+  position:relative; z-index:1; display:inline-flex; align-items:center; gap:3px;
+}
+.t-up  { background:var(--green-s);  color:var(--green); }
+.t-dn  { background:var(--rose-s);   color:var(--rose);  }
+.t-neu { background:var(--amber-s);  color:var(--amber); }
+
+.dp-sc-lbl  { font-size:.69rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--dp-text-m); margin-bottom:5px; }
+.dp-sc-val  { font-size:1.95rem; font-weight:800; color:var(--dp-text-h); line-height:1; margin-bottom:3px; animation:countUp .5s ease; }
+.dp-sc-sub  { font-size:.73rem; color:var(--dp-text-m); }
+.dp-sc-bar  { height:4px; background:var(--dp-border); border-radius:4px; margin-top:13px; overflow:hidden; }
+.dp-sc-fill { height:100%; border-radius:4px; width:0; transition:width 1.4s cubic-bezier(.4,0,.2,1); }
+.c-theme  .dp-sc-fill { background:linear-gradient(90deg, var(--dp-primary), var(--dp-secondary)); }
+.c-green  .dp-sc-fill { background:linear-gradient(90deg, var(--green), #34d399); }
+.c-amber  .dp-sc-fill { background:linear-gradient(90deg, var(--amber), #fbbf24); }
+.c-blue   .dp-sc-fill { background:linear-gradient(90deg, var(--blue),  #818cf8); }
+.c-purple .dp-sc-fill { background:linear-gradient(90deg, var(--purple),#a78bfa); }
+.c-rose   .dp-sc-fill { background:linear-gradient(90deg, var(--rose),  #f87171); }
+.c-teal   .dp-sc-fill { background:linear-gradient(90deg, var(--teal),  #22d3ee); }
+.c-orange .dp-sc-fill { background:linear-gradient(90deg, var(--orange),#fb923c); }
+
+/* ══ CARD SHELL ══ */
+.dp-card {
+  background:var(--dp-card); border:1px solid var(--dp-border);
+  border-radius:var(--dp-radius); box-shadow:var(--dp-shadow);
+  overflow:hidden; transition:box-shadow var(--dp-trans);
+}
+.dp-card:hover { box-shadow:var(--dp-shadow-h); }
+.dp-card-hd {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:15px 20px 13px; border-bottom:1px solid var(--dp-border);
+}
+.dp-card-hd h5 {
+  font-size:.92rem; font-weight:700; color:var(--dp-text-h);
+  margin:0; display:flex; align-items:center; gap:7px;
+}
+.dp-card-hd h5 i { color:var(--dp-primary); font-size:.95rem; }
+.dp-card-bd  { padding:18px 20px; }
+.dp-card-bd0 { padding:0; }
+
+.dp-vlink {
+  font-size:.74rem; color:var(--dp-primary); text-decoration:none;
+  font-weight:600; display:inline-flex; align-items:center; gap:3px;
+  transition:gap var(--dp-trans);
+}
+.dp-vlink:hover { gap:7px; color:var(--dp-primary-d); }
+
+/* ══ LAYOUT GRIDS ══ */
+.dp-g84   { display:grid; grid-template-columns:1fr 360px; gap:18px; margin-bottom:18px; }
+.dp-g64   { display:grid; grid-template-columns:1.5fr 1fr;  gap:18px; margin-bottom:18px; }
+.dp-g66   { display:grid; grid-template-columns:1fr 1fr;    gap:18px; margin-bottom:18px; }
+.dp-g333  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:18px; }
+@media(max-width:1100px){ .dp-g84{grid-template-columns:1fr} .dp-g64{grid-template-columns:1fr} .dp-g333{grid-template-columns:1fr 1fr} }
+@media(max-width:780px) { .dp-g66{grid-template-columns:1fr} .dp-g333{grid-template-columns:1fr} }
+
+/* ══ TABLE ══ */
+.dp-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+.dp-table thead th {
+  background:#f8f9fe; color:var(--dp-text-m);
+  font-size:.68rem; text-transform:uppercase; letter-spacing:.07em;
+  font-weight:700; padding:10px 16px;
+  border-bottom:1px solid var(--dp-border); white-space:nowrap;
+}
+.dp-table tbody tr { border-bottom:1px solid #f0f2f8; transition:background var(--dp-trans); }
+.dp-table tbody tr:last-child { border-bottom:none; }
+.dp-table tbody tr:hover { background:#f5f7ff; }
+.dp-table tbody td { padding:11px 16px; color:var(--dp-text-b); vertical-align:middle; }
+
+/* ══ BADGES ══ */
+.dp-bd { display:inline-flex; align-items:center; padding:3px 10px; border-radius:6px; font-size:.72rem; font-weight:600; gap:4px; }
+.dp-bd-ok     { background:var(--green-s);  color:var(--green); }
+.dp-bd-pend   { background:var(--amber-s);  color:var(--amber); }
+.dp-bd-rej    { background:var(--rose-s);   color:var(--rose);  }
+.dp-bd-blue   { background:var(--blue-s);   color:var(--blue);  }
+.dp-bd-purple { background:var(--purple-s); color:var(--purple);}
+.dp-bd-teal   { background:var(--teal-s);   color:var(--teal);  }
+.dp-bd-theme  { background:var(--dp-primary-l); color:var(--dp-primary); }
+
+/* ══ AVATAR ══ */
+.dp-ava {
+  width:34px; height:34px; border-radius:10px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:.72rem; color:#fff;
+  flex-shrink:0;
+}
+.av1 { background:linear-gradient(135deg,var(--dp-primary),var(--dp-secondary)); }
+.av2 { background:linear-gradient(135deg,#0ca678,#34d399); }
+.av3 { background:linear-gradient(135deg,#f59f00,#fbbf24); }
+.av4 { background:linear-gradient(135deg,#7048e8,#a78bfa); }
+.av5 { background:linear-gradient(135deg,#e03131,#f87171); }
+.av6 { background:linear-gradient(135deg,#0891b2,#22d3ee); }
+
+/* ══ LIST ITEM ══ */
+.dp-li {
+  display:flex; align-items:center; gap:12px;
+  padding:11px 20px; border-bottom:1px solid #f0f2f8;
+  transition:background var(--dp-trans);
+}
+.dp-li:last-child { border-bottom:none; }
+.dp-li:hover { background:#f5f7ff; }
+.dp-li-name { font-size:.83rem; font-weight:600; color:var(--dp-text-h); }
+.dp-li-meta { font-size:.71rem; color:var(--dp-text-m); margin-top:1px; }
+.dp-li-right { margin-left:auto; text-align:right; }
+.dp-li-val   { font-size:.82rem; font-weight:700; color:var(--dp-primary); }
+.dp-li-date  { font-size:.7rem;  color:var(--dp-text-m); margin-top:1px; }
+
+/* ══ ACTIVITY FEED ══ */
+.dp-af { display:flex; gap:11px; padding:12px 20px; border-bottom:1px solid #f0f2f8; align-items:flex-start; transition:background var(--dp-trans); }
+.dp-af:last-child { border-bottom:none; }
+.dp-af:hover { background:#f5f7ff; }
+.dp-af-ico { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0; }
+.dp-af-ttl { font-size:.81rem; font-weight:600; color:var(--dp-text-h); margin-bottom:2px; }
+.dp-af-meta { font-size:.71rem; color:var(--dp-text-m); }
+
+/* ══ HEALTH BAR ══ */
+.dp-hb-item { margin-bottom:14px; }
+.dp-hb-top  { display:flex; justify-content:space-between; font-size:.78rem; margin-bottom:5px; font-weight:600; color:var(--dp-text-b); }
+.dp-hb-bar  { height:7px; background:var(--dp-border); border-radius:99px; overflow:hidden; }
+.dp-hb-fill { height:100%; border-radius:99px; transition:width 1.2s cubic-bezier(.4,0,.2,1); }
+
+/* ══ MINI METRIC BOXES ══ */
+.dp-metric-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px; }
+.dp-metric {
+  border-radius:10px; padding:13px; text-align:center;
+}
+.dp-metric-val { font-size:1.2rem; font-weight:800; }
+.dp-metric-lbl { font-size:.68rem; color:var(--dp-text-m); text-transform:uppercase; letter-spacing:.06em; margin-top:2px; }
+
+/* ══ POST ROW ══ */
+.dp-post-row { display:flex; align-items:center; gap:12px; padding:11px 20px; border-bottom:1px solid #f0f2f8; transition:background var(--dp-trans); }
+.dp-post-row:last-child { border-bottom:none; }
+.dp-post-row:hover { background:#f5f7ff; }
+.dp-post-num { width:28px; height:28px; border-radius:8px; background:var(--dp-primary-l); color:var(--dp-primary); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:800; flex-shrink:0; }
+.dp-post-title { font-size:.8rem; font-weight:600; color:var(--dp-text-h); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dp-post-meta  { font-size:.7rem;  color:var(--dp-text-m); }
+
+/* ══ FINANCE ROW ══ */
+.dp-fin-row { display:flex; align-items:center; gap:12px; padding:11px 20px; border-bottom:1px solid #f0f2f8; transition:background var(--dp-trans); }
+.dp-fin-row:last-child { border-bottom:none; }
+.dp-fin-row:hover { background:#f5f7ff; }
+.dp-fin-ico { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.88rem; flex-shrink:0; }
+.dp-fin-desc { font-size:.81rem; font-weight:600; color:var(--dp-text-h); }
+.dp-fin-meta { font-size:.7rem;  color:var(--dp-text-m); }
+.dp-fin-amt  { margin-left:auto; font-size:.85rem; font-weight:800; }
+.dp-fin-amt.inc { color:var(--green); }
+.dp-fin-amt.exp { color:var(--rose);  }
+
+/* ══ QUICK ACTION BUTTONS ══ */
+.dp-qa-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.dp-qa-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:8px; padding:16px 10px;
+  background:var(--dp-bg); border:1px solid var(--dp-border);
+  border-radius:12px; text-decoration:none; color:var(--dp-text-b);
+  font-size:.78rem; font-weight:600; transition:all var(--dp-trans); text-align:center;
+}
+.dp-qa-btn i { font-size:1.3rem; color:var(--dp-primary); }
+.dp-qa-btn:hover { background:var(--dp-primary); color:#fff; border-color:var(--dp-primary); transform:scale(1.03); }
+.dp-qa-btn:hover i { color:#fff; }
+
+/* ══ ACCOUNT CARD ══ */
+.dp-account { display:flex; align-items:center; gap:12px; padding:13px 20px; border-bottom:1px solid #f0f2f8; transition:background var(--dp-trans); }
+.dp-account:last-child { border-bottom:none; }
+.dp-account:hover { background:#f5f7ff; }
+.dp-account-ico { width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+.dp-account-name { font-size:.83rem; font-weight:700; color:var(--dp-text-h); }
+.dp-account-bank { font-size:.71rem; color:var(--dp-text-m); }
+.dp-account-bal  { margin-left:auto; font-size:.9rem; font-weight:800; color:var(--dp-primary); }
+
+/* ══ EMPTY STATE ══ */
+.dp-empty { padding:40px; text-align:center; color:var(--dp-text-m); }
+.dp-empty i { font-size:2.2rem; display:block; margin-bottom:10px; color:var(--dp-border); }
+.dp-empty p { font-size:.82rem; margin:0; }
+
+/* ══ RING CHART WRAPPER ══ */
+.dp-ring-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 0 10px; }
+.dp-ring-val  { font-size:1.9rem; font-weight:800; color:var(--dp-primary); margin-top:-4px; }
+.dp-ring-lbl  { font-size:.75rem; color:var(--dp-text-m); margin-top:2px; }
+
+/* ══ INSIGHT STRIP (Super Admin) ══ */
+.dp-insight-strip {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:0;
+  border:1px solid var(--dp-border); border-radius:var(--dp-radius);
+  overflow:hidden; margin-bottom:18px; background:var(--dp-card);
+  box-shadow:var(--dp-shadow);
+}
+.dp-insight-item {
+  padding:16px 18px; border-right:1px solid var(--dp-border);
+  transition:background var(--dp-trans);
+}
+.dp-insight-item:last-child { border-right:none; }
+.dp-insight-item:hover { background:var(--dp-primary-l); }
+.dp-insight-lbl { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--dp-text-m); margin-bottom:4px; }
+.dp-insight-val { font-size:1.35rem; font-weight:800; color:var(--dp-text-h); }
+.dp-insight-chg { font-size:.71rem; margin-top:2px; display:inline-flex; align-items:center; gap:3px; }
+.chg-up  { color:var(--green); }
+.chg-dn  { color:var(--rose);  }
+@media(max-width:780px){ .dp-insight-strip{grid-template-columns:repeat(2,1fr)} .dp-insight-item:nth-child(2){border-right:none} }
+
+/* ══ DEVELOPER BADGE ══ */
+.dp-dev-pill {
+  display:inline-flex; align-items:center; gap:5px;
+  background:#111827; color:#10b981; border-radius:6px;
+  padding:3px 10px; font-size:.72rem; font-weight:700;
+  font-family:'Courier New',monospace;
+}
+</style>
+
+<div class="content pb-4 dp">
+
+<%- include('../partials/flash') %>
+
+<!-- ════ BANNER ════ -->
+<div class="dp-banner a1">
+  <div class="dp-banner-left">
+    <h2 class="dp-bn-title">
+      <%= roleEmoji %> Welcome, <%= userName %>!
+    </h2>
+    <p class="dp-bn-sub">
+      <% if(isSuperAdmin){ %> Platform Command Center
+      <% }else if(isAdmin){ %> Admin Operations Panel
+      <% }else if(isDeveloper){ %> Developer Workspace
+      <% }else{ %> My Dashboard
+      <% } %>
+      &nbsp;•&nbsp; <%= new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) %>
+    </p>
+  </div>
+  <div class="dp-banner-right">
+    <span class="dp-bn-badge dp-bn-date">
+      <i class="bi bi-calendar3"></i>
+      <%= new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) %>
+    </span>
+    <span class="dp-bn-badge dp-bn-role">
+      <span class="dp-live"></span> <%= roleLabel %> Panel
+    </span>
+  </div>
+</div>
+
+<!-- ════ QUICK ACTION BAR ════ -->
+<div class="dp-qa a2">
+  <% if(isSuperAdmin || isAdmin){ %>
+    <a href="/admin/posts"><i class="bi bi-file-earmark-text"></i> Posts</a>
+    <a href="/admin/posts/create"><i class="bi bi-plus-circle"></i> New Post</a>
+    <a href="/admin/finance"><i class="bi bi-wallet2"></i> Finance</a>
+    <a href="/admin/users"><i class="bi bi-people"></i> Users</a>
+    <a href="/admin/attendance"><i class="bi bi-calendar-check"></i> Attendance</a>
+    <a href="/admin/ads"><i class="bi bi-megaphone"></i> Ads</a>
+    <% if(isSuperAdmin){ %>
+      <a href="/admin/themes"><i class="bi bi-palette"></i> Themes</a>
+      <a href="/admin/permissions"><i class="bi bi-shield-check"></i> Permissions</a>
+    <% } %>
+  <% }else if(isDeveloper){ %>
+    <a href="/admin/posts"><i class="bi bi-file-earmark-text"></i> Posts</a>
+    <a href="/admin/categories"><i class="bi bi-grid"></i> Categories</a>
+    <a href="/admin/themes"><i class="bi bi-palette"></i> Themes</a>
+    <a href="/admin/seo"><i class="bi bi-rocket"></i> Blog Booster</a>
+    <a href="/admin/database"><i class="bi bi-database"></i> Database</a>
+  <% }else{ %>
+    <a href="/admin/attendance"><i class="bi bi-calendar-check"></i> My Attendance</a>
+    <a href="/admin/profile"><i class="bi bi-person-circle"></i> My Profile</a>
+  <% } %>
+</div>
+
+<!-- ════════════════════════════════
+     SUPER ADMIN
+════════════════════════════════ -->
+<% if(isSuperAdmin){ %>
+
+<!-- Insight Strip -->
+<div class="dp-insight-strip a2">
+  <div class="dp-insight-item">
+    <div class="dp-insight-lbl">Total Revenue</div>
+    <div class="dp-insight-val">₹<%= Math.round((totalIncome||0)/1000) %>K</div>
+    <div class="dp-insight-chg chg-up"><i class="bi bi-arrow-up-right"></i> All-time income</div>
+  </div>
+  <div class="dp-insight-item">
+    <div class="dp-insight-lbl">Total Expense</div>
+    <div class="dp-insight-val">₹<%= Math.round((totalExpense||0)/1000) %>K</div>
+    <div class="dp-insight-chg chg-dn"><i class="bi bi-arrow-down-right"></i> All-time outflow</div>
+  </div>
+  <div class="dp-insight-item">
+    <div class="dp-insight-lbl">Net Profit</div>
+    <div class="dp-insight-val" style="color:var(--green)">₹<%= Math.round(((totalIncome||0)-(totalExpense||0))/1000) %>K</div>
+    <div class="dp-insight-chg chg-up"><i class="bi bi-graph-up-arrow"></i> Net balance</div>
+  </div>
+  <div class="dp-insight-item">
+    <div class="dp-insight-lbl">Active Users</div>
+    <div class="dp-insight-val"><%= totalUsers || 0 %></div>
+    <div class="dp-insight-chg chg-up"><i class="bi bi-people"></i> Platform members</div>
+  </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="dp-sg">
+  <div class="dp-sc c-theme a2">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-file-earmark-text"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Published</span>
+    </div>
+    <div class="dp-sc-lbl">Blog Posts</div>
+    <div class="dp-sc-val"><%= totalPosts || 0 %></div>
+    <div class="dp-sc-sub">Live articles</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="78"></div></div>
+  </div>
+  <div class="dp-sc c-green a3">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-people"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Active</span>
+    </div>
+    <div class="dp-sc-lbl">Total Users</div>
+    <div class="dp-sc-val"><%= totalUsers || 0 %></div>
+    <div class="dp-sc-sub">Platform members</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="82"></div></div>
+  </div>
+  <div class="dp-sc c-amber a4">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-currency-rupee"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Revenue</span>
+    </div>
+    <div class="dp-sc-lbl">Total Income</div>
+    <div class="dp-sc-val">₹<%= Math.round((totalIncome||0)/1000) %>K</div>
+    <div class="dp-sc-sub">All-time earnings</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="70"></div></div>
+  </div>
+  <div class="dp-sc c-rose a5">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-graph-down"></i></div>
+      <span class="dp-sc-trend t-dn"><i class="bi bi-arrow-down"></i> Costs</span>
+    </div>
+    <div class="dp-sc-lbl">Total Expense</div>
+    <div class="dp-sc-val">₹<%= Math.round((totalExpense||0)/1000) %>K</div>
+    <div class="dp-sc-sub">All-time outflow</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="55"></div></div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="dp-g84 a4">
+  <div class="dp-card">
+    <div class="dp-card-hd">
+      <h5><i class="bi bi-bar-chart-line"></i> Monthly Income vs Expense</h5>
+      <span class="dp-bd dp-bd-theme">2024</span>
+    </div>
+    <div class="dp-card-bd">
+      <canvas id="financeChart" height="110"></canvas>
+      <div class="dp-metric-grid" style="margin-top:16px;">
+        <div class="dp-metric" style="background:var(--dp-primary-l);">
+          <div class="dp-metric-val" style="color:var(--dp-primary)">₹<%= Math.round((totalIncome||0)/1000) %>K</div>
+          <div class="dp-metric-lbl">Income</div>
+        </div>
+        <div class="dp-metric" style="background:var(--rose-s);">
+          <div class="dp-metric-val" style="color:var(--rose)">₹<%= Math.round((totalExpense||0)/1000) %>K</div>
+          <div class="dp-metric-lbl">Expense</div>
+        </div>
+        <div class="dp-metric" style="background:var(--green-s);">
+          <div class="dp-metric-val" style="color:var(--green)">₹<%= Math.round(((totalIncome||0)-(totalExpense||0))/1000) %>K</div>
+          <div class="dp-metric-lbl">Profit</div>
+        </div>
       </div>
     </div>
+  </div>
+  <div class="dp-card">
+    <div class="dp-card-hd"><h5><i class="bi bi-pie-chart"></i> Role Distribution</h5></div>
+    <div class="dp-card-bd" style="padding-top:10px;">
+      <canvas id="roleChart" height="180"></canvas>
+    </div>
+  </div>
+</div>
 
-    <!-- STAT CARDS -->
-    <div class="grid grid-stats mb-4">
-      <div class="stat-card">
-        <div class="stat-icon bg-primary-soft"><i class="bi bi-file-earmark-text"></i></div>
-        <div class="stat-info">
-          <div class="stat-val"><%= totalPosts %></div>
-          <div class="stat-lbl">Published Posts</div>
-          <div class="stat-change text-success"><i class="bi bi-arrow-up"></i> Active</div>
+<!-- Recent Posts + Top Posts -->
+<div class="dp-g66 a5">
+  <div class="dp-card">
+    <div class="dp-card-hd">
+      <h5><i class="bi bi-file-text"></i> Recent Posts</h5>
+      <a href="/admin/posts" class="dp-vlink">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="dp-card-bd0">
+      <% if(recentPosts && recentPosts.length){ %>
+        <% recentPosts.slice(0,6).forEach((p,i) => { const avs=['av1','av2','av3','av4','av5','av6']; %>
+        <div class="dp-li">
+          <div class="dp-ava <%= avs[i%6] %>"><%= (p.title||'P').charAt(0).toUpperCase() %></div>
+          <div style="flex:1;min-width:0;">
+            <div class="dp-li-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= (p.title||'').substring(0,36) %><%= (p.title||'').length>36?'…':'' %></div>
+            <div class="dp-li-meta"><%= p.category_name || 'Uncategorized' %></div>
+          </div>
+          <span class="dp-bd <%= p.status==='published'?'dp-bd-ok':p.status==='draft'?'dp-bd-pend':'dp-bd-theme' %>"><%= p.status %></span>
         </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon bg-success-soft"><i class="bi bi-people"></i></div>
-        <div class="stat-info">
-          <div class="stat-val"><%= totalUsers %></div>
-          <div class="stat-lbl">Total Users</div>
-          <div class="stat-change text-success"><i class="bi bi-arrow-up"></i> Active</div>
+        <% }) %>
+      <% }else{ %>
+        <div class="dp-empty"><i class="bi bi-file-earmark-x"></i><p>No posts yet</p></div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="dp-card">
+    <div class="dp-card-hd">
+      <h5><i class="bi bi-fire"></i> Top Posts by Views</h5>
+    </div>
+    <div class="dp-card-bd0">
+      <% if(topPosts && topPosts.length){ %>
+        <% topPosts.slice(0,5).forEach((p,i) => { %>
+        <div class="dp-post-row">
+          <div class="dp-post-num"><%= i+1 %></div>
+          <div style="flex:1;min-width:0;">
+            <div class="dp-post-title"><%= (p.title||'').substring(0,40) %><%= (p.title||'').length>40?'…':'' %></div>
+            <div class="dp-post-meta"><i class="bi bi-eye"></i> <%= (p.views||0).toLocaleString('en-IN') %> views</div>
+          </div>
         </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#dcfce7;color:#16a34a"><i class="bi bi-currency-rupee"></i></div>
-        <div class="stat-info">
-          <div class="stat-val">₹<%= Math.round(totalIncome/1000) %>K</div>
-          <div class="stat-lbl">Total Income</div>
-          <div class="stat-change text-success"><i class="bi bi-arrow-up"></i> Revenue</div>
+        <% }) %>
+      <% }else{ %>
+        <div class="dp-empty"><i class="bi bi-bar-chart"></i><p>No data yet</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Finance + Recent Users -->
+<div class="dp-g84 a6">
+  <div class="dp-card">
+    <div class="dp-card-hd">
+      <h5><i class="bi bi-clock-history"></i> Recent Transactions</h5>
+      <a href="/admin/finance" class="dp-vlink">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="dp-card-bd0">
+      <% if(safeRecentTransactions.length){ %>
+        <% safeRecentTransactions.slice(0,6).forEach(t => { %>
+        <div class="dp-fin-row">
+          <div class="dp-fin-ico" style="background:<%= t.type==='income'?'var(--green-s)':'var(--rose-s)' %>;">
+            <i class="bi <%= t.type==='income'?'bi-arrow-down-left':'bi-arrow-up-right' %>" style="color:<%= t.type==='income'?'var(--green)':'var(--rose)' %>"></i>
+          </div>
+          <div>
+            <div class="dp-fin-desc"><%= (t.description||'Transaction').substring(0,32) %></div>
+            <div class="dp-fin-meta"><%= t.transaction_date ? new Date(t.transaction_date).toLocaleDateString('en-IN') : '—' %></div>
+          </div>
+          <div class="dp-fin-amt <%= t.type==='income'?'inc':'exp' %>">
+            <%= t.type==='income'?'+':'-' %>₹<%= Number(t.amount||0).toLocaleString('en-IN') %>
+          </div>
         </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon bg-danger-soft"><i class="bi bi-graph-down"></i></div>
-        <div class="stat-info">
-          <div class="stat-val">₹<%= Math.round(totalExpense/1000) %>K</div>
-          <div class="stat-lbl">Total Expense</div>
-          <div class="stat-change text-danger"><i class="bi bi-arrow-down"></i> Costs</div>
+        <% }) %>
+      <% }else{ %>
+        <div class="dp-empty"><i class="bi bi-receipt"></i><p>No transactions yet</p></div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Bank Accounts -->
+  <div class="dp-card">
+    <div class="dp-card-hd">
+      <h5><i class="bi bi-bank"></i> Bank Accounts</h5>
+      <a href="/admin/finance" class="dp-vlink">Manage <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="dp-card-bd0">
+      <% if(safeBankAccounts.length){ %>
+        <% bankAccounts.forEach(acc => { %>
+        <div class="dp-account">
+          <div class="dp-account-ico" style="background:<%= acc.color||'var(--dp-primary)' %>22; color:<%= acc.color||'var(--dp-primary)' %>">
+            <i class="bi <%= acc.icon||'bi-bank' %>"></i>
+          </div>
+          <div>
+            <div class="dp-account-name"><%= acc.account_name %></div>
+            <div class="dp-account-bank"><%= acc.bank_name %></div>
+          </div>
+          <div class="dp-account-bal">₹<%= Number(acc.current_balance||0).toLocaleString('en-IN') %></div>
         </div>
+        <% }) %>
+      <% }else{ %>
+        <div class="dp-empty"><i class="bi bi-bank2"></i><p>No accounts added</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     ADMIN
+════════════════════════════════ -->
+<% }else if(isAdmin){ %>
+
+<div class="dp-sg">
+  <div class="dp-sc c-theme a2">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-file-earmark-text"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Live</span>
+    </div>
+    <div class="dp-sc-lbl">Published Posts</div>
+    <div class="dp-sc-val"><%= totalPosts || 0 %></div>
+    <div class="dp-sc-sub">Live articles</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="75"></div></div>
+  </div>
+  <div class="dp-sc c-green a3">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-people"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Active</span>
+    </div>
+    <div class="dp-sc-lbl">Total Users</div>
+    <div class="dp-sc-val"><%= totalUsers || 0 %></div>
+    <div class="dp-sc-sub">Platform members</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="82"></div></div>
+  </div>
+  <div class="dp-sc c-amber a4">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-currency-rupee"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Revenue</span>
+    </div>
+    <div class="dp-sc-lbl">This Month Income</div>
+    <div class="dp-sc-val">₹<%= Math.round((currentMonthIncome||0)/1000) %>K</div>
+    <div class="dp-sc-sub">Current month</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="65"></div></div>
+  </div>
+  <div class="dp-sc c-purple a5">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-eye"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Traffic</span>
+    </div>
+    <div class="dp-sc-lbl">Total Post Views</div>
+    <div class="dp-sc-val"><%= (totalViews||0) >= 1000 ? Math.round((totalViews||0)/1000)+'K' : (totalViews||0) %></div>
+    <div class="dp-sc-sub">Cumulative reads</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="60"></div></div>
+  </div>
+</div>
+
+<div class="dp-g84 a4">
+  <div class="dp-card">
+    <div class="dp-card-hd">
+      <h5><i class="bi bi-bar-chart-line"></i> Monthly Finance Overview</h5>
+    </div>
+    <div class="dp-card-bd">
+      <canvas id="adminFinChart" height="110"></canvas>
+    </div>
+  </div>
+  <div class="dp-card">
+    <div class="dp-card-hd"><h5><i class="bi bi-lightning"></i> Quick Actions</h5></div>
+    <div class="dp-card-bd">
+      <div class="dp-qa-grid">
+        <a href="/admin/posts/create" class="dp-qa-btn"><i class="bi bi-plus-circle"></i><span>New Post</span></a>
+        <a href="/admin/attendance" class="dp-qa-btn"><i class="bi bi-calendar-check"></i><span>Attendance</span></a>
+        <a href="/admin/finance" class="dp-qa-btn"><i class="bi bi-wallet2"></i><span>Add Transaction</span></a>
+        <a href="/admin/users" class="dp-qa-btn"><i class="bi bi-person-plus"></i><span>Add User</span></a>
+        <a href="/admin/ads" class="dp-qa-btn"><i class="bi bi-megaphone"></i><span>Manage Ads</span></a>
+        <a href="/admin/seo" class="dp-qa-btn"><i class="bi bi-rocket"></i><span>Blog Booster</span></a>
       </div>
     </div>
+  </div>
+</div>
 
-    <div class="grid grid-2 mb-4" style="grid-template-columns:2fr 1fr">
-      <!-- INCOME/EXPENSE CHART -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><i class="bi bi-bar-chart-line"></i> Monthly Income vs Expense</div>
-          <span class="badge badge-primary">2024</span>
+<div class="dp-g66 a5">
+  <div class="dp-card">
+    <div class="dp-card-hd">
+      <h5><i class="bi bi-file-text"></i> Recent Posts</h5>
+      <a href="/admin/posts" class="dp-vlink">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="dp-card-bd0">
+      <% if(recentPosts && recentPosts.length){ %>
+        <% recentPosts.slice(0,5).forEach((p,i) => { const avs=['av1','av2','av3','av4','av5','av6']; %>
+        <div class="dp-li">
+          <div class="dp-ava <%= avs[i%6] %>"><%= (p.title||'P').charAt(0).toUpperCase() %></div>
+          <div style="flex:1;min-width:0;">
+            <div class="dp-li-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= (p.title||'').substring(0,34) %><%= (p.title||'').length>34?'…':'' %></div>
+            <div class="dp-li-meta"><%= p.category_name || 'Uncategorized' %></div>
+          </div>
+          <span class="dp-bd <%= p.status==='published'?'dp-bd-ok':'dp-bd-pend' %>"><%= p.status %></span>
         </div>
-        <div class="card-body">
-          <canvas id="financeChart" height="100"></canvas>
+        <% }) %>
+      <% }else{ %>
+        <div class="dp-empty"><i class="bi bi-file-earmark-x"></i><p>No posts yet</p></div>
+      <% } %>
+    </div>
+  </div>
+  <div class="dp-card">
+    <div class="dp-card-hd">
+      <h5><i class="bi bi-clock-history"></i> Recent Transactions</h5>
+      <a href="/admin/finance" class="dp-vlink">View All <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="dp-card-bd0">
+     <% if(safeRecentTransactions.length){ %>
+        <% safeRecentTransactions.slice(0,5).forEach(t => { %>
+        <div class="dp-fin-row">
+          <div class="dp-fin-ico" style="background:<%= t.type==='income'?'var(--green-s)':'var(--rose-s)' %>;">
+            <i class="bi <%= t.type==='income'?'bi-arrow-down-left':'bi-arrow-up-right' %>" style="color:<%= t.type==='income'?'var(--green)':'var(--rose)' %>"></i>
+          </div>
+          <div>
+            <div class="dp-fin-desc"><%= (t.description||'').substring(0,28) %></div>
+            <div class="dp-fin-meta"><%= t.transaction_date ? new Date(t.transaction_date).toLocaleDateString('en-IN') : '—' %></div>
+          </div>
+          <div class="dp-fin-amt <%= t.type==='income'?'inc':'exp' %>">
+            <%= t.type==='income'?'+':'-' %>₹<%= Number(t.amount||0).toLocaleString('en-IN') %>
+          </div>
         </div>
-      </div>
+        <% }) %>
+      <% }else{ %>
+        <div class="dp-empty"><i class="bi bi-receipt"></i><p>No transactions yet</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>
 
-      <!-- QUICK ACTIONS -->
-      <div class="card">
-        <div class="card-header"><div class="card-title"><i class="bi bi-lightning"></i> Quick Actions</div></div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:0.75rem">
-          <a href="/admin/posts/create" class="btn btn-primary w-100"><i class="bi bi-plus-circle"></i> Create Blog Post</a>
-          <a href="/admin/attendance" class="btn btn-secondary w-100"><i class="bi bi-calendar-check"></i> Mark Attendance</a>
-          <a href="/admin/finance" class="btn btn-secondary w-100"><i class="bi bi-wallet2"></i> Add Transaction</a>
-          <a href="/admin/users" class="btn btn-secondary w-100"><i class="bi bi-person-plus"></i> Add User</a>
-          <a href="/admin/ads" class="btn btn-secondary w-100"><i class="bi bi-megaphone"></i> Create Ad</a>
-          <a href="/admin/themes" class="btn btn-secondary w-100"><i class="bi bi-palette"></i> Change Theme</a>
+<!-- ════════════════════════════════
+     DEVELOPER
+════════════════════════════════ -->
+<% }else if(isDeveloper){ %>
+
+<div class="dp-sg">
+  <div class="dp-sc c-theme a2">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-file-earmark-text"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Published</span>
+    </div>
+    <div class="dp-sc-lbl">Total Posts</div>
+    <div class="dp-sc-val"><%= totalPosts || 0 %></div>
+    <div class="dp-sc-sub">Content pieces</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="78"></div></div>
+  </div>
+  <div class="dp-sc c-teal a3">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-grid"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Active</span>
+    </div>
+    <div class="dp-sc-lbl">Categories</div>
+    <div class="dp-sc-val"><%= totalCategories || 0 %></div>
+    <div class="dp-sc-sub">Blog categories</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="60"></div></div>
+  </div>
+  <div class="dp-sc c-purple a4">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-palette"></i></div>
+      <span class="dp-sc-trend t-neu"><i class="bi bi-dash"></i> Themes</span>
+    </div>
+    <div class="dp-sc-lbl">Active Theme</div>
+    <div class="dp-sc-val" style="font-size:1.1rem;padding-top:4px;"><%= activeThemeName || 'Default' %></div>
+    <div class="dp-sc-sub">Current theme</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="100"></div></div>
+  </div>
+  <div class="dp-sc c-orange a5">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-eye"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Traffic</span>
+    </div>
+    <div class="dp-sc-lbl">Total Views</div>
+    <div class="dp-sc-val"><%= (totalViews||0) >= 1000 ? Math.round((totalViews||0)/1000)+'K' : (totalViews||0) %></div>
+    <div class="dp-sc-sub">All post views</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="55"></div></div>
+  </div>
+</div>
+
+<div class="dp-g84 a4">
+  <div class="dp-card">
+    <div class="dp-card-hd">
+      <h5><i class="bi bi-fire"></i> Top Performing Posts</h5>
+      <a href="/admin/posts" class="dp-vlink">All Posts <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="dp-card-bd0">
+      <% if(topPosts && topPosts.length){ %>
+        <% topPosts.slice(0,6).forEach((p,i) => { %>
+        <div class="dp-post-row">
+          <div class="dp-post-num"><%= i+1 %></div>
+          <div style="flex:1;min-width:0;">
+            <div class="dp-post-title"><%= (p.title||'').substring(0,44) %><%= (p.title||'').length>44?'…':'' %></div>
+            <div class="dp-post-meta"><i class="bi bi-eye"></i> <%= (p.views||0).toLocaleString('en-IN') %> views &nbsp;•&nbsp; <%= p.category_name||'—' %></div>
+          </div>
+          <a href="/admin/posts/<%= p.id %>/edit" class="dp-bd dp-bd-theme" style="font-size:.7rem;text-decoration:none;"><i class="bi bi-pencil"></i></a>
         </div>
+        <% }) %>
+      <% }else{ %>
+        <div class="dp-empty"><i class="bi bi-bar-chart"></i><p>No posts yet</p></div>
+      <% } %>
+    </div>
+  </div>
+  <div class="dp-card">
+    <div class="dp-card-hd"><h5><i class="bi bi-terminal"></i> Dev Quick Access</h5></div>
+    <div class="dp-card-bd" style="display:flex;flex-direction:column;gap:8px;">
+      <% [
+        ['/admin/posts/create','bi-plus-circle','Create Post'],
+        ['/admin/categories','bi-grid','Categories'],
+        ['/admin/themes','bi-palette','Theme Manager'],
+        ['/admin/seo','bi-rocket','Blog Booster / SEO'],
+        ['/admin/database','bi-database','Database Manager'],
+        ['/','bi-globe','View Live Site'],
+      ].forEach(([href,icon,label]) => { %>
+      <a href="<%= href %>" <%= href==='/'?'target="_blank"':'' %>
+        style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--dp-bg);border:1px solid var(--dp-border);border-radius:10px;text-decoration:none;color:var(--dp-text-b);font-size:.8rem;font-weight:600;transition:all .2s;">
+        <i class="bi <%= icon %>" style="color:var(--dp-primary);font-size:1rem;"></i> <%= label %>
+        <i class="bi bi-chevron-right" style="margin-left:auto;opacity:.4;font-size:.7rem;"></i>
+      </a>
+      <% }) %>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+        <span class="dp-dev-pill"><i class="bi bi-circle-fill" style="font-size:.5rem;color:#10b981;"></i> Node.js Online</span>
+        <span class="dp-dev-pill" style="background:#1e3a5f;color:#60a5fa;"><i class="bi bi-database-check" style="font-size:.75rem;"></i> DB Connected</span>
       </div>
     </div>
+  </div>
+</div>
 
-    <div class="grid grid-2">
-      <!-- RECENT POSTS -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><i class="bi bi-file-text"></i> Recent Posts</div>
-          <a href="/admin/posts" class="btn btn-sm btn-outline">View All</a>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Title</th><th>Category</th><th>Status</th></tr></thead>
-            <tbody>
-              <% recentPosts.forEach(post => { %>
-              <tr>
-                <td>
-                  <a href="/admin/posts/<%= post.id %>/edit" style="font-weight:600;color:var(--primary);font-size:0.8rem">
-                    <%= post.title.substring(0,45) %><%= post.title.length>45?'...':'' %>
-                  </a>
-                </td>
-                <td><% if(post.category){ %><span class="badge badge-primary"><%= post.category.name %></span><% } %></td>
-                <td><span class="badge badge-<%= post.status==='published'?'success':post.status==='draft'?'secondary':'warning' %>"><%= post.status %></span></td>
-              </tr>
-              <% }) %>
-              <% if(!recentPosts.length){ %><tr><td colspan="3" class="text-center text-muted">No posts yet</td></tr><% } %>
-            </tbody>
-          </table>
-        </div>
-      </div>
+<!-- ════════════════════════════════
+     USER (Basic Staff)
+════════════════════════════════ -->
+<% }else{ %>
 
-      <!-- TOP POSTS -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title"><i class="bi bi-fire"></i> Top Posts by Views</div>
-        </div>
-        <div class="card-body" style="padding:0">
-          <% topPosts.forEach((post, i) => { %>
-          <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border)">
-            <div style="width:28px;height:28px;border-radius:50%;background:var(--accent-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0"><%= i+1 %></div>
-            <div style="flex:1;overflow:hidden">
-              <div style="font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= post.title %></div>
-              <div style="font-size:0.7rem;color:var(--text3)"><i class="bi bi-eye"></i> <%= post.views.toLocaleString() %> views</div>
-            </div>
+<div style="background:linear-gradient(135deg,var(--dp-primary-d),var(--dp-primary));border-radius:16px;padding:24px 28px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 8px 28px rgba(0,0,0,.15);" class="a2">
+  <div>
+    <div style="font-size:1.25rem;font-weight:800;color:#fff;margin-bottom:4px;">Hey <%= userName %>! 👋</div>
+    <div style="font-size:.82rem;color:rgba(255,255,255,.75);"><%= new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'}) %> — Have a great day!</div>
+  </div>
+  <div style="font-size:52px;opacity:.18;">💼</div>
+</div>
+
+<div class="dp-sg">
+  <div class="dp-sc c-theme a2">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-calendar-check"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> This Month</span>
+    </div>
+    <div class="dp-sc-lbl">Present Days</div>
+    <div class="dp-sc-val"><%= myAttendanceSummary ? myAttendanceSummary.present : 0 %></div>
+    <div class="dp-sc-sub">Days attended</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="<%= myAttendanceSummary ? Math.min(100,myAttendanceSummary.present*4) : 0 %>"></div></div>
+  </div>
+  <div class="dp-sc c-rose a3">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-calendar-x"></i></div>
+      <span class="dp-sc-trend t-dn"><i class="bi bi-arrow-down"></i> Absent</span>
+    </div>
+    <div class="dp-sc-lbl">Absent Days</div>
+    <div class="dp-sc-val"><%= myAttendanceSummary ? myAttendanceSummary.absent : 0 %></div>
+    <div class="dp-sc-sub">Days missed</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="<%= myAttendanceSummary ? Math.min(100,myAttendanceSummary.absent*10) : 0 %>"></div></div>
+  </div>
+  <div class="dp-sc c-amber a4">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-cash-stack"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Advance</span>
+    </div>
+    <div class="dp-sc-lbl">Advance Taken</div>
+    <div class="dp-sc-val">₹<%= myAttendanceSummary ? Number(myAttendanceSummary.advance||0).toLocaleString('en-IN') : 0 %></div>
+    <div class="dp-sc-sub">This month</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="40"></div></div>
+  </div>
+  <div class="dp-sc c-green a5">
+    <div class="dp-sc-top">
+      <div class="dp-sc-ico"><i class="bi bi-wallet2"></i></div>
+      <span class="dp-sc-trend t-up"><i class="bi bi-arrow-up"></i> Salary</span>
+    </div>
+    <div class="dp-sc-lbl">My Salary</div>
+    <div class="dp-sc-val">₹<%= mySalary ? Number(mySalary).toLocaleString('en-IN') : '—' %></div>
+    <div class="dp-sc-sub"><%= mySalaryType || 'monthly' %> rate</div>
+    <div class="dp-sc-bar"><div class="dp-sc-fill" data-w="100"></div></div>
+  </div>
+</div>
+
+<div class="dp-g66 a4">
+  <div class="dp-card">
+    <div class="dp-card-hd"><h5><i class="bi bi-calendar3"></i> My Attendance — This Month</h5></div>
+    <div class="dp-card-bd">
+      <% if(myAttendanceRecords && myAttendanceRecords.length){ %>
+        <% const statusColors={'P':'var(--green)','A':'var(--rose)','P+H':'var(--amber)','OT':'var(--blue)','PA':'var(--purple)','P+P':'var(--teal)'}; %>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <% myAttendanceRecords.forEach(r => { const col=statusColors[r.status]||'var(--dp-text-m)'; %>
+          <div title="<%= r.attendance_date %> — <%= r.status %>"
+            style="width:36px;height:36px;border-radius:8px;background:<%= col %>22;border:1.5px solid <%= col %>;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:<%= col %>;">
+            <%= new Date(r.attendance_date).getDate() %>
           </div>
           <% }) %>
         </div>
-      </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;">
+          <% [['var(--green)','Present'],['var(--rose)','Absent'],['var(--amber)','Half'],['var(--blue)','OT']].forEach(([c,l]) => { %>
+          <div style="display:flex;align-items:center;gap:5px;font-size:.71rem;color:var(--dp-text-m);">
+            <span style="width:10px;height:10px;border-radius:3px;background:<%= c %>;flex-shrink:0;"></span><%= l %>
+          </div>
+          <% }) %>
+        </div>
+      <% }else{ %>
+        <div class="dp-empty"><i class="bi bi-calendar2-x"></i><p>No attendance records this month</p></div>
+      <% } %>
     </div>
-  </main>
+  </div>
+  <div class="dp-card">
+    <div class="dp-card-hd"><h5><i class="bi bi-person-badge"></i> My Info</h5></div>
+    <div class="dp-card-bd" style="display:flex;flex-direction:column;gap:12px;">
+      <% [
+        ['bi-person','Name', userName],
+        ['bi-envelope','Email', authUser ? authUser.email : '—'],
+        ['bi-briefcase','Role', roleLabel],
+        ['bi-cash','Salary', (mySalary ? '₹'+Number(mySalary).toLocaleString('en-IN') : '—') + ' / ' + (mySalaryType||'monthly')],
+      ].forEach(([icon, label, val]) => { %>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--dp-bg);border-radius:10px;">
+        <i class="bi <%= icon %>" style="color:var(--dp-primary);font-size:1rem;width:20px;text-align:center;"></i>
+        <div>
+          <div style="font-size:.68rem;color:var(--dp-text-m);text-transform:uppercase;letter-spacing:.06em;font-weight:700;"><%= label %></div>
+          <div style="font-size:.84rem;font-weight:600;color:var(--dp-text-h);"><%= val %></div>
+        </div>
+      </div>
+      <% }) %>
+      <a href="/admin/profile" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:var(--dp-primary);color:#fff;border-radius:10px;text-decoration:none;font-size:.82rem;font-weight:700;">
+        <i class="bi bi-pencil-square"></i> Edit Profile
+      </a>
+    </div>
+  </div>
 </div>
 
+<% } %>
+
+</div><!-- /dp -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-  // Sidebar toggle
-  let collapsed = localStorage.getItem('sidebarCollapsed')==='true';
-  function applyCollapsed(){ document.getElementById('sidebar').classList.toggle('collapsed',collapsed); document.getElementById('mainContent').classList.toggle('expanded',collapsed); }
-  applyCollapsed();
-  function toggleSidebar(){ collapsed=!collapsed; localStorage.setItem('sidebarCollapsed',collapsed); applyCollapsed(); }
+document.addEventListener('DOMContentLoaded', function () {
 
-  // Finance Chart
-  const monthlyData = <%- JSON.stringify(monthlyData) %>;
+  // ── Animate progress bars
+  setTimeout(function () {
+    document.querySelectorAll('.dp-sc-fill[data-w]').forEach(function (el) {
+      el.style.width = (el.dataset.w || 0) + '%';
+    });
+  }, 400);
+
+  // ── Get theme primary color from CSS variable
+  const themeColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--primary').trim() || '#1a7a4a';
+  const themeSecondary = getComputedStyle(document.documentElement)
+    .getPropertyValue('--secondary').trim() || '#e8a020';
+
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const incomeByMonth = Array(12).fill(0);
+
+  const monthlyData = <%- JSON.stringify(monthlyData || []) %>;
+
+  const incomeByMonth  = Array(12).fill(0);
   const expenseByMonth = Array(12).fill(0);
-  monthlyData.forEach(d => {
-    const idx = parseInt(d.month)-1;
-    if(d.type==='income') incomeByMonth[idx] = parseFloat(d.total)||0;
-    if(d.type==='expense') expenseByMonth[idx] = parseFloat(d.total)||0;
-  });
-  new Chart(document.getElementById('financeChart'), {
-    type:'bar',
-    data:{
-      labels: months,
-      datasets:[
-        { label:'Income', data:incomeByMonth, backgroundColor:'rgba(26,122,74,0.8)', borderRadius:6 },
-        { label:'Expense', data:expenseByMonth, backgroundColor:'rgba(220,38,38,0.7)', borderRadius:6 }
-      ]
-    },
-    options:{ responsive:true, plugins:{ legend:{ position:'top' } }, scales:{ y:{ beginAtZero:true, ticks:{ callback: v=>'₹'+Math.round(v/1000)+'K' } } } }
+  monthlyData.forEach(function(d) {
+    const idx = parseInt(d.month) - 1;
+    if (d.type === 'income')  incomeByMonth[idx]  = parseFloat(d.total) || 0;
+    if (d.type === 'expense') expenseByMonth[idx] = parseFloat(d.total) || 0;
   });
 
-  // Auto-hide alerts
-  setTimeout(()=>{ document.querySelectorAll('.alert').forEach(a=>{ a.style.opacity='0'; setTimeout(()=>a.remove(),500); }); },4000);
+  const chartDefaults = {
+    responsive: true,
+    plugins: { legend: { position: 'top', labels: { boxWidth: 10, padding: 14, font: { size: 11 } } } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: '#f0f2f8' }, ticks: { callback: v => '₹' + Math.round(v/1000) + 'K' } }
+    }
+  };
 
-  function openModal(id){ document.getElementById(id).classList.add('show'); }
-  function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+  <% if(isSuperAdmin){ %>
+  // Finance Chart
+  const finCtx = document.getElementById('financeChart');
+  if (finCtx) {
+    new Chart(finCtx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          { label: 'Income',  data: incomeByMonth,  backgroundColor: themeColor + '99', borderColor: themeColor, borderWidth: 2, borderRadius: 7 },
+          { label: 'Expense', data: expenseByMonth, backgroundColor: '#e0313199',       borderColor: '#e03131',  borderWidth: 2, borderRadius: 7 }
+        ]
+      },
+      options: chartDefaults
+    });
+  }
+
+  // Role Donut
+  const roleCtx = document.getElementById('roleChart');
+  const roleLabels = <%- JSON.stringify((safeRoleDistribution||[]).map(r=>r.name)) %>;
+  const roleData   = <%- JSON.stringify((safeRoleDistribution||[]).map(r=>r.total)) %>;
+  if (roleCtx) {
+    new Chart(roleCtx, {
+      type: 'doughnut',
+      data: {
+        labels: roleLabels.length ? roleLabels : ['Super Admin','Admin','Developer','User'],
+        datasets: [{ data: roleData.length ? roleData : [1,1,1,3], backgroundColor: [themeColor,'#0ca678','#7048e8','#f59f00'], borderWidth: 0, hoverOffset: 8 }]
+      },
+      options: { cutout: '68%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 14, font: { size: 11 } } } } }
+    });
+  }
+  <% } %>
+
+  <% if(isAdmin){ %>
+  const adminFinCtx = document.getElementById('adminFinChart');
+  if (adminFinCtx) {
+    new Chart(adminFinCtx, {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [
+          { label: 'Income',  data: incomeByMonth,  borderColor: themeColor, backgroundColor: themeColor+'22', borderWidth: 2.5, tension: 0.4, fill: true, pointBackgroundColor: themeColor, pointRadius: 4 },
+          { label: 'Expense', data: expenseByMonth, borderColor: '#e03131',  backgroundColor: '#e0313122', borderWidth: 2.5, tension: 0.4, fill: true, pointBackgroundColor: '#e03131', pointRadius: 4 }
+        ]
+      },
+      options: chartDefaults
+    });
+  }
+  <% } %>
+
+});
 </script>
-</body>
-</html>
+<%- include('../partials/scripts') %>
+</body></html>

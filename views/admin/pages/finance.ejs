@@ -13,12 +13,27 @@
 <%- include('../partials/flash') %>
 
 <div class="page-header">
-  <div><div class="page-title">Finance Management</div><div class="page-subtitle">Track income, expenses, and bank accounts</div></div>
+  <div>
+    <div class="page-title">Finance Management</div>
+    <div class="page-subtitle">
+      <% if(typeof canSeeAll !== 'undefined' && canSeeAll){ %>
+        Track income, expenses, and bank accounts — viewing <strong>all users</strong>
+      <% } else { %>
+        Track your own income, expenses, and bank accounts
+      <% } %>
+    </div>
+  </div>
   <div class="d-flex gap-2">
     <button class="btn btn-primary" onclick="openModal('txnModal')"><i class="bi bi-plus-lg"></i> Add Transaction</button>
     <button class="btn btn-secondary" onclick="openModal('accountModal')"><i class="bi bi-bank"></i> Add Account</button>
   </div>
 </div>
+
+<% if(typeof canSeeAll !== 'undefined' && !canSeeAll){ %>
+<div class="alert alert-info" style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text3)">
+  <i class="bi bi-shield-lock"></i> You're viewing only <strong>your own</strong> transactions and bank accounts.
+</div>
+<% } %>
 
 <!-- STAT CARDS -->
 <div class="grid grid-4 mb-4">
@@ -33,15 +48,29 @@
   <% accounts.forEach(acc => { %>
   <div class="card" style="border-left:4px solid <%= acc.color %>">
     <div class="card-body" style="padding:1.1rem">
-      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
-        <div style="width:40px;height:40px;border-radius:10px;background:<%= acc.color %>22;color:<%= acc.color %>;display:flex;align-items:center;justify-content:center;font-size:1.2rem"><i class="bi <%= acc.icon %>"></i></div>
-        <div><div style="font-weight:700;font-size:0.85rem"><%= acc.bank_name %></div><div style="font-size:0.7rem;color:var(--text3)"><%= acc.account_type %><% if(acc.account_number){ %> • ****<%= acc.account_number.slice(-4) %><% } %></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.75rem">
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <div style="width:40px;height:40px;border-radius:10px;background:<%= acc.color %>22;color:<%= acc.color %>;display:flex;align-items:center;justify-content:center;font-size:1.2rem"><i class="bi <%= acc.icon %>"></i></div>
+          <div><div style="font-weight:700;font-size:0.85rem"><%= acc.bank_name %></div><div style="font-size:0.7rem;color:var(--text3)"><%= acc.account_type %><% if(acc.account_number){ %> • ****<%= acc.account_number.slice(-4) %><% } %></div></div>
+        </div>
+        <form method="POST" action="/admin/finance/account/<%= acc.id %>?_method=DELETE" onsubmit="return confirm('Delete this account? Only possible if it has no transactions.')">
+          <button class="btn btn-xs btn-danger" title="Delete account"><i class="bi bi-trash"></i></button>
+        </form>
       </div>
       <div style="font-size:1.4rem;font-weight:800;color:<%= acc.color %>">₹<%= parseFloat(acc.current_balance).toLocaleString('en-IN') %></div>
       <div style="font-size:0.7rem;color:var(--text3)">Current Balance</div>
     </div>
   </div>
   <% }) %>
+  <% if(!accounts.length){ %>
+  <div class="card">
+    <div class="card-body" style="padding:1.5rem;text-align:center;color:var(--text3)">
+      <i class="bi bi-bank" style="font-size:1.5rem;display:block;margin-bottom:0.5rem"></i>
+      <div style="font-size:0.85rem">No bank accounts yet</div>
+      <button class="btn btn-primary btn-sm mt-2" onclick="openModal('accountModal')">Add Your First Account</button>
+    </div>
+  </div>
+  <% } %>
 </div>
 
 <div class="grid grid-2">
@@ -78,7 +107,9 @@
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Date</th><th>Description</th><th>Account</th><th>Category</th><th>Method</th><th>Amount</th><th></th></tr></thead>
+      <thead><tr><th>Date</th><th>Description</th><th>Account</th><th>Category</th><th>Method</th>
+        <% if(typeof canSeeAll !== 'undefined' && canSeeAll){ %><th>Owner</th><% } %>
+        <th>Amount</th><th></th></tr></thead>
       <tbody>
         <% transactions.forEach(txn => { %>
         <tr>
@@ -87,6 +118,9 @@
           <td><% if(txn.account){ %><span style="font-size:0.75rem;font-weight:600"><i class="bi <%= txn.account.icon||'bi-bank' %>"></i> <%= txn.account.bank_name %></span><% } %></td>
           <td><% if(txn.category){ %><span class="badge badge-secondary"><%= txn.category.name %></span><% } %></td>
           <td><span class="badge badge-info" style="font-size:0.65rem"><%= txn.payment_method %></span></td>
+          <% if(typeof canSeeAll !== 'undefined' && canSeeAll){ %>
+          <td style="font-size:0.72rem;color:var(--text3)"><%= txn.user_id %></td>
+          <% } %>
           <td style="font-weight:700;font-size:0.9rem;color:<%= txn.type==='income'?'#16a34a':'#dc2626' %>">
             <%= txn.type==='income'?'+':'-' %>₹<%= parseFloat(txn.amount).toLocaleString('en-IN') %>
           </td>
@@ -97,7 +131,7 @@
           </td>
         </tr>
         <% }) %>
-        <% if(!transactions.length){ %><tr><td colspan="7"><div class="empty-state"><i class="bi bi-wallet2"></i><h3>No transactions</h3></div></td></tr><% } %>
+        <% if(!transactions.length){ %><tr><td colspan="<%= (typeof canSeeAll !== 'undefined' && canSeeAll) ? 8 : 7 %>"><div class="empty-state"><i class="bi bi-wallet2"></i><h3>No transactions</h3></div></td></tr><% } %>
       </tbody>
     </table>
   </div>
@@ -125,6 +159,9 @@
           <div class="form-group">
             <label>From Account *</label>
             <select name="bank_account_id" class="form-control" required>
+              <% if(!accounts.length){ %>
+              <option value="" disabled selected>— Add a bank account first —</option>
+              <% } %>
               <% accounts.forEach(a=>{ %><option value="<%= a.id %>"><%= a.bank_name %></option><% }) %>
             </select>
           </div>

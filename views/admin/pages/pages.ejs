@@ -1,98 +1,1169 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title><%= title %> – Dreams Admin</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<%- include('../partials/head') %>
-</head><body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> – Dreams Admin</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/super-build/ckeditor.js"></script>
+  <%- include('../partials/head') %>
+  <style>
+    /* ── PAGE BUILDER STYLES — all use theme CSS vars ── */
+
+    /* Builder layout */
+    .builder-shell {
+      display: flex;
+      height: calc(100vh - 68px);
+      overflow: hidden;
+      background: var(--bg2);
+    }
+
+    /* Left: blocks panel */
+    .blocks-panel {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .blocks-panel-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: var(--bg2);
+      flex-shrink: 0;
+    }
+    .blocks-search {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .blocks-search input {
+      width: 100%;
+      padding: 0.45rem 0.75rem 0.45rem 2rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg2);
+      color: var(--text1);
+    }
+    .blocks-search input:focus { outline: none; border-color: var(--accent); }
+
+    .blocks-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .blocks-tab {
+      flex: 1;
+      padding: 0.55rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text3);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      font-family: 'Poppins', sans-serif;
+    }
+    .blocks-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--bg2); }
+
+    .blocks-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      align-content: start;
+    }
+    .block-item {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+      cursor: grab;
+      transition: all 0.2s;
+      background: var(--bg);
+      user-select: none;
+      color: var(--text2);
+    }
+    .block-item:hover {
+      border-color: var(--accent);
+      background: var(--bg2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .block-item:active { cursor: grabbing; }
+    .block-item i {
+      display: block;
+      font-size: 1.3rem;
+      color: var(--accent);
+      margin-bottom: 0.3rem;
+    }
+    .block-item span {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text2);
+      display: block;
+      line-height: 1.2;
+    }
+
+    /* Center: canvas */
+    .builder-canvas-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .builder-toolbar {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .builder-toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding-right: 0.75rem;
+      border-right: 1px solid var(--border);
+    }
+    .builder-toolbar-group:last-child { border-right: none; }
+    .tb-btn {
+      width: 32px;
+      height: 32px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      background: var(--bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      color: var(--text2);
+      transition: all 0.18s;
+      font-family: 'Poppins', sans-serif;
+    }
+    .tb-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--bg2); }
+    .tb-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tb-select {
+      height: 32px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      padding: 0 0.6rem;
+      font-size: 0.75rem;
+      font-family: 'Poppins', sans-serif;
+      color: var(--text2);
+      background: var(--bg);
+      cursor: pointer;
+    }
+    .preview-size-btns { display: flex; gap: 0.3rem; margin-left: auto; }
+
+    .canvas-viewport {
+      flex: 1;
+      overflow: auto;
+      padding: 1.5rem;
+      background: var(--bg3);
+    }
+    .canvas-frame {
+      background: var(--bg);
+      border-radius: 8px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      min-height: 600px;
+      margin: 0 auto;
+      transition: max-width 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .canvas-frame.desktop { max-width: 100%; }
+    .canvas-frame.tablet { max-width: 768px; }
+    .canvas-frame.mobile { max-width: 375px; }
+
+    .canvas-drop-zone {
+      min-height: 80px;
+      border: 2px dashed transparent;
+      border-radius: 6px;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .canvas-drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--bg2);
+    }
+    .canvas-empty-msg {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      color: var(--text3);
+      text-align: center;
+      padding: 2rem;
+    }
+    .canvas-empty-msg i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.3; }
+    .canvas-empty-msg h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--text2); }
+    .canvas-empty-msg p { font-size: 0.8rem; }
+
+    /* Canvas sections */
+    .canvas-section {
+      position: relative;
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+      cursor: default;
+    }
+    .canvas-section:hover { border-color: rgba(var(--accent-rgb, 26,122,74),0.3); }
+    .canvas-section.selected { border-color: var(--accent) !important; }
+    .section-controls {
+      position: absolute;
+      top: -1px;
+      right: -1px;
+      display: none;
+      gap: 2px;
+      background: var(--accent);
+      border-radius: 0 0 0 6px;
+      padding: 3px 4px;
+      z-index: 10;
+    }
+    .canvas-section:hover .section-controls,
+    .canvas-section.selected .section-controls { display: flex; }
+    .sc-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 4px;
+      background: #ecdbff;
+      color: #ff0b0b;
+      cursor: pointer;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .sc-btn:hover { background: rgba(255,255,255,0.2); }
+
+    /* Right: properties panel */
+    .props-panel {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .props-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: var(--bg2);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .props-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    .prop-group { margin-bottom: 1.25rem; }
+    .prop-group-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text3);
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .prop-group-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .prop-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .prop-label { font-size: 0.72rem; font-weight: 600; color: var(--text2); width: 80px; flex-shrink: 0; }
+    .prop-input {
+      flex: 1;
+      padding: 0.35rem 0.6rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-family: 'Poppins', sans-serif;
+      color: var(--text1);
+      background: var(--bg);
+    }
+    .prop-input:focus { outline: none; border-color: var(--accent); }
+    .prop-color { width: 36px; height: 30px; padding: 2px; border-radius: 6px; border: 1.5px solid var(--border); cursor: pointer; }
+    .prop-range { flex: 1; accent-color: var(--accent); }
+    .prop-range-val { font-size: 0.72rem; font-weight: 600; color: var(--accent); width: 36px; text-align: right; }
+
+    /* Page meta footer */
+    .page-meta-footer {
+      border-top: 1px solid var(--border);
+      padding: 1rem;
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+    .page-meta-footer .pm-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text3);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    .page-meta-footer input,
+    .page-meta-footer select,
+    .page-meta-footer textarea {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-family: 'Poppins', sans-serif;
+      color: var(--text1);
+      background: var(--bg);
+      margin-bottom: 0.6rem;
+    }
+    .page-meta-footer input:focus,
+    .page-meta-footer select:focus,
+    .page-meta-footer textarea:focus { outline: none; border-color: var(--accent); }
+
+    /* Publish bar */
+    .builder-publish-bar {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 0.5rem;
+    }
+    .publish-status {
+      font-size: 0.72rem;
+      color: var(--text3);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .publish-status .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #16a34a;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+    /* Pages list */
+    .pages-list-wrap { padding: 1.5rem; }
+    .page-thumb {
+      width: 48px;
+      height: 36px;
+      border-radius: 6px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    /* Builder modal (full screen) */
+    .builder-modal {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+    }
+    .builder-modal.show { display: flex; }
+    .builder-topbar {
+      height: 56px;
+      background: var(--sidebar-bg, #1a2332);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+    .builder-topbar-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    /* CKEditor modal */
+    .ck-editor-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .ck-editor-modal.show { display: flex; }
+    .ck-editor-box {
+      background: var(--bg);
+      border-radius: 12px;
+      width: 92vw;
+      max-width: 960px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .ck-editor-box-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      background: var(--bg2);
+    }
+    .ck-editor-box-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--text1); }
+    .ck-editor-box-body { flex: 1; overflow: auto; padding: 1rem; }
+    .ck-editor-box-footer {
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      flex-shrink: 0;
+      background: var(--bg2);
+    }
+
+    /* HTML view modal — intentionally dark (code editor) */
+    .html-view-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 3500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .html-view-modal.show { display: flex; }
+    .html-view-box {
+      background: #1a2332;
+      color: #a8ff78;
+      border-radius: 12px;
+      width: 88vw;
+      max-width: 900px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+    }
+    .html-view-box-header {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-family: 'Poppins', sans-serif;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    #htmlViewTextarea {
+      flex: 1;
+      background: transparent;
+      color: #a8ff78;
+      border: none;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      resize: none;
+      outline: none;
+      min-height: 400px;
+    }
+    .html-view-footer {
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      flex-shrink: 0;
+      background: rgba(0,0,0,0.2);
+    }
+
+    /* Tooltip */
+    [data-tip] { position: relative; }
+    [data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text1);
+      color: var(--bg);
+      font-size: 0.65rem;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 5px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    @media (max-width: 768px) {
+      .builder-shell { flex-direction: column; height: auto; }
+      .blocks-panel, .props-panel { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
 <%- include('../partials/sidebar', { currentRoute: '/admin/pages' }) %>
 <div class="main-content" id="mainContent">
 <%- include('../partials/topbar') %>
-<main class="page-content">
+<main class="page-content" style="padding:0">
 <%- include('../partials/flash') %>
-<div class="page-header">
-  <div><div class="page-title">Static Pages</div></div>
-  <button class="btn btn-primary" onclick="openModal('addPageModal')"><i class="bi bi-plus-lg"></i> Add Page</button>
-</div>
-<div class="card">
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Title</th><th>Slug</th><th>Template</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody>
-        <% pages.forEach(p=>{ %>
-        <tr>
-          <td style="font-weight:600"><%= p.title %></td>
-          <td><code style="font-size:0.72rem;background:#f0f4f8;padding:2px 6px;border-radius:4px">/<%= p.slug %></code></td>
-          <td><span class="badge badge-secondary"><%= p.template %></span></td>
-          <td><span class="badge badge-<%= p.is_active?'success':'secondary' %>"><%= p.is_active?'Active':'Hidden' %></span></td>
-          <td>
-            <div style="display:flex;gap:0.3rem">
-              <a href="/page/<%= p.slug %>" target="_blank" class="btn btn-xs btn-secondary"><i class="bi bi-eye"></i></a>
-              <button class="btn btn-xs btn-outline" onclick='openEditPage(<%- JSON.stringify({id:p.id,title:p.title,content:p.content||"",meta_title:p.meta_title||"",meta_desc:p.meta_desc||"",is_active:p.is_active,template:p.template}) %>')><i class="bi bi-pencil"></i></button>
-              <form method="POST" action="/admin/pages/<%= p.id %>?_method=DELETE" onsubmit="return confirm('Delete page?')">
-                <button class="btn btn-xs btn-danger"><i class="bi bi-trash"></i></button>
-              </form>
-            </div>
-          </td>
-        </tr>
-        <% }) %>
-      </tbody>
-    </table>
+
+<!-- ══ PAGES LIST ══ -->
+<div class="pages-list-wrap">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Static Pages</div>
+      <div class="page-subtitle">Build beautiful pages with the visual editor</div>
+    </div>
+    <button class="btn btn-primary" onclick="openBuilderNew()">
+      <i class="bi bi-plus-lg"></i> Create Page
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-4 mb-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--bg2);color:var(--accent)"><i class="bi bi-file-earmark"></i></div>
+      <div class="stat-info">
+        <div class="stat-val" style="color:var(--accent)"><%= pages.length %></div>
+        <div class="stat-lbl">Total Pages</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon bg-success-soft"><i class="bi bi-check-circle"></i></div>
+      <div class="stat-info">
+        <div class="stat-val text-success"><%= pages.filter(p=>p.is_active).length %></div>
+        <div class="stat-lbl">Published</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon bg-warning-soft"><i class="bi bi-eye-slash"></i></div>
+      <div class="stat-info">
+        <div class="stat-val text-warning"><%= pages.filter(p=>!p.is_active).length %></div>
+        <div class="stat-lbl">Hidden</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon bg-info-soft"><i class="bi bi-layout-text-window"></i></div>
+      <div class="stat-info">
+        <div class="stat-val text-info"><%= [...new Set(pages.map(p=>p.template))].length %></div>
+        <div class="stat-lbl">Templates</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pages Table -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="bi bi-file-earmark"></i> All Pages</div>
+      <div style="display:flex;gap:0.5rem;align-items:center;">
+        <div style="position:relative;">
+          <i class="bi bi-search" style="position:absolute;left:0.6rem;top:50%;transform:translateY(-50%);color:var(--text3);font-size:0.8rem;"></i>
+          <input type="text" placeholder="Search pages..." oninput="filterPages(this.value)"
+            class="form-control" style="padding-left:2rem;height:34px;width:200px;font-size:0.8rem">
+        </div>
+        <select onchange="filterByTemplate(this.value)" class="form-control" style="height:34px;font-size:0.8rem;width:auto">
+          <option value="">All Templates</option>
+          <option value="default">Default</option>
+          <option value="contact">Contact</option>
+          <option value="legal">Legal</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="pagesTable">
+        <thead>
+          <tr>
+            <th style="width:48px"></th>
+            <th>Title</th>
+            <th>Slug / URL</th>
+            <th>Template</th>
+            <th>Status</th>
+            <th>Last Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if(pages && pages.length) { %>
+            <% pages.forEach(page => { %>
+            <tr data-template="<%= page.template||'default' %>">
+              <td><div class="page-thumb"><i class="bi bi-file-earmark"></i></div></td>
+              <td style="font-weight:600;font-size:0.85rem"><%= page.title %></td>
+              <td><code style="font-size:0.72rem;background:var(--bg2);color:var(--accent);padding:2px 8px;border-radius:4px;">/<%= page.slug %></code></td>
+              <td><span class="badge badge-secondary"><%= page.template||'default' %></span></td>
+              <td><span class="badge badge-<%= page.is_active?'success':'secondary' %>"><%= page.is_active?'Active':'Hidden' %></span></td>
+              <td style="color:var(--text3);font-size:0.75rem"><%= page.updatedAt ? new Date(page.updatedAt).toLocaleDateString('en-IN') : '-' %></td>
+              <td>
+                <div style="display:flex;gap:0.3rem;align-items:center;">
+                  <a href="/<%= page.slug %>" target="_blank" class="btn btn-xs btn-secondary" data-tip="Preview"><i class="bi bi-eye"></i></a>
+                  <button class="btn btn-xs btn-outline" onclick='openBuilderEdit(<%- JSON.stringify({id:page.id,title:page.title,slug:page.slug,content:page.content||"",meta_title:page.meta_title||"",meta_desc:page.meta_desc||"",is_active:page.is_active,template:page.template||"default"}) %>)' data-tip="Edit in Builder"><i class="bi bi-pencil-square"></i></button>
+                  <button class="btn btn-xs btn-secondary" onclick="duplicatePage(<%= page.id %>)" data-tip="Duplicate"><i class="bi bi-copy"></i></button>
+                  <form method="POST" action="/admin/pages/<%= page.id %>?_method=DELETE" style="display:inline" onsubmit="return confirm('Delete this page?')">
+                    <button class="btn btn-xs btn-danger" data-tip="Delete"><i class="bi bi-trash"></i></button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="7"><div class="empty-state"><i class="bi bi-file-earmark"></i><h3>No pages yet</h3><p>Create your first page</p><button class="btn btn-primary mt-2" onclick="openBuilderNew()">Create Page</button></div></td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<!-- ADD PAGE MODAL -->
-<div class="modal-overlay" id="addPageModal">
-  <div class="modal" style="max-width:700px"><div class="modal-header"><div class="modal-title">Add Page</div><button class="modal-close" onclick="closeModal('addPageModal')"><i class="bi bi-x"></i></button></div>
-  <div class="modal-body">
-    <form method="POST" action="/admin/pages">
-      <div class="grid grid-2">
-        <div class="form-group"><label>Title *</label><input type="text" name="title" class="form-control" required></div>
-        <div class="form-group"><label>Slug (auto)</label><input type="text" name="slug" class="form-control" placeholder="leave-blank-for-auto"></div>
-        <div class="form-group"><label>Template</label>
-          <select name="template" class="form-control"><option value="default">Default</option><option value="contact">Contact</option><option value="legal">Legal</option></select>
+</main>
+</div><!-- /main-content -->
+
+
+<!-- ══════════════════════════════════════════
+     FULL-SCREEN PAGE BUILDER MODAL
+══════════════════════════════════════════ -->
+<div class="builder-modal" id="builderModal">
+
+  <div class="builder-topbar">
+    <button class="btn btn-secondary btn-sm" onclick="closeBuilder()">
+      <i class="bi bi-arrow-left"></i> Back
+    </button>
+    <div class="builder-topbar-title">
+      <i class="bi bi-layout-text-window-reverse" style="color:var(--accent);margin-right:0.4rem;"></i>
+      <span id="builderPageTitle">Page Builder</span>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center;">
+      <span id="autoSaveStatus" style="font-size:0.7rem;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:0.3rem;">
+        <span class="publish-status"><span class="dot"></span></span> Auto-saved
+      </span>
+      <button class="btn btn-secondary btn-sm" onclick="toggleHTMLView()"><i class="bi bi-code-slash"></i> HTML</button>
+      <button class="btn btn-secondary btn-sm" onclick="previewPage()"><i class="bi bi-eye"></i> Preview</button>
+      <button class="btn btn-primary btn-sm" onclick="saveBuilderPage()"><i class="bi bi-cloud-upload"></i> Publish</button>
+    </div>
+  </div>
+
+  <div class="builder-shell">
+
+    <!-- LEFT: BLOCKS -->
+    <div class="blocks-panel">
+      <div class="blocks-panel-header">
+        <i class="bi bi-puzzle" style="color:var(--accent);margin-right:0.4rem;"></i> Content Blocks
+      </div>
+      <div class="blocks-search">
+        <input type="text" placeholder="Search blocks..." oninput="filterBlocks(this.value)" id="blockSearch">
+      </div>
+      <div class="blocks-tabs">
+        <button class="blocks-tab active" onclick="switchBlocksTab(this,'layout')">Layout</button>
+        <button class="blocks-tab" onclick="switchBlocksTab(this,'content')">Content</button>
+        <button class="blocks-tab" onclick="switchBlocksTab(this,'media')">Media</button>
+        <button class="blocks-tab" onclick="switchBlocksTab(this,'advanced')">Pro</button>
+      </div>
+      <div class="blocks-list" id="blocksList">
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'hero')" onclick="insertBlock('hero')" data-cat="layout"><i class="bi bi-layout-text-window"></i><span>Hero</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'2col')" onclick="insertBlock('2col')" data-cat="layout"><i class="bi bi-layout-split"></i><span>2 Columns</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'3col')" onclick="insertBlock('3col')" data-cat="layout"><i class="bi bi-layout-three-columns"></i><span>3 Columns</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'section')" onclick="insertBlock('section')" data-cat="layout"><i class="bi bi-bounding-box"></i><span>Section</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'container')" onclick="insertBlock('container')" data-cat="layout"><i class="bi bi-square"></i><span>Container</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'divider')" onclick="insertBlock('divider')" data-cat="layout"><i class="bi bi-dash-lg"></i><span>Divider</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'heading')" onclick="insertBlock('heading')" data-cat="content"><i class="bi bi-type-h1"></i><span>Heading</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'paragraph')" onclick="insertBlock('paragraph')" data-cat="content"><i class="bi bi-textarea-t"></i><span>Paragraph</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'button')" onclick="insertBlock('button')" data-cat="content"><i class="bi bi-cursor-text"></i><span>Button</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'list')" onclick="insertBlock('list')" data-cat="content"><i class="bi bi-list-ul"></i><span>List</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'quote')" onclick="insertBlock('quote')" data-cat="content"><i class="bi bi-quote"></i><span>Quote</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'table')" onclick="insertBlock('table')" data-cat="content"><i class="bi bi-table"></i><span>Table</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'image')" onclick="insertBlock('image')" data-cat="media"><i class="bi bi-image"></i><span>Image</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'video')" onclick="insertBlock('video')" data-cat="media"><i class="bi bi-play-circle"></i><span>Video</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'gallery')" onclick="insertBlock('gallery')" data-cat="media"><i class="bi bi-images"></i><span>Gallery</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'map')" onclick="insertBlock('map')" data-cat="media"><i class="bi bi-geo-alt"></i><span>Map</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'features')" onclick="insertBlock('features')" data-cat="advanced"><i class="bi bi-grid-3x3-gap"></i><span>Features</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'cta')" onclick="insertBlock('cta')" data-cat="advanced"><i class="bi bi-megaphone"></i><span>CTA</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'testimonial')" onclick="insertBlock('testimonial')" data-cat="advanced"><i class="bi bi-chat-quote"></i><span>Testimonial</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'faq')" onclick="insertBlock('faq')" data-cat="advanced"><i class="bi bi-question-circle"></i><span>FAQ</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'team')" onclick="insertBlock('team')" data-cat="advanced"><i class="bi bi-people"></i><span>Team</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'contact')" onclick="insertBlock('contact')" data-cat="advanced"><i class="bi bi-envelope"></i><span>Contact</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'stats')" onclick="insertBlock('stats')" data-cat="advanced"><i class="bi bi-bar-chart"></i><span>Stats</span></div>
+        <div class="block-item" draggable="true" ondragstart="dragBlock(event,'rawhtml')" onclick="insertBlock('rawhtml')" data-cat="advanced"><i class="bi bi-code-slash"></i><span>HTML</span></div>
+      </div>
+    </div>
+
+    <!-- CENTER: CANVAS -->
+    <div class="builder-canvas-wrap">
+      <div class="builder-toolbar">
+        <div class="builder-toolbar-group">
+          <button class="tb-btn" onclick="builderUndo()" data-tip="Undo"><i class="bi bi-arrow-counterclockwise"></i></button>
+          <button class="tb-btn" onclick="builderRedo()" data-tip="Redo"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
-        <div class="form-group"><label>Meta Title</label><input type="text" name="meta_title" class="form-control"></div>
+        <div class="builder-toolbar-group">
+          <button class="tb-btn" onclick="moveSelectedUp()" data-tip="Move Up"><i class="bi bi-arrow-up"></i></button>
+          <button class="tb-btn" onclick="moveSelectedDown()" data-tip="Move Down"><i class="bi bi-arrow-down"></i></button>
+          <button class="tb-btn" onclick="duplicateSelected()" data-tip="Duplicate"><i class="bi bi-copy"></i></button>
+          <button class="tb-btn" style="color:#dc2626;" onclick="deleteSelected()" data-tip="Delete Block"><i class="bi bi-trash"></i></button>
+        </div>
+        <div class="builder-toolbar-group">
+          <select class="tb-select" onchange="changeTemplate(this.value)" id="templateSelect">
+            <option value="default">Default</option>
+            <option value="contact">Contact</option>
+            <option value="legal">Legal</option>
+          </select>
+        </div>
+        <div class="preview-size-btns">
+          <button class="tb-btn active" id="btn-desktop" onclick="setPreviewSize('desktop',this)" data-tip="Desktop"><i class="bi bi-display"></i></button>
+          <button class="tb-btn" id="btn-tablet" onclick="setPreviewSize('tablet',this)" data-tip="Tablet"><i class="bi bi-tablet"></i></button>
+          <button class="tb-btn" id="btn-mobile" onclick="setPreviewSize('mobile',this)" data-tip="Mobile"><i class="bi bi-phone"></i></button>
+        </div>
       </div>
-      <div class="form-group"><label>Content (HTML)</label><textarea name="content" class="form-control" rows="8" placeholder="<h1>Page Title</h1><p>Content here...</p>"></textarea></div>
-      <div class="form-group"><label>Meta Description</label><textarea name="meta_desc" class="form-control" rows="2"></textarea></div>
-      <div class="form-check mb-3"><input type="checkbox" name="is_active" id="pa_active" value="1" checked><label for="pa_active">Active (visible on website)</label></div>
-      <div class="modal-footer" style="padding:0;border:none">
-        <button type="button" class="btn btn-secondary" onclick="closeModal('addPageModal')">Cancel</button>
-        <button type="submit" class="btn btn-primary">Create Page</button>
+
+      <div class="canvas-viewport"
+        ondragover="event.preventDefault();document.getElementById('canvasDropZone').classList.add('drag-over')"
+        ondragleave="document.getElementById('canvasDropZone').classList.remove('drag-over')"
+        ondrop="handleCanvasDrop(event)">
+        <div class="canvas-frame desktop" id="canvasFrame">
+          <div class="canvas-drop-zone" id="canvasDropZone">
+            <div id="canvasEmpty" class="canvas-empty-msg">
+              <i class="bi bi-magic"></i>
+              <h3>Start Building Your Page</h3>
+              <p>Drag blocks from the left panel<br>or click any block to insert</p>
+            </div>
+            <div id="canvasBlocks"></div>
+          </div>
+        </div>
       </div>
-    </form>
-  </div></div>
+
+      <div class="builder-publish-bar">
+        <div class="publish-status">
+          <span class="dot"></span>
+          <span id="saveStatusText">Ready</span>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-secondary btn-sm" onclick="clearCanvas()"><i class="bi bi-trash"></i> Clear All</button>
+          <button class="btn btn-outline btn-sm" onclick="saveBuilderDraft()"><i class="bi bi-floppy"></i> Save Draft</button>
+          <button class="btn btn-primary btn-sm" onclick="saveBuilderPage()"><i class="bi bi-cloud-upload"></i> Publish Page</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PROPERTIES -->
+    <div class="props-panel">
+      <div class="props-header">
+        <span><i class="bi bi-sliders" style="color:var(--accent);margin-right:0.4rem;"></i> Properties</span>
+        <span id="selectedBlockLabel" style="font-size:0.68rem;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;">No selection</span>
+      </div>
+      <div class="props-body" id="propsBody">
+        <div style="text-align:center;padding:2rem;color:var(--text3);">
+          <i class="bi bi-mouse" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.75rem;"></i>
+          <div style="font-size:0.78rem;">Click a block on the canvas to edit its properties</div>
+        </div>
+      </div>
+      <div class="page-meta-footer">
+        <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text3);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.4rem;">
+          <i class="bi bi-info-circle" style="color:var(--accent);"></i> Page Settings
+        </div>
+        <input type="hidden" id="builderPageId" value="">
+        <label class="pm-label">Page Title *</label>
+        <input type="text" id="metaTitle" placeholder="My Awesome Page">
+        <label class="pm-label">URL Slug</label>
+        <input type="text" id="metaSlug" placeholder="my-page">
+        <label class="pm-label">SEO Title</label>
+        <input type="text" id="metaSeoTitle" placeholder="SEO title">
+        <label class="pm-label">Meta Description</label>
+        <textarea id="metaDesc" rows="2" placeholder="Brief description for SEO..." style="resize:vertical;"></textarea>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+          <input type="checkbox" id="metaActive" checked style="width:15px;height:15px;cursor:pointer;">
+          <label for="metaActive" style="font-size:0.75rem;font-weight:600;color:var(--text2);cursor:pointer;">Active (visible on site)</label>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /builder-shell -->
+</div><!-- /builder-modal -->
+
+
+<!-- CKEditor Modal -->
+<div class="ck-editor-modal" id="ckEditorModal">
+  <div class="ck-editor-box">
+    <div class="ck-editor-box-header">
+      <h3><i class="bi bi-pencil-square" style="color:var(--accent);margin-right:0.5rem;"></i> Rich Text Editor</h3>
+      <button onclick="closeCKEditor()" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--bg3);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;color:var(--text2);"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="ck-editor-box-body">
+      <div id="ckEditorContainer"></div>
+    </div>
+    <div class="ck-editor-box-footer">
+      <button class="btn btn-secondary" onclick="closeCKEditor()">Cancel</button>
+      <button class="btn btn-primary" onclick="applyCKEditorContent()"><i class="bi bi-check-lg"></i> Apply Content</button>
+    </div>
+  </div>
 </div>
 
-<!-- EDIT PAGE MODAL -->
-<div class="modal-overlay" id="editPageModal">
-  <div class="modal" style="max-width:700px"><div class="modal-header"><div class="modal-title">Edit Page</div><button class="modal-close" onclick="closeModal('editPageModal')"><i class="bi bi-x"></i></button></div>
-  <div class="modal-body">
-    <form method="POST" id="editPageForm">
-      <div class="form-group"><label>Title *</label><input type="text" name="title" id="ep_title" class="form-control" required></div>
-      <div class="form-group"><label>Content (HTML)</label><textarea name="content" id="ep_content" class="form-control" rows="10"></textarea></div>
-      <div class="form-group"><label>Meta Title</label><input type="text" name="meta_title" id="ep_meta_title" class="form-control"></div>
-      <div class="form-group"><label>Meta Desc</label><textarea name="meta_desc" id="ep_meta_desc" class="form-control" rows="2"></textarea></div>
-      <div class="form-check mb-3"><input type="checkbox" name="is_active" id="ep_active" value="1"><label for="ep_active">Active</label></div>
-      <div class="modal-footer" style="padding:0;border:none">
-        <button type="button" class="btn btn-secondary" onclick="closeModal('editPageModal')">Cancel</button>
-        <button type="submit" class="btn btn-primary">Update Page</button>
+<!-- HTML View Modal -->
+<div class="html-view-modal" id="htmlViewModal">
+  <div class="html-view-box">
+    <div class="html-view-box-header">
+      <span><i class="bi bi-code-slash" style="color:#a8ff78;margin-right:0.4rem;"></i> Page HTML Source</span>
+      <div style="display:flex;gap:0.5rem;">
+        <button onclick="copyHTML()" class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);"><i class="bi bi-clipboard"></i> Copy</button>
+        <button onclick="document.getElementById('htmlViewModal').classList.remove('show')" style="background:transparent;border:none;color:#fff;cursor:pointer;font-size:1.2rem;"><i class="bi bi-x"></i></button>
       </div>
-    </form>
-  </div></div>
+    </div>
+    <textarea id="htmlViewTextarea"></textarea>
+    <div class="html-view-footer">
+      <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="applyHTMLEdit()"><i class="bi bi-check-lg"></i> Apply HTML</button>
+      <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="document.getElementById('htmlViewModal').classList.remove('show')">Close</button>
+    </div>
+  </div>
 </div>
+
+<!-- Hidden submit form -->
+<form id="builderForm" method="POST" style="display:none;">
+  <input type="hidden" name="title" id="formTitle">
+  <input type="hidden" name="slug" id="formSlug">
+  <input type="hidden" name="content" id="formContent">
+  <input type="hidden" name="meta_title" id="formMetaTitle">
+  <input type="hidden" name="meta_desc" id="formMetaDesc">
+  <input type="hidden" name="is_active" id="formIsActive" value="1">
+  <input type="hidden" name="template" id="formTemplate" value="default">
+</form>
 
 <script>
-function openEditPage(p){
-  document.getElementById('editPageForm').action='/admin/pages/'+p.id+'?_method=PUT';
-  document.getElementById('ep_title').value=p.title||'';
-  document.getElementById('ep_content').value=p.content||'';
-  document.getElementById('ep_meta_title').value=p.meta_title||'';
-  document.getElementById('ep_meta_desc').value=p.meta_desc||'';
-  document.getElementById('ep_active').checked=!!p.is_active;
-  openModal('editPageModal');
+// ── BLOCK TEMPLATES (front-end design, hardcoded colors intentional) ──
+const BLOCK_TEMPLATES = {
+  hero: `<section style="background:linear-gradient(135deg,#1a7a4a 0%,#125c36 100%);color:#fff;padding:5rem 2rem;text-align:center;"><h1 style="font-size:2.5rem;font-weight:800;margin-bottom:1rem;">Your Powerful Headline Here</h1><p style="font-size:1.1rem;opacity:0.9;max-width:600px;margin:0 auto 2rem;">A compelling sub-headline that explains your value proposition clearly and concisely.</p><a href="#" style="display:inline-block;background:#e8a020;color:#fff;padding:0.85rem 2rem;border-radius:8px;font-weight:700;text-decoration:none;margin-right:0.75rem;">Get Started</a><a href="#" style="display:inline-block;background:rgba(255,255,255,0.15);color:#fff;padding:0.85rem 2rem;border-radius:8px;font-weight:700;text-decoration:none;border:2px solid rgba(255,255,255,0.4);">Learn More</a></section>`,
+  '2col': `<section style="padding:3rem 2rem;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;max-width:1100px;margin:0 auto;"><div style="background:#f8fafc;border-radius:12px;padding:2rem;"><h3 style="font-size:1.3rem;font-weight:700;margin-bottom:0.75rem;color:#1a2332;">Column One</h3><p style="color:#4a5568;line-height:1.7;">Add your content here. This column layout is great for showcasing two related concepts side by side.</p></div><div style="background:#f8fafc;border-radius:12px;padding:2rem;"><h3 style="font-size:1.3rem;font-weight:700;margin-bottom:0.75rem;color:#1a2332;">Column Two</h3><p style="color:#4a5568;line-height:1.7;">Add your content here. Keep the content balanced between both columns for visual harmony.</p></div></div></section>`,
+  '3col': `<section style="padding:3rem 2rem;"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:1100px;margin:0 auto;"><div style="text-align:center;padding:1.5rem;border:1.5px solid #e0e8f0;border-radius:12px;"><div style="width:56px;height:56px;background:#e8f5ee;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;">✨</div><h4 style="font-weight:700;margin-bottom:0.5rem;">Feature One</h4><p style="font-size:0.85rem;color:#4a5568;">Brief description of this amazing feature.</p></div><div style="text-align:center;padding:1.5rem;border:1.5px solid #e0e8f0;border-radius:12px;"><div style="width:56px;height:56px;background:#e8f5ee;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;">🚀</div><h4 style="font-weight:700;margin-bottom:0.5rem;">Feature Two</h4><p style="font-size:0.85rem;color:#4a5568;">Brief description of this amazing feature.</p></div><div style="text-align:center;padding:1.5rem;border:1.5px solid #e0e8f0;border-radius:12px;"><div style="width:56px;height:56px;background:#e8f5ee;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;">💎</div><h4 style="font-weight:700;margin-bottom:0.5rem;">Feature Three</h4><p style="font-size:0.85rem;color:#4a5568;">Brief description of this amazing feature.</p></div></div></section>`,
+  section: `<section style="padding:4rem 2rem;background:#f8fafc;"><div style="max-width:800px;margin:0 auto;text-align:center;"><h2 style="font-size:2rem;font-weight:800;margin-bottom:1rem;color:#1a2332;">Section Heading</h2><p style="color:#4a5568;line-height:1.8;font-size:1.05rem;">This is a full-width section ideal for important content.</p></div></section>`,
+  container: `<div style="max-width:1100px;margin:2rem auto;padding:2rem;border:2px dashed #e0e8f0;border-radius:12px;min-height:100px;"><p style="color:#8a97a8;font-size:0.85rem;text-align:center;">Container — drop content here</p></div>`,
+  divider: `<div style="padding:1.5rem 2rem;"><hr style="border:none;border-top:2px solid #e0e8f0;max-width:200px;margin:0 auto;"></div>`,
+  heading: `<div style="padding:1.5rem 2rem;"><h2 style="font-size:1.8rem;font-weight:800;color:#1a2332;text-align:center;">Your Page Heading</h2><p style="text-align:center;color:#8a97a8;font-size:0.85rem;margin-top:0.5rem;text-transform:uppercase;letter-spacing:0.1em;">Subtitle goes here</p></div>`,
+  paragraph: `<div style="padding:1rem 2rem;max-width:800px;margin:0 auto;"><p style="color:#4a5568;line-height:1.8;font-size:1rem;">Click to edit this paragraph. Add your text content here.</p></div>`,
+  button: `<div style="padding:1.5rem 2rem;text-align:center;"><a href="#" style="display:inline-block;background:#1a7a4a;color:#fff;padding:0.75rem 2rem;border-radius:8px;font-weight:700;text-decoration:none;font-size:1rem;">Click Here</a></div>`,
+  list: `<div style="padding:1.5rem 2rem;max-width:700px;margin:0 auto;"><ul style="color:#4a5568;line-height:2;padding-left:1.5rem;"><li>First important item in your list</li><li>Second item with great detail</li><li>Third compelling point</li><li>Fourth reason to choose us</li></ul></div>`,
+  quote: `<div style="padding:2rem;margin:1rem 2rem;border-left:4px solid #1a7a4a;background:#e8f5ee;border-radius:0 12px 12px 0;"><p style="font-size:1.15rem;font-style:italic;color:#1a2332;line-height:1.7;margin-bottom:0.75rem;">"This is an inspiring quote that adds credibility and depth to your page."</p><cite style="font-size:0.8rem;color:#1a7a4a;font-weight:700;">— Author Name, Title</cite></div>`,
+  table: `<div style="padding:1.5rem 2rem;overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.9rem;"><thead><tr style="background:#1a7a4a;color:#fff;"><th style="padding:0.75rem 1rem;text-align:left;">Header 1</th><th style="padding:0.75rem 1rem;text-align:left;">Header 2</th><th style="padding:0.75rem 1rem;text-align:left;">Header 3</th></tr></thead><tbody><tr style="border-bottom:1px solid #e0e8f0;"><td style="padding:0.75rem 1rem;">Row 1, Col 1</td><td style="padding:0.75rem 1rem;">Row 1, Col 2</td><td style="padding:0.75rem 1rem;">Row 1, Col 3</td></tr><tr style="border-bottom:1px solid #e0e8f0;background:#f8fafc;"><td style="padding:0.75rem 1rem;">Row 2, Col 1</td><td style="padding:0.75rem 1rem;">Row 2, Col 2</td><td style="padding:0.75rem 1rem;">Row 2, Col 3</td></tr></tbody></table></div>`,
+  image: `<div style="padding:1.5rem 2rem;text-align:center;"><img src="https://placehold.co/800x400/e8f5ee/1a7a4a?text=Your+Image+Here" alt="Image" style="max-width:100%;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1);"></div>`,
+  video: `<div style="padding:1.5rem 2rem;"><div style="position:relative;padding-bottom:56.25%;border-radius:12px;overflow:hidden;background:#1a2332;"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;flex-direction:column;gap:0.75rem;"><i class="bi bi-play-circle-fill" style="font-size:3rem;opacity:0.7;"></i><p style="font-size:0.85rem;opacity:0.6;">Paste YouTube/Vimeo embed code here</p></div></div></div>`,
+  gallery: `<div style="padding:1.5rem 2rem;"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;"><img src="https://placehold.co/400x300/e8f5ee/1a7a4a?text=Photo+1" style="width:100%;border-radius:8px;aspect-ratio:4/3;object-fit:cover;"><img src="https://placehold.co/400x300/e8f5ee/1a7a4a?text=Photo+2" style="width:100%;border-radius:8px;aspect-ratio:4/3;object-fit:cover;"><img src="https://placehold.co/400x300/e8f5ee/1a7a4a?text=Photo+3" style="width:100%;border-radius:8px;aspect-ratio:4/3;object-fit:cover;"></div></div>`,
+  map: `<div style="padding:1.5rem 2rem;"><div style="border-radius:12px;overflow:hidden;height:300px;background:#e0e8f0;display:flex;align-items:center;justify-content:center;color:#8a97a8;flex-direction:column;gap:0.5rem;border:2px dashed #e0e8f0;"><i class="bi bi-geo-alt" style="font-size:2.5rem;"></i><p style="font-size:0.85rem;">Paste Google Maps embed iframe here</p></div></div>`,
+  features: `<section style="padding:4rem 2rem;background:#fff;"><div style="max-width:1100px;margin:0 auto;"><h2 style="text-align:center;font-size:1.8rem;font-weight:800;margin-bottom:0.5rem;color:#1a2332;">Why Choose Us</h2><p style="text-align:center;color:#8a97a8;margin-bottom:2.5rem;">Discover the features that set us apart</p><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;"><div style="text-align:center;padding:1.5rem 1rem;"><div style="width:56px;height:56px;border-radius:14px;background:#e8f5ee;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:#1a7a4a;">⚡</div><h4 style="font-weight:700;margin-bottom:0.4rem;font-size:0.95rem;">Fast</h4><p style="font-size:0.8rem;color:#4a5568;">Lightning fast performance</p></div><div style="text-align:center;padding:1.5rem 1rem;"><div style="width:56px;height:56px;border-radius:14px;background:#e8f5ee;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:#1a7a4a;">🔒</div><h4 style="font-weight:700;margin-bottom:0.4rem;font-size:0.95rem;">Secure</h4><p style="font-size:0.8rem;color:#4a5568;">Enterprise-grade security</p></div><div style="text-align:center;padding:1.5rem 1rem;"><div style="width:56px;height:56px;border-radius:14px;background:#e8f5ee;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:#1a7a4a;">🎯</div><h4 style="font-weight:700;margin-bottom:0.4rem;font-size:0.95rem;">Precise</h4><p style="font-size:0.8rem;color:#4a5568;">Pixel-perfect results</p></div><div style="text-align:center;padding:1.5rem 1rem;"><div style="width:56px;height:56px;border-radius:14px;background:#e8f5ee;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:#1a7a4a;">💬</div><h4 style="font-weight:700;margin-bottom:0.4rem;font-size:0.95rem;">Supported</h4><p style="font-size:0.8rem;color:#4a5568;">24/7 expert support</p></div></div></div></section>`,
+  cta: `<section style="padding:4rem 2rem;background:linear-gradient(135deg,#1a7a4a,#e8a020);text-align:center;"><h2 style="font-size:2rem;font-weight:800;color:#fff;margin-bottom:0.75rem;">Ready to Get Started?</h2><p style="color:rgba(255,255,255,0.9);font-size:1rem;margin-bottom:2rem;max-width:500px;margin-left:auto;margin-right:auto;">Join thousands of satisfied customers today.</p><a href="#" style="display:inline-block;background:#fff;color:#1a7a4a;padding:0.9rem 2.5rem;border-radius:50px;font-weight:800;text-decoration:none;font-size:1rem;box-shadow:0 4px 20px rgba(0,0,0,0.2);">Start Free Trial →</a></section>`,
+  testimonial: `<section style="padding:3rem 2rem;background:#f8fafc;"><div style="max-width:700px;margin:0 auto;text-align:center;"><div style="font-size:2rem;color:#e8a020;margin-bottom:1rem;">★★★★★</div><p style="font-size:1.1rem;font-style:italic;color:#1a2332;line-height:1.8;margin-bottom:1.5rem;">"Absolutely brilliant product! It transformed our entire workflow."</p><div style="display:flex;align-items:center;justify-content:center;gap:0.75rem;"><div style="width:48px;height:48px;border-radius:50%;background:#1a7a4a;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;">JD</div><div style="text-align:left;"><div style="font-weight:700;font-size:0.9rem;">Jane Doe</div><div style="font-size:0.75rem;color:#8a97a8;">CEO, Acme Corp</div></div></div></div></section>`,
+  faq: `<section style="padding:3rem 2rem;"><div style="max-width:750px;margin:0 auto;"><h2 style="text-align:center;font-size:1.8rem;font-weight:800;margin-bottom:2rem;color:#1a2332;">Frequently Asked Questions</h2><details style="border:1.5px solid #e0e8f0;border-radius:10px;padding:1rem 1.25rem;margin-bottom:0.75rem;background:#fff;"><summary style="font-weight:700;cursor:pointer;color:#1a2332;">How does it work?</summary><p style="margin-top:0.75rem;color:#4a5568;line-height:1.7;">This is the answer to the first FAQ question.</p></details><details style="border:1.5px solid #e0e8f0;border-radius:10px;padding:1rem 1.25rem;margin-bottom:0.75rem;background:#fff;"><summary style="font-weight:700;cursor:pointer;color:#1a2332;">What are the pricing options?</summary><p style="margin-top:0.75rem;color:#4a5568;line-height:1.7;">We offer flexible pricing plans to suit all budgets.</p></details></div></section>`,
+  team: `<section style="padding:3rem 2rem;"><div style="max-width:1000px;margin:0 auto;"><h2 style="text-align:center;font-size:1.8rem;font-weight:800;margin-bottom:2rem;color:#1a2332;">Meet Our Team</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;"><div style="text-align:center;padding:1.5rem;border:1.5px solid #e0e8f0;border-radius:12px;background:#fff;"><div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#1a7a4a,#e8a020);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;color:#fff;font-weight:800;">JD</div><h4 style="font-weight:700;">John Doe</h4><p style="font-size:0.8rem;color:#1a7a4a;font-weight:600;margin-bottom:0.5rem;">CEO & Founder</p><p style="font-size:0.8rem;color:#4a5568;">Expert in strategy and innovation.</p></div><div style="text-align:center;padding:1.5rem;border:1.5px solid #e0e8f0;border-radius:12px;background:#fff;"><div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#0369a1,#7c3aed);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;color:#fff;font-weight:800;">JS</div><h4 style="font-weight:700;">Jane Smith</h4><p style="font-size:0.8rem;color:#0369a1;font-weight:600;margin-bottom:0.5rem;">Lead Designer</p><p style="font-size:0.8rem;color:#4a5568;">Creates beautiful user experiences.</p></div><div style="text-align:center;padding:1.5rem;border:1.5px solid #e0e8f0;border-radius:12px;background:#fff;"><div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#dc2626);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;color:#fff;font-weight:800;">MB</div><h4 style="font-weight:700;">Mark Brown</h4><p style="font-size:0.8rem;color:#7c3aed;font-weight:600;margin-bottom:0.5rem;">Tech Lead</p><p style="font-size:0.8rem;color:#4a5568;">Builds robust technical solutions.</p></div></div></div></section>`,
+  contact: `<section style="padding:3rem 2rem;background:#f8fafc;"><div style="max-width:600px;margin:0 auto;"><h2 style="text-align:center;font-size:1.8rem;font-weight:800;margin-bottom:0.5rem;color:#1a2332;">Get In Touch</h2><p style="text-align:center;color:#8a97a8;margin-bottom:2rem;">We'd love to hear from you!</p><div style="background:#fff;border-radius:12px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,0.06);border:1px solid #e0e8f0;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;"><div><label style="display:block;font-size:0.78rem;font-weight:600;color:#4a5568;margin-bottom:0.3rem;">Name</label><input type="text" placeholder="Your name" style="width:100%;padding:0.55rem 0.9rem;border:1.5px solid #e0e8f0;border-radius:8px;font-size:0.85rem;"></div><div><label style="display:block;font-size:0.78rem;font-weight:600;color:#4a5568;margin-bottom:0.3rem;">Email</label><input type="email" placeholder="your@email.com" style="width:100%;padding:0.55rem 0.9rem;border:1.5px solid #e0e8f0;border-radius:8px;font-size:0.85rem;"></div></div><div style="margin-bottom:1rem;"><label style="display:block;font-size:0.78rem;font-weight:600;color:#4a5568;margin-bottom:0.3rem;">Message</label><textarea rows="4" placeholder="Your message..." style="width:100%;padding:0.55rem 0.9rem;border:1.5px solid #e0e8f0;border-radius:8px;font-size:0.85rem;resize:vertical;"></textarea></div><button style="width:100%;background:#1a7a4a;color:#fff;border:none;padding:0.75rem;border-radius:8px;font-size:0.9rem;font-weight:700;cursor:pointer;">Send Message →</button></div></div></section>`,
+  stats: `<section style="padding:3rem 2rem;background:linear-gradient(135deg,#1a2332 0%,#2d3f55 100%);color:#fff;"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;max-width:900px;margin:0 auto;text-align:center;"><div><div style="font-size:2.5rem;font-weight:800;color:#e8a020;">10K+</div><div style="font-size:0.85rem;opacity:0.7;margin-top:0.3rem;">Happy Clients</div></div><div><div style="font-size:2.5rem;font-weight:800;color:#e8a020;">98%</div><div style="font-size:0.85rem;opacity:0.7;margin-top:0.3rem;">Satisfaction Rate</div></div><div><div style="font-size:2.5rem;font-weight:800;color:#e8a020;">50+</div><div style="font-size:0.85rem;opacity:0.7;margin-top:0.3rem;">Countries Served</div></div><div><div style="font-size:2.5rem;font-weight:800;color:#e8a020;">24/7</div><div style="font-size:0.85rem;opacity:0.7;margin-top:0.3rem;">Expert Support</div></div></div></section>`,
+  rawhtml: `<div style="padding:1rem;border:2px dashed #e0e8f0;border-radius:8px;background:#f8fafc;min-height:80px;"><code style="color:#1a7a4a;font-size:0.8rem;"><!-- Custom HTML Block --></code></div>`
+};
+
+// ── BUILDER STATE ──
+let currentPageId = null, selectedBlockId = null, blockCounter = 0;
+let undoStack = [], redoStack = [], draggedBlockType = null;
+let ckEditorInstance = null, ckEditorTargetId = null;
+let autoSaveTimer = null;
+
+// ── OPEN/CLOSE ──
+function openBuilderNew() {
+  currentPageId = null;
+  document.getElementById('builderPageTitle').textContent = 'New Page';
+  ['metaTitle','metaSlug','metaSeoTitle','metaDesc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('metaActive').checked = true;
+  document.getElementById('templateSelect').value = 'default';
+  clearCanvasSilent();
+  document.getElementById('builderModal').classList.add('show');
 }
+function openBuilderEdit(page) {
+  currentPageId = page.id;
+  document.getElementById('builderPageTitle').textContent = 'Edit: ' + page.title;
+  document.getElementById('builderPageId').value = page.id;
+  document.getElementById('metaTitle').value = page.title || '';
+  document.getElementById('metaSlug').value = page.slug || '';
+  document.getElementById('metaSeoTitle').value = page.meta_title || '';
+  document.getElementById('metaDesc').value = page.meta_desc || '';
+  document.getElementById('metaActive').checked = !!page.is_active;
+  document.getElementById('templateSelect').value = page.template || 'default';
+  clearCanvasSilent();
+  if (page.content) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = page.content;
+    Array.from(tmp.children).length > 0
+      ? Array.from(tmp.children).forEach(c => insertRawHTMLBlock(c.outerHTML))
+      : insertRawHTMLBlock(page.content);
+  }
+  document.getElementById('builderModal').classList.add('show');
+}
+function closeBuilder() { document.getElementById('builderModal').classList.remove('show'); }
+
+// ── INSERT BLOCK ──
+function insertBlock(type) {
+  insertRawHTMLBlock(BLOCK_TEMPLATES[type] || `<div style="padding:1rem;text-align:center;color:#8a97a8;">Block: ${type}</div>`, type);
+}
+function insertRawHTMLBlock(html, type) {
+  const id = 'block_' + (++blockCounter);
+  const wrap = document.createElement('div');
+  wrap.className = 'canvas-section'; wrap.id = id; wrap.dataset.type = type || 'raw';
+  wrap.innerHTML = `<div class="section-controls">
+    <button class="sc-btn" onclick="openCKEditor('${id}')" title="Edit"><i class="bi bi-pencil"></i></button>
+    <button class="sc-btn" onclick="moveBlockUp('${id}')" title="Up"><i class="bi bi-arrow-up"></i></button>
+    <button class="sc-btn" onclick="moveBlockDown('${id}')" title="Down"><i class="bi bi-arrow-down"></i></button>
+    <button class="sc-btn" onclick="duplicateBlock('${id}')" title="Duplicate"><i class="bi bi-copy"></i></button>
+    <button class="sc-btn" onclick="deleteBlock('${id}')" title="Delete" style="color:#fca5a5;"><i class="bi bi-trash"></i></button>
+  </div><div class="block-content" id="content_${id}">${html}</div>`;
+  wrap.addEventListener('click', () => selectBlock(id));
+  document.getElementById('canvasBlocks').appendChild(wrap);
+  document.getElementById('canvasEmpty').style.display = 'none';
+  selectBlock(id); pushUndo(); triggerAutoSave();
+}
+function selectBlock(id) {
+  document.querySelectorAll('.canvas-section').forEach(s => s.classList.remove('selected'));
+  const b = document.getElementById(id); if(!b) return;
+  b.classList.add('selected'); selectedBlockId = id;
+  showPropsFor(id, b.dataset.type);
+}
+function showPropsFor(id, type) {
+  document.getElementById('selectedBlockLabel').textContent = type || 'block';
+  document.getElementById('propsBody').innerHTML = `
+    <div class="prop-group">
+      <div class="prop-group-title"><i class="bi bi-palette2"></i> Background</div>
+      <div class="prop-row"><span class="prop-label">Color</span><input type="color" class="prop-color" value="#ffffff" oninput="applyBgColor('${id}',this.value)"></div>
+      <div class="prop-row"><span class="prop-label">Opacity</span><input type="range" class="prop-range" min="0" max="100" value="100" oninput="applyOpacity('${id}',this.value);document.getElementById('opV_${id}').textContent=this.value+'%'"><span class="prop-range-val" id="opV_${id}">100%</span></div>
+    </div>
+    <div class="prop-group">
+      <div class="prop-group-title"><i class="bi bi-arrows-angle-expand"></i> Spacing</div>
+      <div class="prop-row"><span class="prop-label">Pad Top</span><input type="range" class="prop-range" min="0" max="200" value="0" oninput="applyPaddingTop('${id}',this.value)"><span class="prop-range-val">px</span></div>
+      <div class="prop-row"><span class="prop-label">Pad Bot</span><input type="range" class="prop-range" min="0" max="200" value="0" oninput="applyPaddingBottom('${id}',this.value)"><span class="prop-range-val">px</span></div>
+    </div>
+    <div class="prop-group">
+      <div class="prop-group-title"><i class="bi bi-border-all"></i> Border & Shadow</div>
+      <div class="prop-row"><span class="prop-label">Radius</span><input type="range" class="prop-range" min="0" max="40" value="0" oninput="applyBorderRadius('${id}',this.value)"><span class="prop-range-val">px</span></div>
+      <div class="prop-row"><span class="prop-label">Shadow</span>
+        <select class="prop-input" onchange="applyShadow('${id}',this.value)">
+          <option value="">None</option>
+          <option value="0 2px 8px rgba(0,0,0,0.08)">Light</option>
+          <option value="0 4px 20px rgba(0,0,0,0.12)">Medium</option>
+          <option value="0 8px 40px rgba(0,0,0,0.2)">Heavy</option>
+        </select>
+      </div>
+    </div>
+    <div class="prop-group">
+      <div class="prop-group-title"><i class="bi bi-pencil-square"></i> Content</div>
+      <button class="btn btn-outline btn-sm" onclick="openCKEditor('${id}')" style="width:100%;justify-content:center;"><i class="bi bi-pencil"></i> Open Rich Text Editor</button>
+    </div>
+    <div class="prop-group">
+      <div class="prop-group-title"><i class="bi bi-code-slash"></i> HTML</div>
+      <button onclick="openBlockHTMLEdit('${id}')" style="width:100%;justify-content:center;padding:0.4rem;border-radius:6px;border:none;background:#1a2332;color:#a8ff78;cursor:pointer;font-size:0.75rem;font-family:inherit;"><i class="bi bi-code"></i> Edit Raw HTML</button>
+    </div>`;
+}
+
+function applyBgColor(id,v){const c=document.getElementById('content_'+id);if(c&&c.firstElementChild)c.firstElementChild.style.background=v;}
+function applyOpacity(id,v){const b=document.getElementById(id);if(b)b.style.opacity=v/100;}
+function applyPaddingTop(id,v){const c=document.getElementById('content_'+id);if(c&&c.firstElementChild)c.firstElementChild.style.paddingTop=v+'px';}
+function applyPaddingBottom(id,v){const c=document.getElementById('content_'+id);if(c&&c.firstElementChild)c.firstElementChild.style.paddingBottom=v+'px';}
+function applyBorderRadius(id,v){const b=document.getElementById(id);if(b)b.style.borderRadius=v+'px';}
+function applyShadow(id,v){const b=document.getElementById(id);if(b)b.style.boxShadow=v;}
+
+// ── CKEDITOR ──
+function openCKEditor(blockId) {
+  ckEditorTargetId = blockId;
+  const el = document.getElementById('content_' + blockId);
+  const cur = el ? el.innerHTML : '';
+  document.getElementById('ckEditorContainer').innerHTML = '<div id="ckEditorTarget"></div>';
+  document.getElementById('ckEditorModal').classList.add('show');
+  if (ckEditorInstance) { try { ckEditorInstance.destroy(); } catch(e){} ckEditorInstance = null; }
+  if (typeof CKEDITOR !== 'undefined' && CKEDITOR.ClassicEditor) {
+    CKEDITOR.ClassicEditor.create(document.getElementById('ckEditorTarget'), { initialData: removeControls(cur) })
+      .then(ed => { ckEditorInstance = ed; })
+      .catch(() => { fallbackTextarea(removeControls(cur)); });
+  } else { fallbackTextarea(removeControls(cur)); }
+}
+function fallbackTextarea(html) {
+  document.getElementById('ckEditorContainer').innerHTML = `<textarea id="ckFallback" style="width:100%;min-height:300px;font-family:inherit;font-size:0.85rem;border:1.5px solid var(--border);border-radius:8px;padding:1rem;color:var(--text1);background:var(--bg);">${html}</textarea>`;
+}
+function removeControls(html) {
+  const t = document.createElement('div'); t.innerHTML = html;
+  const sc = t.querySelector('.section-controls'); if(sc) sc.remove();
+  return t.innerHTML;
+}
+function closeCKEditor() {
+  document.getElementById('ckEditorModal').classList.remove('show');
+  if (ckEditorInstance) { try { ckEditorInstance.destroy(); } catch(e){} ckEditorInstance = null; }
+}
+function applyCKEditorContent() {
+  if (!ckEditorTargetId) return;
+  const content = ckEditorInstance ? ckEditorInstance.getData() : (document.getElementById('ckFallback')?.value || '');
+  const el = document.getElementById('content_' + ckEditorTargetId);
+  if (el) el.innerHTML = content;
+  closeCKEditor(); pushUndo(); triggerAutoSave();
+}
+function openBlockHTMLEdit(blockId) {
+  const el = document.getElementById('content_' + blockId);
+  document.getElementById('htmlViewTextarea').value = el ? removeControls(el.innerHTML) : '';
+  document.getElementById('htmlViewTextarea').dataset.blockId = blockId;
+  document.getElementById('htmlViewModal').classList.add('show');
+}
+
+// ── BLOCK CONTROLS ──
+function deleteBlock(id) {
+  const el = document.getElementById(id); if(el) el.remove();
+  if (!document.getElementById('canvasBlocks').children.length) document.getElementById('canvasEmpty').style.display = '';
+  selectedBlockId = null;
+  document.getElementById('propsBody').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text3);"><i class="bi bi-mouse" style="font-size:2rem;opacity:0.3;display:block;margin-bottom:0.75rem;"></i><div style="font-size:0.78rem;">Click a block to edit its properties</div></div>';
+  document.getElementById('selectedBlockLabel').textContent = 'No selection';
+  pushUndo();
+}
+function deleteSelected(){if(selectedBlockId)deleteBlock(selectedBlockId);}
+function moveBlockUp(id){const el=document.getElementById(id);if(el&&el.previousElementSibling)el.parentNode.insertBefore(el,el.previousElementSibling);pushUndo();}
+function moveBlockDown(id){const el=document.getElementById(id);if(el&&el.nextElementSibling)el.parentNode.insertBefore(el.nextElementSibling,el);pushUndo();}
+function moveSelectedUp(){if(selectedBlockId)moveBlockUp(selectedBlockId);}
+function moveSelectedDown(){if(selectedBlockId)moveBlockDown(selectedBlockId);}
+function duplicateBlock(id) {
+  const el = document.getElementById(id); if(!el) return;
+  const clone = el.cloneNode(true);
+  const newId = 'block_' + (++blockCounter);
+  clone.id = newId;
+  clone.querySelectorAll('[onclick]').forEach(b => b.setAttribute('onclick', b.getAttribute('onclick').replace(new RegExp(id,'g'), newId)));
+  clone.querySelector('.block-content').id = 'content_' + newId;
+  clone.addEventListener('click', () => selectBlock(newId));
+  el.parentNode.insertBefore(clone, el.nextSibling);
+  selectBlock(newId); pushUndo();
+}
+function duplicateSelected(){if(selectedBlockId)duplicateBlock(selectedBlockId);}
+
+// ── DRAG & DROP ──
+function dragBlock(event, type) { draggedBlockType = type; event.dataTransfer.effectAllowed = 'copy'; }
+function handleCanvasDrop(event) {
+  event.preventDefault();
+  document.getElementById('canvasDropZone').classList.remove('drag-over');
+  if (draggedBlockType) { insertBlock(draggedBlockType); draggedBlockType = null; }
+}
+
+// ── UNDO/REDO ──
+function getSnap(){return document.getElementById('canvasBlocks').innerHTML;}
+function pushUndo(){undoStack.push(getSnap());if(undoStack.length>50)undoStack.shift();redoStack=[];}
+function builderUndo(){if(undoStack.length<2)return;redoStack.push(undoStack.pop());document.getElementById('canvasBlocks').innerHTML=undoStack[undoStack.length-1]||'';if(!document.getElementById('canvasBlocks').children.length)document.getElementById('canvasEmpty').style.display='';}
+function builderRedo(){if(!redoStack.length)return;const s=redoStack.pop();undoStack.push(s);document.getElementById('canvasBlocks').innerHTML=s;if(!document.getElementById('canvasBlocks').children.length)document.getElementById('canvasEmpty').style.display='';}
+
+// ── CANVAS UTILS ──
+function clearCanvas(){if(!confirm('Clear all blocks?'))return;clearCanvasSilent();}
+function clearCanvasSilent(){document.getElementById('canvasBlocks').innerHTML='';document.getElementById('canvasEmpty').style.display='';selectedBlockId=null;undoStack=[];redoStack=[];}
+function setPreviewSize(size,btn){['desktop','tablet','mobile'].forEach(s=>{document.getElementById('canvasFrame').classList.remove(s);document.getElementById('btn-'+s).classList.remove('active');});document.getElementById('canvasFrame').classList.add(size);btn.classList.add('active');}
+function changeTemplate(val){document.getElementById('formTemplate').value=val;}
+
+// ── HTML VIEW ──
+function getPageHTML() {
+  const blocks = document.getElementById('canvasBlocks');
+  const tmp = blocks.cloneNode(true);
+  tmp.querySelectorAll('.section-controls').forEach(c => c.remove());
+  tmp.querySelectorAll('.canvas-section').forEach(s => {
+    const inner = s.querySelector('.block-content');
+    if (inner) { while(inner.firstChild) s.parentNode.insertBefore(inner.firstChild, s); s.remove(); }
+  });
+  return tmp.innerHTML.trim();
+}
+function toggleHTMLView(){document.getElementById('htmlViewTextarea').value=getPageHTML();delete document.getElementById('htmlViewTextarea').dataset.blockId;document.getElementById('htmlViewModal').classList.add('show');}
+function copyHTML(){navigator.clipboard.writeText(document.getElementById('htmlViewTextarea').value);}
+function applyHTMLEdit() {
+  const ta = document.getElementById('htmlViewTextarea');
+  if (ta.dataset.blockId) {
+    const el = document.getElementById('content_' + ta.dataset.blockId);
+    if (el) el.innerHTML = ta.value;
+  } else { clearCanvasSilent(); if(ta.value.trim()) insertRawHTMLBlock(ta.value.trim()); }
+  document.getElementById('htmlViewModal').classList.remove('show');
+  pushUndo();
+}
+
+// ── SAVE / PUBLISH ──
+function saveBuilderPage() {
+  const title = document.getElementById('metaTitle').value.trim();
+  if (!title) { alert('Please enter a page title.'); return; }
+  document.getElementById('formTitle').value = title;
+  document.getElementById('formSlug').value = document.getElementById('metaSlug').value.trim() || title.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  document.getElementById('formContent').value = getPageHTML();
+  document.getElementById('formMetaTitle').value = document.getElementById('metaSeoTitle').value;
+  document.getElementById('formMetaDesc').value = document.getElementById('metaDesc').value;
+  document.getElementById('formIsActive').value = document.getElementById('metaActive').checked ? '1' : '0';
+  document.getElementById('formTemplate').value = document.getElementById('templateSelect').value;
+  const form = document.getElementById('builderForm');
+  form.action = currentPageId ? '/admin/pages/' + currentPageId + '?_method=PUT' : '/admin/pages';
+  form.submit();
+}
+function saveBuilderDraft() {
+  try { localStorage.setItem('page_draft_'+(currentPageId||'new'), JSON.stringify({title:document.getElementById('metaTitle').value,content:getPageHTML(),ts:Date.now()})); } catch(e){}
+  document.getElementById('saveStatusText').textContent = 'Draft saved';
+}
+function triggerAutoSave() {
+  clearTimeout(autoSaveTimer);
+  document.getElementById('autoSaveStatus').innerHTML = '<span style="font-size:0.7rem;color:rgba(255,255,255,0.4);">Saving…</span>';
+  autoSaveTimer = setTimeout(() => {
+    document.getElementById('autoSaveStatus').innerHTML = '<span class="publish-status"><span class="dot"></span></span><span style="font-size:0.7rem;color:rgba(255,255,255,0.5);"> Auto-saved</span>';
+  }, 1500);
+}
+
+// ── PREVIEW ──
+function previewPage() {
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Preview</title><style>body{font-family:'Poppins',sans-serif;margin:0;}*{box-sizing:border-box;}</style></head><body>${getPageHTML()}</body></html>`);
+  w.document.close();
+}
+
+// ── BLOCKS FILTER ──
+function filterBlocks(q) { document.querySelectorAll('.block-item').forEach(b => { b.style.display = !q || b.querySelector('span').textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; }); }
+function switchBlocksTab(btn, cat) {
+  document.querySelectorAll('.blocks-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.block-item').forEach(b => { b.style.display = b.dataset.cat === cat ? '' : 'none'; });
+}
+
+// ── PAGES LIST UTILS ──
+function filterPages(q) { document.querySelectorAll('#pagesTable tbody tr').forEach(r => { r.style.display = r.innerText.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; }); }
+function filterByTemplate(val) { document.querySelectorAll('#pagesTable tbody tr').forEach(r => { r.style.display = !val || r.dataset.template === val ? '' : 'none'; }); }
+function duplicatePage(id) { if(confirm('Duplicate this page?')){const f=document.createElement('form');f.method='POST';f.action='/admin/pages/'+id+'/duplicate';document.body.appendChild(f);f.submit();} }
+
+// Init
+document.querySelectorAll('.block-item').forEach(b => { if(b.dataset.cat !== 'layout') b.style.display = 'none'; });
+pushUndo();
 </script>
+
 <%- include('../partials/scripts') %>
-</body></html>
+</body>
+</html>

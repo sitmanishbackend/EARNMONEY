@@ -4,9 +4,28 @@
     <span style="font-size:0.85rem;font-weight:600;color:var(--text2)"><%= typeof title !== 'undefined' ? title : 'Dashboard' %></span>
   </div>
   <div class="topbar-right">
-    <button class="topbar-btn"><i class="bi bi-bell"></i><span class="notif-dot"></span></button>
+    <a href="/admin/notifications" class="topbar-btn" style="position:relative" title="Notifications">
+  <i class="bi bi-bell"></i>
+  <span class="notif-dot" id="topbarNotifBadge"
+    style="display:none;position:absolute;top:6px;right:6px;
+           width:8px;height:8px;background:#dc2626;border-radius:50%;
+           border:2px solid var(--bg)"></span>
+</a>
+ 
+<script>
+(function(){
+  fetch('/admin/notifications/unread-count')
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.count > 0){
+        const dot = document.getElementById('topbarNotifBadge');
+        if(dot) dot.style.display = 'block';
+      }
+    }).catch(()=>{});
+})();
+</script>
     <a href="/" target="_blank" class="topbar-btn" title="View Site"><i class="bi bi-globe"></i></a>
     <a href="/admin/profile" class="topbar-btn"><i class="bi bi-person-circle"></i></a>
-    <a href="/admin/logout" class="btn btn-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    <!-- <a href="/admin/logout" class="btn btn-danger btn-sm"><i class="bi bi-box-arrow-right"></i> Logout</a> -->
   </div>
 </header>

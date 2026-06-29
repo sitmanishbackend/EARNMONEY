@@ -9,7 +9,7 @@ const { sequelize } = require('./models');
 const { injectGlobals } = require('./middleware/auth');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8001;
 
 // View engine
 app.set('view engine', 'ejs');
@@ -46,6 +46,9 @@ app.use('/', require('./routes/sitemap'));
 app.use('/', require('./routes/website'));
 app.use('/admin', require('./routes/admin'));
 app.use('/api', require('./routes/api'));
+const marketRouter = require('./routes/market');
+app.use(require('./routes/myxosChat'));
+app.use('/api', marketRouter);
 
 // 404
 app.use((req, res) => {

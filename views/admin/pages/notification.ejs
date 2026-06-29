@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title><%= title %> – Dreams Admin</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <%- include('../partials/head') %>
+
+  <style>
+    /* ── Notification-specific styles ── */
+    .notif-filters {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .notif-filter-btn {
+      padding: 0.35rem 1rem;
+      border-radius: 50px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text2);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+    .notif-filter-btn.active,
+    .notif-filter-btn:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .notif-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .notif-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-light, rgba(0,0,0,0.06));
+      background: var(--card-bg, #fff);
+      cursor: pointer;
+      transition: background 0.18s ease, transform 0.18s ease;
+      position: relative;
+      animation: slideInNotif 0.35s ease both;
+    }
+    .notif-item:last-child {
+      border-bottom: none;
+    }
+    .notif-item:hover {
+      background: var(--hover-bg, rgba(26,122,74,0.04));
+    }
+    .notif-item.unread {
+      background: var(--unread-bg, rgba(26,122,74,0.05));
+    }
+    .notif-item.unread::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--primary);
+      border-radius: 0 2px 2px 0;
+    }
+    /* Removing animation for items that are being deleted */
+    .notif-item.removing {
+      animation: slideOutNotif 0.3s ease forwards;
+    }
+    @keyframes slideInNotif {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideOutNotif {
+      from { opacity: 1; transform: translateX(0) scaleY(1); max-height: 200px; }
+      to   { opacity: 0; transform: translateX(30px) scaleY(0); max-height: 0; padding: 0; margin: 0; }
+    }
+
+    /* Icon circle */
+    .notif-icon {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: transform 0.2s ease;
+    }
+    .notif-item:hover .notif-icon {
+      transform: scale(1.08);
+    }
+    .notif-icon.success  { background: rgba(22,163,74,0.12);  color: #16a34a; }
+    .notif-icon.danger   { background: rgba(220,38,38,0.12);  color: #dc2626; }
+    .notif-icon.warning  { background: rgba(217,119,6,0.12);  color: #d97706; }
+    .notif-icon.info     { background: rgba(37,99,235,0.12);  color: #2563eb; }
+    .notif-icon.primary  { background: rgba(26,122,74,0.12);  color: var(--primary); }
+    .notif-icon.purple   { background: rgba(124,58,237,0.12); color: #7c3aed; }
+
+    .notif-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .notif-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text1, #1a1a1a);
+      margin-bottom: 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .notif-title .badge {
+      font-size: 0.65rem;
+      padding: 1px 7px;
+    }
+    .notif-msg {
+      font-size: 0.78rem;
+      color: var(--text3, #6b7280);
+      line-height: 1.5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 520px;
+    }
+    .notif-time {
+      font-size: 0.72rem;
+      color: var(--text3, #9ca3af);
+      margin-top: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .notif-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+    .notif-item:hover .notif-actions {
+      opacity: 1;
+    }
+    .notif-dot-badge {
+      width: 8px;
+      height: 8px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulseDot 1.8s ease-in-out infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    /* Empty state */
+    .notif-empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text3);
+    }
+    .notif-empty i {
+      font-size: 3.5rem;
+      display: block;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+    .notif-empty h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text2);
+      margin-bottom: 0.4rem;
+    }
+    .notif-empty p {
+      font-size: 0.82rem;
+    }
+
+    /* Stats bar */
+    .notif-stats {
+      display: flex;
+      gap: 1.5rem;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border-light, rgba(0,0,0,0.06));
+      background: var(--sidebar-bg, rgba(0,0,0,0.02));
+      flex-wrap: wrap;
+    }
+    .notif-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      color: var(--text2);
+    }
+    .notif-stat strong {
+      font-weight: 600;
+      color: var(--text1);
+    }
+
+    /* Toast notification (for mark read / delete feedback) */
+    .notif-toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--primary, #1a7a4a);
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      z-index: 9999;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: toastIn 0.3s ease;
+      pointer-events: none;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(12px); }
+    }
+
+    /* Bulk action bar */
+    .bulk-bar {
+      display: none;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.6rem 1.25rem;
+      background: rgba(26,122,74,0.07);
+      border-bottom: 1px solid rgba(26,122,74,0.15);
+      animation: slideInNotif 0.2s ease;
+    }
+    .bulk-bar.visible {
+      display: flex;
+    }
+    .bulk-bar span {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+<%- include('../partials/sidebar', { currentRoute: '/admin/notifications' }) %>
+<div class="main-content" id="mainContent">
+<%- include('../partials/topbar') %>
+<main class="page-content">
+<%- include('../partials/flash') %>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <div class="page-title">Notifications</div>
+    <div class="page-subtitle">Stay updated with your latest alerts and activity</div>
+  </div>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+    <% if (unreadCount > 0) { %>
+    <form method="POST" action="/admin/notifications/mark-all-read?_method=PUT" style="display:inline">
+      <button type="submit" class="btn btn-outline">
+        <i class="bi bi-check2-all"></i> Mark All Read
+      </button>
+    </form>
+    <% } %>
+    <% if (notifications.length > 0) { %>
+    <form method="POST" action="/admin/notifications/delete-all?_method=DELETE"
+      onsubmit="return confirm('Delete ALL notifications? This cannot be undone.')">
+      <button type="submit" class="btn btn-danger">
+        <i class="bi bi-trash3"></i> Clear All
+      </button>
+    </form>
+    <% } %>
+  </div>
+</div>
+
+<!-- Main Card -->
+<div class="card" style="overflow:hidden">
+
+  <!-- Stats Bar -->
+  <div class="notif-stats">
+    <div class="notif-stat">
+      <i class="bi bi-bell" style="color:var(--primary)"></i>
+      <strong><%= notifications.length %></strong> total
+    </div>
+    <div class="notif-stat">
+      <span class="notif-dot-badge"></span>
+      <strong><%= unreadCount %></strong> unread
+    </div>
+    <div class="notif-stat">
+      <i class="bi bi-check-circle" style="color:#16a34a"></i>
+      <strong><%= notifications.length - unreadCount %></strong> read
+    </div>
+  </div>
+
+  <!-- Filter + Bulk Bar -->
+  <div class="card-header" style="flex-wrap:wrap;gap:0.75rem">
+    <div class="card-title"><i class="bi bi-funnel"></i> Filter</div>
+    <div class="notif-filters" id="filterBtns">
+      <button class="notif-filter-btn active" data-filter="all" onclick="filterNotifs(this,'all')">All</button>
+      <button class="notif-filter-btn" data-filter="unread" onclick="filterNotifs(this,'unread')">Unread</button>
+      <button class="notif-filter-btn" data-filter="post" onclick="filterNotifs(this,'post')"><i class="bi bi-file-text"></i> Posts</button>
+      <button class="notif-filter-btn" data-filter="user" onclick="filterNotifs(this,'user')"><i class="bi bi-person"></i> Users</button>
+      <button class="notif-filter-btn" data-filter="finance" onclick="filterNotifs(this,'finance')"><i class="bi bi-cash"></i> Finance</button>
+      <button class="notif-filter-btn" data-filter="system" onclick="filterNotifs(this,'system')"><i class="bi bi-gear"></i> System</button>
+      <button class="notif-filter-btn" data-filter="warning" onclick="filterNotifs(this,'warning')"><i class="bi bi-exclamation-triangle"></i> Alerts</button>
+    </div>
+  </div>
+
+  <!-- Bulk Action Bar -->
+  <div class="bulk-bar" id="bulkBar">
+    <span id="bulkCount">0 selected</span>
+    <button class="btn btn-xs btn-outline" onclick="bulkMarkRead()"><i class="bi bi-check2-all"></i> Mark Read</button>
+    <button class="btn btn-xs btn-danger" onclick="bulkDelete()"><i class="bi bi-trash"></i> Delete</button>
+    <button class="btn btn-xs btn-secondary" onclick="clearSelection()">Cancel</button>
+  </div>
+
+  <!-- Notification List -->
+  <div class="notif-list" id="notifList">
+    <% if (!notifications.length) { %>
+    <div class="notif-empty">
+      <i class="bi bi-bell-slash"></i>
+      <h3>You're all caught up!</h3>
+      <p>No notifications at the moment. Check back later.</p>
+    </div>
+    <% } %>
+
+    <% notifications.forEach(function(n, idx) {
+      const iconMap = {
+        post:    { icon: 'bi-file-earmark-text', cls: 'primary' },
+        user:    { icon: 'bi-person-check',      cls: 'info'    },
+        finance: { icon: 'bi-cash-stack',         cls: 'success' },
+        system:  { icon: 'bi-gear-fill',          cls: 'purple'  },
+        warning: { icon: 'bi-exclamation-triangle-fill', cls: 'warning' },
+        danger:  { icon: 'bi-x-circle-fill',      cls: 'danger'  },
+        comment: { icon: 'bi-chat-dots',           cls: 'info'    }
+      };
+      const iconInfo = iconMap[n.type] || { icon: 'bi-bell', cls: 'primary' };
+    %>
+    <div class="notif-item <%= n.is_read ? '' : 'unread' %>"
+         data-id="<%= n.id %>"
+         data-type="<%= n.type %>"
+         data-read="<%= n.is_read ? '1' : '0' %>"
+         style="animation-delay: <%= idx * 0.04 %>s"
+         onclick="handleNotifClick(this, event)">
+
+      <!-- Checkbox -->
+      <input type="checkbox" class="notif-check"
+        style="margin-top:0.3rem;accent-color:var(--primary);cursor:pointer"
+        onclick="event.stopPropagation(); toggleSelect(this)"
+        title="Select">
+
+      <!-- Icon -->
+      <div class="notif-icon <%= iconInfo.cls %>">
+        <i class="bi <%= iconInfo.icon %>"></i>
+      </div>
+
+      <!-- Body -->
+      <div class="notif-body">
+        <div class="notif-title">
+          <%= n.title %>
+          <% if (!n.is_read) { %>
+            <span class="badge badge-success" style="font-size:0.62rem">New</span>
+          <% } %>
+          <span class="badge badge-<%= n.type === 'danger' ? 'danger' : n.type === 'warning' ? 'warning' : 'secondary' %>"
+                style="font-size:0.62rem;text-transform:capitalize"><%= n.type %></span>
+        </div>
+        <div class="notif-msg" title="<%= (n.message || '').replace(/"/g,'&quot;') %>">
+          <%= n.message %>
+        </div>
+        <div class="notif-time">
+          <i class="bi bi-clock" style="font-size:0.7rem"></i>
+          <%= n.time_ago %>
+          <% if (n.link) { %>
+            <span style="color:var(--primary);margin-left:0.3rem">
+              <i class="bi bi-arrow-up-right-square" style="font-size:0.7rem"></i> View
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Actions (visible on hover) -->
+      <div class="notif-actions" onclick="event.stopPropagation()">
+        <% if (!n.is_read) { %>
+        <button class="btn btn-xs btn-outline" title="Mark as read"
+          onclick="markRead(<%= n.id %>, this)">
+          <i class="bi bi-check2"></i>
+        </button>
+        <% } %>
+        <% if (n.link) { %>
+        <a href="<%= n.link %>" class="btn btn-xs btn-outline" title="Open link">
+          <i class="bi bi-box-arrow-up-right"></i>
+        </a>
+        <% } %>
+        <button class="btn btn-xs btn-danger" title="Delete"
+          onclick="deleteNotif(<%= n.id %>, this)">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+
+    </div>
+    <% }); %>
+  </div>
+
+  <!-- Pagination -->
+  <% if (totalPages > 1) { %>
+  <div style="padding:1rem 1.25rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+    <span style="font-size:0.78rem;color:var(--text3)">
+      Page <%= currentPage %> of <%= totalPages %> &nbsp;·&nbsp; <%= total %> notifications
+    </span>
+    <div style="display:flex;gap:0.4rem">
+      <% if (currentPage > 1) { %>
+        <a href="/admin/notifications?page=<%= currentPage - 1 %>" class="btn btn-xs btn-outline">
+          <i class="bi bi-chevron-left"></i> Prev
+        </a>
+      <% } %>
+      <% for (let p = 1; p <= totalPages; p++) { %>
+        <a href="/admin/notifications?page=<%= p %>"
+          class="btn btn-xs <%= p === currentPage ? 'btn-primary' : 'btn-outline' %>">
+          <%= p %>
+        </a>
+      <% } %>
+      <% if (currentPage < totalPages) { %>
+        <a href="/admin/notifications?page=<%= currentPage + 1 %>" class="btn btn-xs btn-outline">
+          Next <i class="bi bi-chevron-right"></i>
+        </a>
+      <% } %>
+    </div>
+  </div>
+  <% } %>
+
+</div><!-- /card -->
+
+</main>
+</div><!-- /main-content -->
+
+<!-- Toast element -->
+<div class="notif-toast" id="notifToast" style="display:none">
+  <i class="bi bi-check-circle-fill"></i>
+  <span id="notifToastMsg">Done!</span>
+</div>
+
+<script>
+/* ── Filter ── */
+function filterNotifs(btn, filter) {
+  document.querySelectorAll('.notif-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.notif-item').forEach(item => {
+    const type   = item.dataset.type;
+    const isRead = item.dataset.read === '1';
+    let show = false;
+    if (filter === 'all')            show = true;
+    else if (filter === 'unread')    show = !isRead;
+    else                             show = (type === filter);
+    item.style.display = show ? 'flex' : 'none';
+  });
+}
+
+/* ── Mark single as read (AJAX) ── */
+function markRead(id, btn) {
+  fetch('/admin/notifications/' + id + '/read', { method: 'PUT', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const item = document.querySelector('.notif-item[data-id="' + id + '"]');
+        if (item) {
+          item.classList.remove('unread');
+          item.dataset.read = '1';
+          item.querySelector('::before');
+          const badge = item.querySelector('.badge-success');
+          if (badge) badge.remove();
+          btn.remove();
+        }
+        showToast('Marked as read');
+        updateUnreadBadge(-1);
+      }
+    });
+}
+
+/* ── Delete single (AJAX) ── */
+function deleteNotif(id, btn) {
+  if (!confirm('Delete this notification?')) return;
+  fetch('/admin/notifications/' + id, { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const item = document.querySelector('.notif-item[data-id="' + id + '"]');
+        if (item) {
+          item.classList.add('removing');
+          const wasUnread = item.dataset.read === '0';
+          setTimeout(() => { item.remove(); checkEmpty(); }, 320);
+          if (wasUnread) updateUnreadBadge(-1);
+        }
+        showToast('Notification deleted');
+      }
+    });
+}
+
+/* ── Click on notification row ── */
+function handleNotifClick(item, e) {
+  if (e.target.closest('.notif-actions') || e.target.closest('.notif-check')) return;
+  const id   = item.dataset.id;
+  const link = item.dataset.link;
+  if (item.dataset.read === '0') markReadSilent(id, item);
+  if (link) window.location.href = link;
+}
+function markReadSilent(id, item) {
+  fetch('/admin/notifications/' + id + '/read', { method: 'PUT', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(r => r.json()).then(d => { if(d.success){ item.classList.remove('unread'); item.dataset.read='1'; updateUnreadBadge(-1); } });
+}
+
+/* ── Bulk select ── */
+let selectedIds = new Set();
+function toggleSelect(cb) {
+  const id = cb.closest('.notif-item').dataset.id;
+  cb.checked ? selectedIds.add(id) : selectedIds.delete(id);
+  const bar = document.getElementById('bulkBar');
+  bar.classList.toggle('visible', selectedIds.size > 0);
+  document.getElementById('bulkCount').textContent = selectedIds.size + ' selected';
+}
+function clearSelection() {
+  selectedIds.clear();
+  document.querySelectorAll('.notif-check').forEach(cb => cb.checked = false);
+  document.getElementById('bulkBar').classList.remove('visible');
+}
+function bulkMarkRead() {
+  fetch('/admin/notifications/bulk-read', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    body: JSON.stringify({ ids: Array.from(selectedIds) })
+  }).then(r => r.json()).then(d => {
+    if (d.success) {
+      selectedIds.forEach(id => {
+        const item = document.querySelector('.notif-item[data-id="' + id + '"]');
+        if (item) { item.classList.remove('unread'); item.dataset.read = '1'; const b = item.querySelector('.badge-success'); if(b) b.remove(); }
+      });
+      showToast(d.count + ' marked as read');
+      clearSelection();
+    }
+  });
+}
+function bulkDelete() {
+  if (!confirm('Delete selected notifications?')) return;
+  fetch('/admin/notifications/bulk-delete', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    body: JSON.stringify({ ids: Array.from(selectedIds) })
+  }).then(r => r.json()).then(d => {
+    if (d.success) {
+      selectedIds.forEach(id => {
+        const item = document.querySelector('.notif-item[data-id="' + id + '"]');
+        if (item) { item.classList.add('removing'); setTimeout(() => item.remove(), 320); }
+      });
+      showToast(d.count + ' deleted');
+      clearSelection();
+      setTimeout(checkEmpty, 400);
+    }
+  });
+}
+
+/* ── Helpers ── */
+function checkEmpty() {
+  const list  = document.getElementById('notifList');
+  const items = list.querySelectorAll('.notif-item');
+  if (!items.length) {
+    list.innerHTML = '<div class="notif-empty"><i class="bi bi-bell-slash"></i><h3>You\'re all caught up!</h3><p>No notifications at the moment.</p></div>';
+  }
+}
+function updateUnreadBadge(delta) {
+  const dot = document.querySelector('.notif-dot');
+  const badge = document.querySelector('.topbar-btn .badge, .topbar-btn .notif-dot');
+  // Update stats bar
+  const statEls = document.querySelectorAll('.notif-stat strong');
+  if (statEls[1]) {
+    let cur = parseInt(statEls[1].textContent) + delta;
+    if (cur < 0) cur = 0;
+    statEls[1].textContent = cur;
+    if (dot) dot.style.display = cur > 0 ? '' : 'none';
+  }
+}
+let toastTimer;
+function showToast(msg) {
+  const toast = document.getElementById('notifToast');
+  document.getElementById('notifToastMsg').textContent = msg;
+  toast.style.display = 'flex';
+  toast.style.animation = 'toastIn 0.3s ease';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.style.animation = 'toastOut 0.3s ease forwards';
+    setTimeout(() => { toast.style.display = 'none'; }, 300);
+  }, 2500);
+}
+</script>
+
+<%- include('../partials/scripts') %>
+</body>
+</html>

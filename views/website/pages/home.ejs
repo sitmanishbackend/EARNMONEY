@@ -42,7 +42,7 @@
           </div>
         <% } %>
         <div class="hero-overlay">
-          <div class="ho-cat"><%= post.category ? (post.category.name_hi||post.category.name) : '' %></div>
+          <div class="ho-cat"><%= post.category ? (post.category_name_hi||post.category_name) : '' %></div>
           <div class="ho-title"><%= post.title_hi||post.title %></div>
         </div>
       </a>
@@ -85,7 +85,7 @@
               <% } %>
             </div>
             <div class="pc-body">
-              <div class="pc-cat"><%= post.category ? (post.category.name_hi||post.category.name) : 'General' %></div>
+              <div class="pc-cat"><%= post.category ? (post.category_name_hi||post.category_name) : 'General' %></div>
               <div class="pc-title"><%= post.title_hi||post.title %></div>
               <div class="pc-desc"><%= (post.short_description_hi||post.short_description||'').substring(0,100) %><%= (post.short_description||'').length>100?'...':'' %></div>
               <div class="pc-meta">
@@ -135,7 +135,7 @@
               <span><%= post.category ? post.category.icon||'📰' : '📰' %></span><% } %>
             </div>
             <div>
-              <div class="rp-cat"><%= post.category ? (post.category.name_hi||post.category.name) : '' %></div>
+              <div class="rp-cat"><%= post.category ? (post.category_name_hi||post.category_name) : '' %></div>
               <div class="rp-title"><%= (post.title_hi||post.title).substring(0,55) %>...</div>
               <div class="rp-date"><i class="bi bi-eye"></i> <%= (post.views||0).toLocaleString() %></div>
             </div>

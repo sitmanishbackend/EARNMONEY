@@ -65,7 +65,7 @@
               <div style="font-weight:600;font-size:0.82rem;max-width:300px"><%= post.title.substring(0,60) %><%= post.title.length>60?'...':'' %></div>
               <% if(post.title_hi){ %><div style="font-size:0.7rem;color:var(--text3);font-family:'Noto Sans Devanagari',sans-serif"><%= post.title_hi.substring(0,50) %>...</div><% } %>
             </td>
-            <td><% if(post.category){ %><span class="badge badge-primary"><%= post.category.name %></span><% } %></td>
+            <td><% if(post.category_name){ %><span class="badge badge-primary"><%= post.category_name %></span><% } %></td>
             <td><span class="badge badge-<%= post.status==='published'?'success':post.status==='draft'?'secondary':'warning' %>"><%= post.status %></span></td>
             <td><i class="bi bi-eye" style="color:var(--text3)"></i> <%= (post.views||0).toLocaleString() %></td>
             <td><% if(post.is_featured){ %><i class="bi bi-star-fill" style="color:#f59e0b"></i><% } else { %><i class="bi bi-star" style="color:var(--border)"></i><% } %></td>

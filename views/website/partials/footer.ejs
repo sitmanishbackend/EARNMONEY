@@ -84,4 +84,347 @@ document.querySelectorAll('[data-ad-id]').forEach(ad=>{
 });
 </script>
 <% if(siteSettings && siteSettings.footer_script){ %><%- siteSettings.footer_script %><% } %>
+
+<!-- ============================================ -->
+<!-- MYXOS AI CHAT WIDGET                          -->
+<!-- Replace the old <div id="aiChatBtn"> block     -->
+<!-- in your footer.ejs with everything below.       -->
+<!-- ============================================ -->
+
+<!-- Floating Button -->
+<div id="myxosFab" onclick="toggleMyxosChat()">
+  <span class="myxos-fab-tooltip">Myxos AI से पूछें</span>
+  <i class="bi bi-robot"></i>
+</div>
+
+<!-- Chat Window -->
+<div id="myxosChatWindow">
+  <div class="myxos-header">
+    <div class="myxos-header-left">
+      <div class="myxos-avatar"><i class="bi bi-robot"></i></div>
+      <div>
+        <div class="myxos-title">Myxos AI</div>
+        <div class="myxos-status"><span class="myxos-dot"></span> Online</div>
+      </div>
+    </div>
+    <button class="myxos-close" onclick="toggleMyxosChat()"><i class="bi bi-x-lg"></i></button>
+  </div>
+
+  <div id="myxosMessages" class="myxos-messages">
+    <div class="myxos-msg myxos-msg-bot">
+      नमस्ते! 👋 मैं Myxos AI हूँ। Online earning, freelancing, investment या business ideas से जुड़ा कोई भी सवाल पूछिए।
+    </div>
+  </div>
+
+  <div id="myxosTyping" class="myxos-typing" style="display:none">
+    <div class="myxos-msg myxos-msg-bot myxos-typing-bubble">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="myxos-input-row">
+    <input
+      type="text"
+      id="myxosInput"
+      placeholder="अपना सवाल लिखें..."
+      onkeydown="if(event.key==='Enter') sendMyxosMessage()"
+      autocomplete="off"
+    />
+    <button id="myxosSendBtn" onclick="sendMyxosMessage()">
+      <i class="bi bi-send-fill"></i>
+    </button>
+  </div>
+</div>
+
+<style>
+/* ===== Floating Action Button ===== */
+#myxosFab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent, #6366f1), var(--accent-dark, #4338ca));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
+  z-index: 999;
+  animation: myxos-pulse 2.5s infinite;
+  transition: transform 0.2s ease;
+}
+#myxosFab:hover {
+  transform: scale(1.08);
+}
+#myxosFab:hover .myxos-fab-tooltip {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@keyframes myxos-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.45); }
+  70%  { box-shadow: 0 0 0 14px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+.myxos-fab-tooltip {
+  position: absolute;
+  right: 70px;
+  background: #1f2937;
+  color: #fff;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-family: var(--font-hi, inherit);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+.myxos-fab-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -5px;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-left-color: #1f2937;
+}
+
+/* ===== Chat Window ===== */
+#myxosChatWindow {
+  position: fixed;
+  bottom: 96px;
+  right: 24px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  height: 520px;
+  max-height: calc(100vh - 140px);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.22);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 1000;
+  font-family: var(--font-hi, inherit);
+}
+#myxosChatWindow.open {
+  display: flex;
+  animation: myxos-slide-up 0.25s ease;
+}
+@keyframes myxos-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.myxos-header {
+  background: linear-gradient(135deg, var(--accent, #6366f1), var(--accent-dark, #4338ca));
+  color: #fff;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.myxos-header-left { display: flex; align-items: center; gap: 0.6rem; }
+.myxos-avatar {
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.myxos-title { font-weight: 700; font-size: 0.92rem; }
+.myxos-status { font-size: 0.7rem; opacity: 0.85; display: flex; align-items: center; gap: 0.3rem; }
+.myxos-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #4ade80; display: inline-block;
+}
+.myxos-close {
+  background: rgba(255,255,255,0.15);
+  border: none; color: #fff;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+}
+.myxos-close:hover { background: rgba(255,255,255,0.28); }
+
+.myxos-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: #f9fafb;
+}
+.myxos-msg {
+  max-width: 82%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 14px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+.myxos-msg-bot {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+.myxos-msg-user {
+  background: linear-gradient(135deg, var(--accent, #6366f1), var(--accent-dark, #4338ca));
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.myxos-msg-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  align-self: flex-start;
+}
+
+.myxos-typing { padding: 0 1rem; background: #f9fafb; }
+.myxos-typing-bubble {
+  display: inline-flex;
+  gap: 4px;
+  padding: 0.7rem 1rem;
+}
+.myxos-typing-bubble span {
+  width: 6px; height: 6px;
+  background: #9ca3af;
+  border-radius: 50%;
+  animation: myxos-bounce 1.2s infinite;
+}
+.myxos-typing-bubble span:nth-child(2) { animation-delay: 0.15s; }
+.myxos-typing-bubble span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes myxos-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+.myxos-input-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+}
+#myxosInput {
+  flex: 1;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  outline: none;
+  font-family: var(--font-hi, inherit);
+}
+#myxosInput:focus { border-color: var(--accent, #6366f1); }
+#myxosSendBtn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--accent, #6366f1), var(--accent-dark, #4338ca));
+  color: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+#myxosSendBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+#myxosSendBtn:hover:not(:disabled) { transform: scale(1.06); }
+
+@media (max-width: 480px) {
+  #myxosChatWindow {
+    right: 16px;
+    bottom: 90px;
+    width: calc(100vw - 32px);
+  }
+  #myxosFab { right: 16px; bottom: 16px; }
+}
+</style>
+
+<script>
+(function() {
+  let myxosHistory = [];
+  let myxosOpen = false;
+
+  window.toggleMyxosChat = function() {
+    const win = document.getElementById('myxosChatWindow');
+    myxosOpen = !myxosOpen;
+    win.classList.toggle('open', myxosOpen);
+    if (myxosOpen) {
+      document.getElementById('myxosInput').focus();
+    }
+  };
+
+  function appendMessage(text, type) {
+    const box = document.getElementById('myxosMessages');
+    const div = document.createElement('div');
+    div.className = 'myxos-msg ' + (
+      type === 'user' ? 'myxos-msg-user' :
+      type === 'error' ? 'myxos-msg-error' : 'myxos-msg-bot'
+    );
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function showTyping(show) {
+    document.getElementById('myxosTyping').style.display = show ? 'block' : 'none';
+    const box = document.getElementById('myxosMessages');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  window.sendMyxosMessage = async function() {
+    const input = document.getElementById('myxosInput');
+    const sendBtn = document.getElementById('myxosSendBtn');
+    const message = input.value.trim();
+    if (!message) return;
+
+    appendMessage(message, 'user');
+    myxosHistory.push({ role: 'user', content: message });
+    input.value = '';
+    input.disabled = true;
+    sendBtn.disabled = true;
+    showTyping(true);
+
+    try {
+      const res = await fetch('/api/myxos-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, history: myxosHistory })
+      });
+
+      const data = await res.json();
+      showTyping(false);
+
+      if (!res.ok) {
+        appendMessage(data.error || 'कुछ गड़बड़ हो गई। दोबारा कोशिश करें।', 'error');
+      } else {
+        appendMessage(data.reply, 'bot');
+        myxosHistory.push({ role: 'assistant', content: data.reply });
+        // keep history from growing forever
+        if (myxosHistory.length > 20) myxosHistory = myxosHistory.slice(-20);
+      }
+    } catch (err) {
+      showTyping(false);
+      appendMessage('Network error। कृपया अपना internet connection check करें।', 'error');
+    } finally {
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  };
+})();
+</script>
 </body></html>

@@ -1,230 +1,1345 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title><%= title %> – Dreams Admin</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <%- include('../partials/head') %>
-</head><body>
+<style>
+*{box-sizing:border-box}
+
+/* ── TOP BAR ── */
+.post-topbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);flex-wrap:wrap;position:sticky;top:0;z-index:90}
+.post-topbar .ptb-brand{font-weight:700;font-size:14px;color:var(--text1);display:flex;align-items:center;gap:6px}
+.ptb-brand i{color:var(--accent)}
+.ptb-autosave{display:flex;align-items:center;gap:6px;padding:4px 12px;background:var(--bg2);border-radius:20px;border:1px solid var(--border);font-size:11px;color:var(--text3)}
+.ptb-autosave-dot{width:7px;height:7px;border-radius:50%;background:var(--border)}
+.ptb-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.reading-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:var(--bg2);border:1px solid var(--border);color:var(--text3);font-size:11px;font-weight:500}
+
+/* ── LAYOUT ── */
+.post-editor-layout{display:grid;grid-template-columns:48px 1fr 300px;min-height:calc(100vh - 120px);align-items:start}
+
+/* ── ICON NAV ── */
+.post-icon-nav{background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:4px;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto}
+.pin-btn{width:36px;height:36px;border:none;background:transparent;color:var(--text3);cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s;position:relative}
+.pin-btn:hover,.pin-btn.active{background:var(--bg2);color:var(--accent)}
+.pin-btn .ptip{position:absolute;left:44px;top:50%;transform:translateY(-50%);background:var(--text1);color:var(--bg);font-size:11px;padding:3px 8px;border-radius:4px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:100}
+.pin-btn:hover .ptip{opacity:1}
+.pin-sep{width:24px;height:1px;background:var(--border);margin:6px 0}
+
+/* ── CENTER ── */
+.post-center{display:flex;flex-direction:column;gap:0}
+.post-tab-strip{display:flex;align-items:center;background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;gap:2px;position:sticky;top:60px;z-index:80;overflow-x:auto}
+.ptab{padding:10px 14px;font-size:12px;font-weight:600;color:var(--text3);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;gap:5px;white-space:nowrap;font-family:inherit}
+.ptab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.ptab:hover:not(.active){color:var(--text2)}
+
+/* ── PANELS ── */
+.post-panel{display:none;flex-direction:column;gap:14px;padding:16px}
+.post-panel.active{display:flex}
+
+/* ── CARDS ── */
+.pcard{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.pcard-h{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border)}
+.pcard-h-l{display:flex;align-items:center;gap:8px;font-weight:600;font-size:12px;color:var(--text2)}
+.pcard-h-l i{font-size:14px;color:var(--accent)}
+.pcard-b{padding:14px}
+
+/* ── FORM ── */
+.pform-label{display:block;font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.pfg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.pfg:last-child{margin-bottom:0}
+
+/* ── LANG SWITCH ── */
+.lang-sw{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.lang-sw button{flex:1;padding:4px 10px;border:none;background:transparent;font-size:11px;font-weight:700;color:var(--text3);cursor:pointer;transition:all .15s;font-family:inherit}
+.lang-sw button.active{background:var(--accent);color:#fff}
+
+/* ── CHAR METER ── */
+.char-bar{height:3px;border-radius:2px;background:var(--bg2);margin-top:4px;overflow:hidden}
+.char-fill{height:100%;border-radius:2px;transition:width .2s,background .2s}
+
+/* ── RICH TOOLBAR ── */
+.rich-toolbar{display:flex;flex-wrap:wrap;gap:2px;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.rtb-btn{width:28px;height:28px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .1s;font-family:inherit}
+.rtb-btn:hover{background:var(--bg);color:var(--text1)}
+.rtb-btn.active{background:var(--accent);color:#fff}
+.rtb-sep{width:1px;height:22px;background:var(--border);margin:0 3px;align-self:center;flex-shrink:0}
+.rtb-sel{height:28px;padding:0 6px;font-size:12px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text1);font-family:inherit}
+
+/* ── EDITOR AREA ── */
+.rich-editor-area{min-height:380px;padding:20px;outline:none;font-size:14px;line-height:1.8;color:var(--text1);overflow-y:auto;background:var(--bg)}
+.rich-editor-area:empty::before{content:attr(data-placeholder);color:var(--text3)}
+.rich-editor-area h1,.rich-editor-area h2,.rich-editor-area h3{margin:.5em 0 .3em;font-weight:700}
+.rich-editor-area p{margin:.3em 0}
+.rich-editor-area blockquote{border-left:3px solid var(--accent);padding:.5em 1em;background:var(--bg2);margin:1em 0;border-radius:0 8px 8px 0;color:var(--text2)}
+.rich-editor-area code{background:var(--bg2);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px}
+.rich-editor-area pre{background:var(--bg2);padding:12px;border-radius:8px;font-size:12px;margin:1em 0;overflow-x:auto}
+.rich-editor-area ul,.rich-editor-area ol{padding-left:1.5em;margin:.5em 0}
+.rich-editor-area table{border-collapse:collapse;width:100%;margin:1em 0;font-size:13px}
+.rich-editor-area table td,.rich-editor-area table th{border:1px solid var(--border);padding:6px 10px}
+.rich-editor-area table th{background:var(--bg2);font-weight:600}
+.rich-editor-area a{color:var(--accent)}
+.rich-editor-area figure{margin:1.5em 0;text-align:center}
+.rich-editor-area figure img{max-width:100%;border-radius:8px}
+.rich-editor-area figure figcaption{font-size:12px;color:var(--text3);margin-top:6px}
+
+/* ── WORD COUNT BAR ── */
+.wc-bar{display:flex;gap:16px;padding:6px 14px;border-top:1px solid var(--border);background:var(--bg2);font-size:11px;color:var(--text3);flex-wrap:wrap}
+.wc-item{display:flex;align-items:center;gap:4px}
+
+/* ── TABLE PICKER ── */
+.table-picker-popup{display:none;position:fixed;z-index:200;background:var(--bg);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.15);padding:8px}
+.tpg{display:grid;grid-template-columns:repeat(6,22px);gap:3px}
+.tpc{width:22px;height:22px;border:1px solid var(--border);border-radius:3px;cursor:pointer;background:var(--bg2);transition:background .1s}
+.tpc:hover,.tpc.hov{background:rgba(var(--accent-rgb,26,115,232),.2);border-color:var(--accent)}
+
+/* ── IMAGE DROP ── */
+.img-dropzone{border:2px dashed var(--border);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:var(--bg2)}
+.img-dropzone:hover,.img-dropzone.dragover{border-color:var(--accent)}
+.img-dropzone i.drop-icon{font-size:36px;color:var(--text3);display:block;margin-bottom:8px}
+.img-preview-el{width:100%;border-radius:8px;display:none;max-height:220px;object-fit:cover}
+.img-preview-el.show{display:block}
+.img-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+
+/* ── SEO ── */
+.seo-ring-wrap{display:flex;align-items:center;gap:10px}
+.seo-ring{display:inline-block;width:40px;height:40px;position:relative}
+.seo-ring svg{transform:rotate(-90deg)}
+.seo-ring .seo-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text1)}
+.seo-check-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border)}
+.seo-check-row:last-child{border:none}
+.serp-box{border:1px solid var(--border);border-radius:8px;padding:12px 14px;background:var(--bg2);margin-bottom:12px}
+.serp-title{font-size:17px;color:#1a0dab;margin-bottom:2px;font-weight:400}
+.serp-url{font-size:12px;color:#006621;margin-bottom:4px}
+.serp-desc{font-size:13px;color:#545454;line-height:1.5}
+
+/* ── CUSTOM FIELDS ── */
+.cf-row{display:grid;grid-template-columns:20px 1fr 100px 1fr 28px;gap:6px;align-items:center;padding:8px;background:var(--bg2);border-radius:8px;margin-bottom:6px;border:1px solid var(--border)}
+.cf-grip{cursor:grab;color:var(--text3);font-size:14px;text-align:center}
+
+/* ── REVISIONS ── */
+.rev-item{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:8px;cursor:pointer;transition:border .15s;margin-bottom:6px}
+.rev-item:hover{border-color:var(--accent)}
+.rev-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0}
+.rev-dot.current{background:#16a34a}
+
+/* ── AI CHIPS ── */
+.ai-chip{padding:5px 12px;border:1px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;background:var(--bg);color:var(--text2);transition:all .15s;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
+.ai-chip:hover{border-color:var(--accent);color:var(--accent)}
+.ai-chips-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+
+/* ── RIGHT PANEL ── */
+.post-right{background:var(--bg);border-left:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto}
+.right-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.rtab-btn{flex:1;padding:9px 4px;font-size:11px;font-weight:600;color:var(--text3);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;text-align:center;font-family:inherit}
+.rtab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.rpanel-c{display:none;flex-direction:column;gap:10px;padding:12px}
+.rpanel-c.active{display:flex}
+
+/* ── COLLAPSIBLE SECTIONS ── */
+.ps-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg)}
+.ps-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none;background:var(--bg);transition:background .15s}
+.ps-hdr:hover{background:var(--bg2)}
+.ps-hdr-l{display:flex;align-items:center;gap:8px;font-weight:600;font-size:12px;color:var(--text2)}
+.ps-hdr-l i:first-child{color:var(--accent);font-size:14px}
+.ps-body{padding:12px 14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.ps-body.collapsed{display:none}
+
+/* ── BADGES ── */
+.pbadge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+
+/* ── TAGS ── */
+.tag-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:500}
+.tag-chip button{border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:0}
+
+/* ── FOCUS OVERLAY ── */
+.focus-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;display:none;align-items:center;justify-content:center}
+.focus-overlay.show{display:flex}
+.focus-modal{width:740px;max-height:85vh;background:var(--bg);border-radius:14px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+
+/* ── NOTIFICATION ── */
+.pnotif{position:fixed;top:16px;right:16px;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);opacity:0;pointer-events:none;transition:opacity .2s}
+.pnotif.show{opacity:1;pointer-events:auto}
+.pnotif-success{background:#f0fdf4;color:#16a34a;border:1px solid #16a34a}
+.pnotif-info{background:#eff6ff;color:#2563eb;border:1px solid #2563eb}
+
+/* ── MEDIA GRID ── */
+.media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.media-item{aspect-ratio:1;border-radius:8px;background:var(--bg2);border:2px solid transparent;cursor:pointer;overflow:hidden;position:relative;transition:border .15s}
+.media-item:hover,.media-item.sel{border-color:var(--accent)}
+.media-item img{width:100%;height:100%;object-fit:cover}
+.media-check{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;display:none;align-items:center;justify-content:center;font-size:11px}
+.media-item.sel .media-check{display:flex}
+
+/* ── SCHEMA ── */
+.schema-code{background:var(--bg2);border-radius:8px;padding:10px;font-size:11px;font-family:monospace;color:var(--text2);max-height:200px;overflow-y:auto;border:1px solid var(--border);white-space:pre-wrap;word-break:break-all}
+
+/* ── SLUG PREVIEW ── */
+.slug-preview{display:flex;align-items:center;gap:4px;background:var(--bg2);padding:5px 10px;border-radius:6px;font-size:11px;color:var(--text3);border:1px solid var(--border);margin-top:4px;word-break:break-all;flex-wrap:wrap}
+.slug-preview span{color:var(--accent);font-weight:500}
+
+/* ── TOOLTIPS ── */
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:var(--text1);color:var(--bg);font-size:11px;padding:3px 7px;border-radius:4px;white-space:nowrap;z-index:200;pointer-events:none;font-family:inherit}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── OG PREVIEW ── */
+.og-img-box{height:130px;background:var(--bg2);display:flex;align-items:center;justify-content:center;color:var(--text3);border-radius:8px 8px 0 0;overflow:hidden}
+.og-img-box img{width:100%;height:100%;object-fit:cover}
+
+input[type=color]{width:28px;height:26px;padding:2px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:var(--bg)}
+</style>
+</head>
+<body>
 <%- include('../partials/sidebar', { currentRoute: '/admin/posts' }) %>
 <div class="main-content" id="mainContent">
 <%- include('../partials/topbar') %>
-<main class="page-content">
+<main class="page-content" style="padding:0">
 <%- include('../partials/flash') %>
 
-<div class="page-header">
-  <div>
-    <div class="breadcrumb"><a href="/admin/posts">Posts</a><span class="sep">/</span><span><%= post ? 'Edit Post' : 'Create Post' %></span></div>
-    <div class="page-title"><%= post ? 'Edit Post' : 'Create New Post' %></div>
+<!-- TOP BAR -->
+<div class="post-topbar">
+  <div class="ptb-brand">
+    <i class="bi bi-stars"></i>
+    <a href="/admin/posts" style="color:var(--text2);text-decoration:none;font-weight:400;font-size:13px">Posts</a>
+    <span style="color:var(--text3)">/</span>
+    <span><%= post ? 'Edit Post' : 'New Post' %></span>
   </div>
-  <a href="/admin/posts" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+  <div class="ptb-autosave">
+    <div class="ptb-autosave-dot" id="autoSaveDot"></div>
+    <span id="autoSaveLabel">Unsaved</span>
+  </div>
+  <div class="reading-badge"><i class="bi bi-clock"></i> <span id="readTimeTop">0 min</span></div>
+  <div class="ptb-right">
+    <button class="btn btn-sm" onclick="toggleFocusMode()"><i class="bi bi-arrows-fullscreen"></i> Focus</button>
+    <a href="<%= post ? '/blog/'+post.slug : '#' %>" target="_blank" class="btn btn-sm"><i class="bi bi-eye"></i> Preview</a>
+    <button class="btn btn-sm" onclick="saveDraft()"><i class="bi bi-floppy"></i> Save Draft</button>
+    <button class="btn btn-primary btn-sm" onclick="publishPost()"><i class="bi bi-send"></i> Publish</button>
+  </div>
 </div>
 
-<form method="POST" action="<%= post ? '/admin/posts/'+post.id+'?_method=PUT' : '/admin/posts' %>" enctype="multipart/form-data">
-<div class="grid" style="grid-template-columns:1fr 320px;align-items:start">
+<!-- LAYOUT -->
+<div class="post-editor-layout">
 
-  <!-- MAIN CONTENT -->
-  <div style="display:flex;flex-direction:column;gap:1.25rem">
-    <!-- TITLES -->
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="bi bi-type"></i> Post Title</div></div>
-      <div class="card-body">
-        <div class="form-group">
-          <label>English Title <span style="color:#dc2626">*</span></label>
-          <input type="text" name="title" class="form-control" placeholder="Enter post title in English" value="<%= post ? post.title : '' %>" required>
-        </div>
-        <div class="form-group mb-1">
-          <label>Hindi Title (हिंदी शीर्षक)</label>
-          <input type="text" name="title_hi" class="form-control" placeholder="हिंदी में शीर्षक दर्ज करें" value="<%= post ? (post.title_hi||'') : '' %>" style="font-family:'Noto Sans Devanagari',sans-serif">
+<!-- ICON NAV -->
+<div class="post-icon-nav">
+  <button class="pin-btn active" onclick="switchPanel('write',this)" title="Write"><i class="bi bi-pencil-square"></i><span class="ptip">Write</span></button>
+  <button class="pin-btn" onclick="switchPanel('media',this)"><i class="bi bi-images"></i><span class="ptip">Media</span></button>
+  <button class="pin-btn" onclick="switchPanel('seo',this)"><i class="bi bi-graph-up"></i><span class="ptip">SEO</span></button>
+  <button class="pin-btn" onclick="switchPanel('custom',this)"><i class="bi bi-sliders"></i><span class="ptip">Fields</span></button>
+  <button class="pin-btn" onclick="switchPanel('suggest',this)"><i class="bi bi-link-45deg"></i><span class="ptip">Suggest</span></button>
+  <div class="pin-sep"></div>
+  <button class="pin-btn" onclick="switchPanel('revisions',this)"><i class="bi bi-clock-history"></i><span class="ptip">History</span></button>
+  <button class="pin-btn" onclick="switchPanel('ai',this)"><i class="bi bi-robot"></i><span class="ptip">AI Writer</span></button>
+</div>
+
+<!-- CENTER -->
+<div class="post-center">
+  <div class="post-tab-strip">
+    <button class="ptab active" id="tab-write" onclick="switchPanel('write',null,'tab-write')"><i class="bi bi-pencil-square"></i> Write</button>
+    <button class="ptab" id="tab-media" onclick="switchPanel('media',null,'tab-media')"><i class="bi bi-images"></i> Media</button>
+    <button class="ptab" id="tab-seo" onclick="switchPanel('seo',null,'tab-seo')"><i class="bi bi-graph-up"></i> SEO</button>
+    <button class="ptab" id="tab-custom" onclick="switchPanel('custom',null,'tab-custom')"><i class="bi bi-sliders"></i> Custom Fields</button>
+    <button class="ptab" id="tab-suggest" onclick="switchPanel('suggest',null,'tab-suggest')"><i class="bi bi-link-45deg"></i> Suggested</button>
+    <button class="ptab" id="tab-revisions" onclick="switchPanel('revisions',null,'tab-revisions')"><i class="bi bi-clock-history"></i> History</button>
+    <button class="ptab" id="tab-ai" onclick="switchPanel('ai',null,'tab-ai')"><i class="bi bi-robot"></i> AI</button>
+  </div>
+
+  <!-- ── WRITE PANEL ── -->
+  <div class="post-panel active" id="panel-write">
+
+    <!-- TITLE -->
+    <div class="pcard">
+      <div class="pcard-h">
+        <div class="pcard-h-l"><i class="bi bi-fonts"></i> Post Title</div>
+        <div class="lang-sw" id="titleLangSw">
+          <button class="active" onclick="switchTitleLang('en',this)">EN</button>
+          <button onclick="switchTitleLang('hi',this)">हिं</button>
         </div>
       </div>
-    </div>
-
-    <!-- SHORT DESCRIPTION -->
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="bi bi-card-text"></i> Short Description</div></div>
-      <div class="card-body">
-        <div class="form-group">
-          <label>English</label>
-          <textarea name="short_description" class="form-control" rows="2" placeholder="Brief description for SEO and card preview..."><%= post ? (post.short_description||'') : '' %></textarea>
-        </div>
-        <div class="form-group mb-1">
-          <label>Hindi (संक्षिप्त विवरण)</label>
-          <textarea name="short_description_hi" class="form-control" rows="2" placeholder="हिंदी में संक्षिप्त विवरण..." style="font-family:'Noto Sans Devanagari',sans-serif"><%= post ? (post.short_description_hi||'') : '' %></textarea>
-        </div>
-      </div>
-    </div>
-
-    <!-- CONTENT -->
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="bi bi-file-richtext"></i> Content</div></div>
-      <div class="card-body">
-        <div class="tabs">
-          <button type="button" class="tab-btn active" onclick="switchTab(this,'tab-en')">🇬🇧 English</button>
-          <button type="button" class="tab-btn" onclick="switchTab(this,'tab-hi')">🇮🇳 Hindi</button>
-        </div>
-        <div id="tab-en" class="tab-content active">
-          <textarea name="content" class="form-control" rows="15" placeholder="Write your post content in English... Use HTML tags for formatting."><%= post ? (post.content||'') : '' %></textarea>
-        </div>
-        <div id="tab-hi" class="tab-content">
-          <textarea name="content_hi" class="form-control" rows="15" placeholder="हिंदी में पोस्ट सामग्री लिखें..." style="font-family:'Noto Sans Devanagari',sans-serif"><%= post ? (post.content_hi||'') : '' %></textarea>
-        </div>
-      </div>
-    </div>
-
-    <!-- CUSTOM FIELDS -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title"><i class="bi bi-plus-square"></i> Custom Fields</div>
-        <button type="button" class="btn btn-sm btn-outline" onclick="addCustomField()"><i class="bi bi-plus"></i> Add Field</button>
-      </div>
-      <div class="card-body">
-        <div id="customFields">
-          <% if(post && post.customFields && post.customFields.length) { %>
-            <% post.customFields.forEach((field, i) => { %>
-            <div class="custom-field-row" style="display:grid;grid-template-columns:1fr 120px 1fr 36px;gap:0.5rem;margin-bottom:0.75rem;align-items:start">
-              <input type="text" name="custom_labels[]" class="form-control" placeholder="Field Label" value="<%= field.field_label %>">
-              <select name="custom_types[]" class="form-control">
-                <option value="text" <%= field.field_type==='text'?'selected':'' %>>Text</option>
-                <option value="textarea" <%= field.field_type==='textarea'?'selected':'' %>>Textarea</option>
-                <option value="number" <%= field.field_type==='number'?'selected':'' %>>Number</option>
-                <option value="url" <%= field.field_type==='url'?'selected':'' %>>URL</option>
-                <option value="date" <%= field.field_type==='date'?'selected':'' %>>Date</option>
-              </select>
-              <input type="text" name="custom_values[]" class="form-control" placeholder="Field Value" value="<%= field.field_value %>">
-              <button type="button" class="btn btn-xs btn-danger" onclick="this.closest('.custom-field-row').remove()"><i class="bi bi-trash"></i></button>
+      <div class="pcard-b">
+        <div id="titleEN-wrap">
+          <div class="pfg">
+            <label class="pform-label">English Title <span style="color:#dc2626">*</span></label>
+            <input type="text" name="title" id="titleInput" class="form-control" placeholder="Enter post title in English..." value="<%= post ? post.title : '' %>" oninput="onTitleInput(this.value)" style="font-size:15px;font-weight:600;padding:10px 12px" required>
+            <div class="char-bar"><div class="char-fill" id="titleCharFill" style="width:0%;background:#16a34a"></div></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;flex-wrap:wrap;gap:6px">
+              <div class="slug-preview">yourdomain.com/blog/<span id="slugPreview"><%= post ? post.slug : 'post-slug' %></span>
+                <button type="button" onclick="editSlug()" style="border:none;background:transparent;color:var(--accent);cursor:pointer;font-size:11px;padding:0 4px" data-tip="Edit slug"><i class="bi bi-pencil"></i></button>
+              </div>
+              <span style="font-size:11px;color:var(--text3)" id="titleCharCount">0/70</span>
             </div>
-            <% }) %>
+          </div>
+        </div>
+        <div id="titleHI-wrap" style="display:none">
+          <div class="pfg">
+            <label class="pform-label">हिंदी शीर्षक</label>
+            <input type="text" name="title_hi" id="titleHiInput" class="form-control" placeholder="हिंदी में शीर्षक दर्ज करें..." value="<%= post ? (post.title_hi||'') : '' %>" style="font-family:'Noto Sans Devanagari',sans-serif;font-size:15px">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHORT DESC -->
+    <div class="pcard">
+      <div class="pcard-h">
+        <div class="pcard-h-l"><i class="bi bi-card-text"></i> Short Description</div>
+        <div class="lang-sw">
+          <button class="active" onclick="switchDescLang('en',this)">EN</button>
+          <button onclick="switchDescLang('hi',this)">हिं</button>
+        </div>
+      </div>
+      <div class="pcard-b">
+        <div id="descEN-wrap">
+          <div class="pfg">
+            <label class="pform-label">English</label>
+            <textarea name="short_description" id="descInput" class="form-control" rows="2" placeholder="Brief description for SEO and card previews..." oninput="onDescInput(this.value)"><%= post ? (post.short_description||'') : '' %></textarea>
+            <div class="char-bar"><div class="char-fill" id="descCharFill" style="width:0%"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:3px">
+              <span style="font-size:11px;color:var(--text3)">Ideal: 120-160 chars for SEO</span>
+              <span style="font-size:11px;color:var(--text3)" id="descCharCount">0/160</span>
+            </div>
+          </div>
+        </div>
+        <div id="descHI-wrap" style="display:none">
+          <div class="pfg">
+            <label class="pform-label">हिंदी संक्षिप्त विवरण</label>
+            <textarea name="short_description_hi" class="form-control" rows="2" placeholder="हिंदी में संक्षिप्त विवरण..." style="font-family:'Noto Sans Devanagari',sans-serif"><%= post ? (post.short_description_hi||'') : '' %></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RICH EDITOR -->
+    <div class="pcard" style="display:flex;flex-direction:column">
+      <div class="pcard-h">
+        <div class="pcard-h-l"><i class="bi bi-file-richtext"></i> Content</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="lang-sw">
+            <button class="active" id="contentLangEN" onclick="switchContentLang('en')">EN</button>
+            <button id="contentLangHI" onclick="switchContentLang('hi')">हिं</button>
+          </div>
+          <button class="btn btn-xs" onclick="toggleFocusMode()" data-tip="Distraction-free mode"><i class="bi bi-arrows-fullscreen"></i></button>
+        </div>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="rich-toolbar" id="mainToolbar">
+        <select class="rtb-sel" onchange="execRich('formatBlock',this.value);this.value=''" style="width:110px">
+          <option value="">Paragraph ▾</option>
+          <option value="h1">Heading 1</option>
+          <option value="h2">Heading 2</option>
+          <option value="h3">Heading 3</option>
+          <option value="h4">Heading 4</option>
+          <option value="blockquote">Blockquote</option>
+          <option value="pre">Code Block</option>
+        </select>
+        <select class="rtb-sel" onchange="execRich('fontSize',this.value);this.value=''" style="width:70px">
+          <option value="">Size ▾</option>
+          <option value="1">Small</option>
+          <option value="3">Normal</option>
+          <option value="5">Large</option>
+          <option value="7">Huge</option>
+        </select>
+        <div class="rtb-sep"></div>
+        <button class="rtb-btn" onclick="execRich('bold')" data-tip="Bold"><i class="bi bi-type-bold"></i></button>
+        <button class="rtb-btn" onclick="execRich('italic')" data-tip="Italic"><i class="bi bi-type-italic"></i></button>
+        <button class="rtb-btn" onclick="execRich('underline')" data-tip="Underline"><i class="bi bi-type-underline"></i></button>
+        <button class="rtb-btn" onclick="execRich('strikeThrough')" data-tip="Strikethrough"><i class="bi bi-type-strikethrough"></i></button>
+        <button class="rtb-btn" onclick="execRich('superscript')" data-tip="Superscript"><i class="bi bi-superscript"></i></button>
+        <button class="rtb-btn" onclick="execRich('subscript')" data-tip="Subscript"><i class="bi bi-subscript"></i></button>
+        <div class="rtb-sep"></div>
+        <button class="rtb-btn" onclick="execRich('justifyLeft')" data-tip="Align Left"><i class="bi bi-text-left"></i></button>
+        <button class="rtb-btn" onclick="execRich('justifyCenter')" data-tip="Center"><i class="bi bi-text-center"></i></button>
+        <button class="rtb-btn" onclick="execRich('justifyRight')" data-tip="Right"><i class="bi bi-text-right"></i></button>
+        <button class="rtb-btn" onclick="execRich('justifyFull')" data-tip="Justify"><i class="bi bi-justify"></i></button>
+        <div class="rtb-sep"></div>
+        <button class="rtb-btn" onclick="execRich('insertUnorderedList')" data-tip="Bullet List"><i class="bi bi-list-ul"></i></button>
+        <button class="rtb-btn" onclick="execRich('insertOrderedList')" data-tip="Numbered List"><i class="bi bi-list-ol"></i></button>
+        <button class="rtb-btn" onclick="execRich('indent')" data-tip="Indent"><i class="bi bi-text-indent-left"></i></button>
+        <button class="rtb-btn" onclick="execRich('outdent')" data-tip="Outdent"><i class="bi bi-text-indent-right"></i></button>
+        <button class="rtb-btn" onclick="insertBlockquote()" data-tip="Blockquote"><i class="bi bi-chat-square-quote"></i></button>
+        <button class="rtb-btn" onclick="insertHR()" data-tip="Divider"><i class="bi bi-hr"></i></button>
+        <div class="rtb-sep"></div>
+        <button class="rtb-btn" onclick="insertLink()" data-tip="Insert Link"><i class="bi bi-link-45deg"></i></button>
+        <button class="rtb-btn" onclick="execRich('unlink')" data-tip="Remove Link"><i class="bi bi-link-slash"></i></button>
+        <button class="rtb-btn" onclick="showTablePicker()" id="tablePickerBtn" data-tip="Insert Table"><i class="bi bi-table"></i></button>
+        <button class="rtb-btn" onclick="insertCodeBlock()" data-tip="Code Block"><i class="bi bi-code-slash"></i></button>
+        <div class="rtb-sep"></div>
+        <button class="rtb-btn" onclick="execRich('removeFormat')" data-tip="Clear Formatting"><i class="bi bi-eraser"></i></button>
+        <button class="rtb-btn" onclick="execRich('undo')" data-tip="Undo (Ctrl+Z)"><i class="bi bi-arrow-counterclockwise"></i></button>
+        <button class="rtb-btn" onclick="execRich('redo')" data-tip="Redo (Ctrl+Y)"><i class="bi bi-arrow-clockwise"></i></button>
+        <div class="rtb-sep"></div>
+        <span style="font-size:11px;color:var(--text3);align-self:center">A</span>
+        <input type="color" value="#111111" oninput="execRich('foreColor',this.value)" data-tip="Text Color">
+        <span style="font-size:12px;color:var(--text3);align-self:center"><i class="bi bi-highlighter"></i></span>
+        <input type="color" value="#ffff00" oninput="execRich('hiliteColor',this.value)" data-tip="Highlight">
+      </div>
+
+      <!-- TABLE PICKER POPUP -->
+      <div class="table-picker-popup" id="tablePickerPopup">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:5px;text-align:center">Select table size</div>
+        <div class="tpg" id="tablePickerGrid"></div>
+        <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px" id="tablePickerSize">1 × 1</div>
+      </div>
+
+      <!-- EN EDITOR -->
+      <div id="editorEN-wrap">
+        <div class="rich-editor-area" id="richEditorEN" contenteditable="true" spellcheck="true"
+          data-placeholder="Write your post content in English. Use toolbar above for formatting, tables, links and more..."
+          oninput="onEditorChange()"><%= post ? post.content||'' : '' %></div>
+      </div>
+      <!-- HI EDITOR -->
+      <div id="editorHI-wrap" style="display:none">
+        <div class="rich-editor-area" id="richEditorHI" contenteditable="true" spellcheck="true"
+          data-placeholder="हिंदी में पोस्ट सामग्री लिखें..."
+          style="font-family:'Noto Sans Devanagari',sans-serif"
+          oninput="onEditorChange()"><%= post ? post.content_hi||'' : '' %></div>
+      </div>
+
+      <div class="wc-bar">
+        <div class="wc-item"><i class="bi bi-file-word"></i> <span id="wcWords">0 words</span></div>
+        <div class="wc-item"><i class="bi bi-cursor-text"></i> <span id="wcChars">0 chars</span></div>
+        <div class="wc-item"><i class="bi bi-paragraph"></i> <span id="wcParas">0 paras</span></div>
+        <div class="wc-item"><i class="bi bi-clock"></i> <span id="wcRead">0 min read</span></div>
+        <div class="wc-item"><i class="bi bi-image"></i> <span id="wcImgs">0 images</span></div>
+      </div>
+    </div>
+
+    <!-- SEO BASIC in write -->
+    <div class="pcard">
+      <div class="pcard-h"><div class="pcard-h-l"><i class="bi bi-search"></i> SEO Settings</div></div>
+      <div class="pcard-b">
+        <div class="pfg"><label class="pform-label">Meta Title</label><input type="text" name="meta_title" id="metaTitle" class="form-control" placeholder="SEO title (50-60 chars recommended)" value="<%= post ? (post.meta_title||'') : '' %>" oninput="updateSERP()"></div>
+        <div class="pfg"><label class="pform-label">Meta Description</label><textarea name="meta_desc" id="metaDesc" class="form-control" rows="2" placeholder="SEO description (120-160 chars)..." oninput="updateSERP()"><%= post ? (post.meta_desc||'') : '' %></textarea></div>
+        <div class="pfg"><label class="pform-label">Meta Keywords</label><input type="text" name="meta_keywords" id="metaKw" class="form-control" placeholder="keyword1, keyword2, keyword3" value="<%= post ? (post.meta_keywords||'') : '' %>"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MEDIA PANEL ── -->
+  <div class="post-panel" id="panel-media">
+    <div class="pcard">
+      <div class="pcard-h">
+        <div class="pcard-h-l"><i class="bi bi-image"></i> Featured Image</div>
+        <button type="button" class="btn btn-sm" onclick="document.getElementById('featImgFile').click()"><i class="bi bi-upload"></i> Upload</button>
+      </div>
+      <div class="pcard-b">
+        <div class="img-dropzone" id="imgDropzone"
+          onclick="document.getElementById('featImgFile').click()"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="handleImgDrop(event)">
+          <img class="img-preview-el" id="featImgPreview" alt="Featured Image Preview">
+          <div id="imgDropMsg">
+            <i class="bi bi-cloud-arrow-up drop-icon"></i>
+            <div style="font-weight:600;font-size:13px;color:var(--text2)">Drop image here or click to browse</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">PNG, JPG, WebP · Max 5MB · Recommended 1200×630px</div>
+          </div>
+          <input type="file" name="featured_image" id="featImgFile" accept="image/*" style="display:none" onchange="handleImgUpload(this)">
+        </div>
+        <div id="imgMetaSection" style="display:none;margin-top:12px">
+          <div class="img-meta-grid">
+            <div class="pfg"><label class="pform-label">Width</label><input type="text" id="imgW" readonly class="form-control" style="background:var(--bg2)"></div>
+            <div class="pfg"><label class="pform-label">Height</label><input type="text" id="imgH" readonly class="form-control" style="background:var(--bg2)"></div>
+            <div class="pfg"><label class="pform-label">File Size</label><input type="text" id="imgFileSize" readonly class="form-control" style="background:var(--bg2)"></div>
+            <div class="pfg"><label class="pform-label">Format</label><input type="text" id="imgFormat" readonly class="form-control" style="background:var(--bg2)"></div>
+          </div>
+          <div class="pfg"><label class="pform-label">Alt Text (Accessibility + SEO)</label><input type="text" id="imgAlt" class="form-control" placeholder="Describe the image..."></div>
+          <div class="pfg"><label class="pform-label">Caption</label><input type="text" id="imgCaption" class="form-control" placeholder="Optional caption below image..."></div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button type="button" class="btn btn-sm btn-success" onclick="insertFeatImgIntoContent()"><i class="bi bi-plus-circle"></i> Insert into Content</button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeFeatImg()"><i class="bi bi-trash"></i> Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pcard">
+      <div class="pcard-h"><div class="pcard-h-l"><i class="bi bi-grid-3x3"></i> Media Library</div></div>
+      <div class="pcard-b">
+        <div class="media-grid" id="mediaLibGrid"></div>
+        <div id="mediaLibEmpty" style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Upload images to see them here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SEO PANEL ── -->
+  <div class="post-panel" id="panel-seo">
+    <div class="pcard">
+      <div class="pcard-h">
+        <div class="pcard-h-l"><i class="bi bi-bar-chart-fill"></i> SEO Analysis</div>
+        <div class="seo-ring-wrap">
+          <div class="seo-ring">
+            <svg width="40" height="40" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="16" fill="none" stroke="var(--border)" stroke-width="3"/>
+              <circle cx="20" cy="20" r="16" fill="none" id="seoRing" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="100.5" style="transition:stroke-dashoffset .4s"/>
+            </svg>
+            <div class="seo-num" id="seoRingNum">0</div>
+          </div>
+          <span class="pbadge" id="seoBadge" style="background:var(--bg2);color:var(--text3)">Not analyzed</span>
+        </div>
+      </div>
+      <div class="pcard-b">
+        <div class="pfg"><label class="pform-label">Focus Keyword</label><input type="text" id="focusKw" class="form-control" placeholder="Primary keyword to optimize for..." oninput="runSEOAnalysis()"></div>
+        <div id="seoCheckList" style="margin-top:8px"></div>
+        <button type="button" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:10px" onclick="runSEOAnalysis()"><i class="bi bi-play-fill"></i> Run Analysis</button>
+      </div>
+    </div>
+
+    <div class="pcard">
+      <div class="pcard-h"><div class="pcard-h-l"><i class="bi bi-google"></i> SERP Preview</div></div>
+      <div class="pcard-b">
+        <div class="serp-box">
+          <div class="serp-title" id="serpTitle">Post Title Here</div>
+          <div class="serp-url">yourdomain.com › blog › <span id="serpSlug">post-slug</span></div>
+          <div class="serp-desc" id="serpDesc">Your meta description will appear here. Make it compelling to increase clicks.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pcard">
+      <div class="pcard-h"><div class="pcard-h-l"><i class="bi bi-share"></i> Social / OG Preview</div></div>
+      <div class="pcard-b">
+        <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+          <div class="og-img-box" id="ogImgBox"><i class="bi bi-image" style="font-size:32px"></i></div>
+          <div style="padding:10px 12px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:2px;text-transform:uppercase">YOURDOMAIN.COM</div>
+            <div style="font-weight:600;font-size:13px;color:var(--text1)" id="ogTitle">Post Title</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px" id="ogDesc">Post description...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CUSTOM FIELDS PANEL ── -->
+  <div class="post-panel" id="panel-custom">
+    <div class="pcard">
+      <div class="pcard-h">
+        <div class="pcard-h-l"><i class="bi bi-plus-square-dotted"></i> Custom Fields</div>
+        <button type="button" class="btn btn-sm btn-primary" onclick="addCustomField()"><i class="bi bi-plus"></i> Add Field</button>
+      </div>
+      <div class="pcard-b">
+        <div style="font-size:12px;color:var(--text3);padding:8px;background:var(--bg2);border-radius:8px;display:flex;gap:8px;align-items:flex-start;margin-bottom:10px">
+          <i class="bi bi-info-circle" style="margin-top:1px;flex-shrink:0"></i>
+          <span>Add structured data like price, duration, eligibility, location. Drag to reorder. Displays as rich snippets on your post.</span>
+        </div>
+        <div id="cfContainer"></div>
+        <div id="cfEmpty" style="text-align:center;padding:28px;color:var(--text3)"><i class="bi bi-plus-circle" style="font-size:28px;display:block;margin-bottom:8px"></i>No fields yet</div>
+      </div>
+    </div>
+    <div class="pcard">
+      <div class="pcard-h"><div class="pcard-h-l"><i class="bi bi-eye"></i> Live Preview</div></div>
+      <div class="pcard-b"><div id="cfLivePreview" style="font-size:13px;color:var(--text3);text-align:center">Custom fields will appear here</div></div>
+    </div>
+  </div>
+
+  <!-- ── SUGGESTED PANEL ── -->
+  <div class="post-panel" id="panel-suggest">
+    <div class="pcard">
+      <div class="pcard-h"><div class="pcard-h-l"><i class="bi bi-link-45deg"></i> Suggested Posts</div></div>
+      <div class="pcard-b">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Choose up to 4 posts to recommend at the end of this article.</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <% for(let i=0; i<4; i++) { %>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:8px;border:1px solid var(--border)">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text3);flex-shrink:0"><%= i+1 %></div>
+            <select name="suggested_posts[]" class="form-control" style="font-size:12px">
+              <option value="">— Select Suggested Post —</option>
+              <% allPosts.forEach(p => { %>
+                <% const sid = post && post.suggestions && post.suggestions[i] ? post.suggestions[i].suggested_post_id : null; %>
+                <option value="<%= p.id %>" <%= sid==p.id?'selected':'' %>><%= p.title.substring(0,65) %></option>
+              <% }) %>
+            </select>
+          </div>
           <% } %>
         </div>
-        <div style="font-size:0.75rem;color:var(--text3);margin-top:0.5rem"><i class="bi bi-info-circle"></i> Add extra data fields like price, duration, eligibility, etc.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REVISIONS PANEL ── -->
+  <div class="post-panel" id="panel-revisions">
+    <div class="pcard">
+      <div class="pcard-h">
+        <div class="pcard-h-l"><i class="bi bi-clock-history"></i> Revision History</div>
+        <button type="button" class="btn btn-xs" onclick="addRevision('Manual snapshot')"><i class="bi bi-plus"></i> Snapshot</button>
+      </div>
+      <div class="pcard-b">
+        <div id="revisionList"><div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">No revisions yet</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── AI PANEL ── -->
+  <div class="post-panel" id="panel-ai">
+    <div class="pcard">
+      <div class="pcard-h">
+        <div class="pcard-h-l"><i class="bi bi-robot"></i> AI Writing Assistant</div>
+        <span class="pbadge" style="background:#f0fdf4;color:#16a34a;border:1px solid #16a34a">Claude Powered</span>
+      </div>
+      <div class="pcard-b">
+        <div class="ai-chips-wrap">
+          <button type="button" class="ai-chip" onclick="aiQuick('Generate 5 catchy title variations for: ')"><i class="bi bi-type-h1"></i> Generate Titles</button>
+          <button type="button" class="ai-chip" onclick="aiQuick('Write an engaging opening paragraph for a post about: ')"><i class="bi bi-paragraph"></i> Write Intro</button>
+          <button type="button" class="ai-chip" onclick="aiQuick('Write a compelling conclusion for a post about: ')"><i class="bi bi-check-circle"></i> Write Conclusion</button>
+          <button type="button" class="ai-chip" onclick="aiQuick('Create an SEO meta description under 160 chars for: ')"><i class="bi bi-search"></i> Meta Description</button>
+          <button type="button" class="ai-chip" onclick="aiQuick('Generate a FAQ section with 5 questions and answers about: ')"><i class="bi bi-question-circle"></i> Generate FAQ</button>
+          <button type="button" class="ai-chip" onclick="aiQuick('Suggest 10 relevant SEO tags and keywords for: ')"><i class="bi bi-tags"></i> Suggest Tags</button>
+          <button type="button" class="ai-chip" onclick="aiQuick('Improve, expand and make more engaging this content: ')"><i class="bi bi-magic"></i> Improve Content</button>
+          <button type="button" class="ai-chip" onclick="aiQuick('Translate to Hindi: ')"><i class="bi bi-translate"></i> Translate to Hindi</button>
+        </div>
+        <div class="pfg">
+          <label class="pform-label">Your prompt / topic</label>
+          <textarea id="aiPromptInput" class="form-control" rows="4" placeholder="Describe what you want to write about, paste existing content to improve, or combine with a quick action above..."></textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button type="button" class="btn btn-primary" style="flex:1;justify-content:center" onclick="runAIWrite()"><i class="bi bi-stars"></i> Generate</button>
+          <button type="button" class="btn" onclick="document.getElementById('aiPromptInput').value=''"><i class="bi bi-x"></i> Clear</button>
+        </div>
+      </div>
+    </div>
+    <div class="pcard" id="aiResultCard" style="display:none">
+      <div class="pcard-h">
+        <div class="pcard-h-l"><i class="bi bi-stars"></i> AI Result</div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="btn btn-xs" onclick="copyAI()"><i class="bi bi-copy"></i> Copy</button>
+          <button type="button" class="btn btn-xs btn-success" onclick="insertAIToEditor()"><i class="bi bi-arrow-down-circle"></i> Insert</button>
+        </div>
+      </div>
+      <div class="pcard-b">
+        <div style="background:var(--bg2);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;color:var(--text1);border:1px solid var(--border)" id="aiResultText"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /center -->
+
+<!-- RIGHT PANEL -->
+<div class="post-right">
+  <div class="right-tabs">
+    <button class="rtab-btn active" onclick="switchRTab('publish',this)"><i class="bi bi-send"></i> Publish</button>
+    <button class="rtab-btn" onclick="switchRTab('settings',this)"><i class="bi bi-gear"></i> Settings</button>
+    <button class="rtab-btn" onclick="switchRTab('schema',this)"><i class="bi bi-code-square"></i> Schema</button>
+  </div>
+
+  <!-- PUBLISH TAB -->
+  <div class="rpanel-c active" id="rp-publish">
+
+    <div class="ps-wrap">
+      <div class="ps-hdr" onclick="toggleSection(this)">
+        <div class="ps-hdr-l"><i class="bi bi-send"></i> Publish</div>
+        <i class="bi bi-chevron-down" style="font-size:12px;color:var(--text3)"></i>
+      </div>
+      <div class="ps-body">
+        <div class="pfg"><label class="pform-label">Status</label>
+          <select name="status" id="postStatus" class="form-control" onchange="onStatusChange(this.value)">
+            <option value="draft" <%= !post||post.status==='draft'?'selected':'' %>>📝 Draft</option>
+            <option value="published" <%= post&&post.status==='published'?'selected':'' %>>✅ Published</option>
+            <option value="scheduled">🕐 Scheduled</option>
+            <option value="archived" <%= post&&post.status==='archived'?'selected':'' %>>📦 Archived</option>
+          </select>
+        </div>
+        <div class="pfg" id="scheduleRow" style="display:none">
+          <label class="pform-label">Publish Date & Time</label>
+          <input type="datetime-local" name="scheduled_at" class="form-control">
+        </div>
+        <div class="pfg"><label class="pform-label">Visibility</label>
+          <select name="visibility" class="form-control">
+            <option>🌍 Public</option>
+            <option>🔒 Private</option>
+            <option>🔑 Password Protected</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:4px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2)">
+            <input type="checkbox" name="is_featured" value="1" <%= post&&post.is_featured?'checked':'' %>>
+            <i class="bi bi-star" style="color:#f59e0b"></i> Featured Post
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2)">
+            <input type="checkbox" name="is_breaking" value="1" <%= post&&post.is_breaking?'checked':'' %>>
+            <i class="bi bi-lightning" style="color:#dc2626"></i> Breaking News
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2)">
+            <input type="checkbox" name="no_index" value="1">
+            <i class="bi bi-eye-slash" style="color:var(--text3)"></i> No Index
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2)">
+            <input type="checkbox" name="allow_comments" value="1" checked>
+            <i class="bi bi-chat" style="color:var(--text3)"></i> Allow Comments
+          </label>
+        </div>
+        <button type="button" class="btn btn-primary" style="width:100%;justify-content:center" onclick="publishPost()"><i class="bi bi-check-lg"></i> <%= post ? 'Update Post' : 'Publish Post' %></button>
+        <button type="button" class="btn btn-sm" style="width:100%;justify-content:center;margin-top:4px" onclick="saveDraft()"><i class="bi bi-floppy"></i> Save Draft</button>
       </div>
     </div>
 
-    <!-- SUGGESTED POSTS -->
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="bi bi-link"></i> Suggested Posts</div></div>
-      <div class="card-body">
-        <% for(let i=0; i<4; i++) { %>
-        <div class="form-group" style="margin-bottom:0.5rem">
-          <select name="suggested_posts[]" class="form-control" style="font-size:0.8rem">
-            <option value="">-- Select Suggested Post --</option>
-            <% allPosts.forEach(p => { %>
-              <% const suggId = post && post.suggestions && post.suggestions[i] ? post.suggestions[i].suggested_post_id : null; %>
-              <option value="<%= p.id %>" <%= suggId==p.id?'selected':'' %>><%= p.title.substring(0,60) %></option>
+    <div class="ps-wrap">
+      <div class="ps-hdr" onclick="toggleSection(this)">
+        <div class="ps-hdr-l"><i class="bi bi-grid"></i> Category & Tags</div>
+        <i class="bi bi-chevron-down" style="font-size:12px;color:var(--text3)"></i>
+      </div>
+      <div class="ps-body">
+        <div class="pfg"><label class="pform-label">Category</label>
+          <select name="category_id" class="form-control">
+            <option value="">— Select Category —</option>
+            <% categories.forEach(c => { %>
+              <option value="<%= c.id %>" <%= post&&post.category_id==c.id?'selected':'' %>><%= c.icon||'' %> <%= c.name %></option>
             <% }) %>
           </select>
         </div>
-        <% } %>
+        <div class="pfg">
+          <label class="pform-label">Tags</label>
+          <input type="text" id="tagInputField" class="form-control" placeholder="Type tag + Enter" onkeydown="handleTagInput(event)">
+          <input type="hidden" name="tags" id="tagsHidden" value="<%= post ? (post.tags||'') : '' %>">
+          <div id="tagDisplay" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
+        </div>
+        <div class="pfg"><label class="pform-label">Language</label>
+          <select name="language" class="form-control">
+            <option value="both" <%= !post||post.language==='both'?'selected':'' %>>🌐 Both (EN + HI)</option>
+            <option value="en" <%= post&&post.language==='en'?'selected':'' %>>🇬🇧 English Only</option>
+            <option value="hi" <%= post&&post.language==='hi'?'selected':'' %>>🇮🇳 Hindi Only</option>
+          </select>
+        </div>
       </div>
     </div>
 
-    <!-- SEO -->
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="bi bi-search"></i> SEO Settings</div></div>
-      <div class="card-body">
-        <div class="form-group"><label>Meta Title</label><input type="text" name="meta_title" class="form-control" placeholder="SEO title (60 chars recommended)" value="<%= post ? (post.meta_title||'') : '' %>"></div>
-        <div class="form-group"><label>Meta Description</label><textarea name="meta_desc" class="form-control" rows="2" placeholder="SEO description (160 chars)..."><%= post ? (post.meta_desc||'') : '' %></textarea></div>
-        <div class="form-group mb-1"><label>Meta Keywords</label><input type="text" name="meta_keywords" class="form-control" placeholder="keyword1, keyword2, keyword3" value="<%= post ? (post.meta_keywords||'') : '' %>"></div>
+    <div class="ps-wrap">
+      <div class="ps-hdr" onclick="toggleSection(this)">
+        <div class="ps-hdr-l"><i class="bi bi-person"></i> Author</div>
+        <i class="bi bi-chevron-down" style="font-size:12px;color:var(--text3)"></i>
+      </div>
+      <div class="ps-body">
+        <div class="pfg"><label class="pform-label">Author</label><input type="text" name="author" class="form-control" value="Admin"></div>
+        <div class="pfg"><label class="pform-label">Co-Author</label><input type="text" name="co_author" class="form-control" placeholder="Optional..."></div>
+        <div class="pfg"><label class="pform-label">Canonical URL</label><input type="url" name="canonical_url" class="form-control" placeholder="https://..."></div>
       </div>
     </div>
   </div>
 
-  <!-- SIDEBAR OPTIONS -->
-  <div style="display:flex;flex-direction:column;gap:1.25rem;position:sticky;top:80px">
-    <!-- PUBLISH -->
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="bi bi-send"></i> Publish</div></div>
-      <div class="card-body">
-        <div class="form-group">
-          <label>Status</label>
-          <select name="status" class="form-control">
-            <option value="draft" <%= !post||post.status==='draft'?'selected':'' %>>Draft</option>
-            <option value="published" <%= post&&post.status==='published'?'selected':'' %>>Published</option>
-            <option value="archived" <%= post&&post.status==='archived'?'selected':'' %>>Archived</option>
+  <!-- SETTINGS TAB -->
+  <div class="rpanel-c" id="rp-settings">
+    <div class="ps-wrap">
+      <div class="ps-hdr" onclick="toggleSection(this)">
+        <div class="ps-hdr-l"><i class="bi bi-layout-text-sidebar"></i> Editor Preferences</div>
+        <i class="bi bi-chevron-down" style="font-size:12px;color:var(--text3)"></i>
+      </div>
+      <div class="ps-body">
+        <div class="pfg">
+          <label class="pform-label">Font Size</label>
+          <input type="range" min="12" max="22" value="14" oninput="document.getElementById('richEditorEN').style.fontSize=this.value+'px';this.nextElementSibling.textContent=this.value+'px'">
+          <span style="font-size:11px;color:var(--text3)">14px</span>
+        </div>
+        <div class="pfg">
+          <label class="pform-label">Line Height</label>
+          <input type="range" min="1.4" max="2.4" step="0.1" value="1.8" oninput="document.getElementById('richEditorEN').style.lineHeight=this.value;this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
+          <span style="font-size:11px;color:var(--text3)">1.8</span>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2)">
+          <input type="checkbox" checked onchange="document.getElementById('richEditorEN').spellcheck=this.checked"> Spell Check
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text2)">
+          <input type="checkbox" onchange="document.getElementById('richEditorEN').style.fontFamily=this.checked?'Georgia,serif':''"> Serif Font
+        </label>
+      </div>
+    </div>
+    <div class="ps-wrap">
+      <div class="ps-hdr" onclick="toggleSection(this)">
+        <div class="ps-hdr-l"><i class="bi bi-speedometer2"></i> Post Stats</div>
+        <i class="bi bi-chevron-down" style="font-size:12px;color:var(--text3)"></i>
+      </div>
+      <div class="ps-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:var(--bg2);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border)">
+            <div style="font-size:20px;font-weight:700;color:var(--text1)"><%= post ? (post.views||0).toLocaleString() : '0' %></div>
+            <div style="font-size:11px;color:var(--text3)">Views</div>
+          </div>
+          <div style="background:var(--bg2);border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border)">
+            <div style="font-size:20px;font-weight:700;color:var(--text1)">0</div>
+            <div style="font-size:11px;color:var(--text3)">Shares</div>
+          </div>
+        </div>
+        <div class="pfg"><label class="pform-label">Last Modified</label><input type="text" id="lastModifiedField" readonly class="form-control" style="background:var(--bg2)" value="<%= post ? new Date(post.updatedAt).toLocaleString('en-IN') : 'New post' %>"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHEMA TAB -->
+  <div class="rpanel-c" id="rp-schema">
+    <div class="ps-wrap">
+      <div class="ps-hdr" onclick="toggleSection(this)">
+        <div class="ps-hdr-l"><i class="bi bi-code-square"></i> Schema Markup</div>
+        <i class="bi bi-chevron-down" style="font-size:12px;color:var(--text3)"></i>
+      </div>
+      <div class="ps-body">
+        <div class="pfg"><label class="pform-label">Schema Type</label>
+          <select id="schemaTypeSelect" class="form-control" onchange="generateSchema()">
+            <option value="BlogPosting">BlogPosting</option>
+            <option value="Article">Article</option>
+            <option value="NewsArticle">NewsArticle</option>
+            <option value="HowTo">HowTo</option>
+            <option value="FAQPage">FAQPage</option>
+            <option value="Review">Review</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Language</label>
-          <select name="language" class="form-control">
-            <option value="both" <%= !post||post.language==='both'?'selected':'' %>>Both (EN + HI)</option>
-            <option value="en" <%= post&&post.language==='en'?'selected':'' %>>English Only</option>
-            <option value="hi" <%= post&&post.language==='hi'?'selected':'' %>>Hindi Only</option>
-          </select>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem">
-          <div class="form-check">
-            <input type="checkbox" name="is_featured" id="is_featured" value="1" <%= post&&post.is_featured?'checked':'' %>>
-            <label for="is_featured" style="font-size:0.8rem;font-weight:500;cursor:pointer"><i class="bi bi-star" style="color:#f59e0b"></i> Featured Post</label>
-          </div>
-          <div class="form-check">
-            <input type="checkbox" name="is_breaking" id="is_breaking" value="1" <%= post&&post.is_breaking?'checked':'' %>>
-            <label for="is_breaking" style="font-size:0.8rem;font-weight:500;cursor:pointer"><i class="bi bi-lightning" style="color:#dc2626"></i> Breaking News</label>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-lg"></i> <%= post ? 'Update Post' : 'Publish Post' %></button>
+        <div class="schema-code" id="schemaOutput"></div>
+        <button type="button" class="btn btn-xs" onclick="copySchema()"><i class="bi bi-copy"></i> Copy Schema JSON</button>
       </div>
     </div>
+  </div>
+</div><!-- /right -->
 
-    <!-- CATEGORY -->
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="bi bi-grid"></i> Category</div></div>
-      <div class="card-body">
-        <select name="category_id" class="form-control">
-          <option value="">-- Select Category --</option>
-          <% categories.forEach(c => { %>
-            <option value="<%= c.id %>" <%= post&&post.category_id==c.id?'selected':'' %>><%= c.icon||'' %> <%= c.name %></option>
-          <% }) %>
-        </select>
-      </div>
-    </div>
+</div><!-- /layout -->
+</main>
+</div>
 
-    <!-- TAGS -->
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="bi bi-tags"></i> Tags</div></div>
-      <div class="card-body">
-        <input type="text" name="tags" class="form-control" placeholder="tag1, tag2, tag3" value="<%= post ? (post.tags||'') : '' %>">
-        <div style="font-size:0.72rem;color:var(--text3);margin-top:0.4rem">Comma separated tags</div>
-      </div>
-    </div>
+<!-- HIDDEN FORM FIELDS (submitted with actual form) -->
+<form id="postForm" method="POST" action="<%= post ? '/admin/posts/'+post.id+'?_method=PUT' : '/admin/posts' %>" enctype="multipart/form-data" style="display:none">
+  <input type="hidden" name="content" id="hiddenContent">
+  <input type="hidden" name="content_hi" id="hiddenContentHI">
+  
+  <!-- YE SAARE ADD KARO -->
+  <input type="hidden" name="title" id="hTitle">
+  <input type="hidden" name="title_hi" id="hTitleHi">
+  <input type="hidden" name="short_description" id="hDesc">
+  <input type="hidden" name="short_description_hi" id="hDescHi">
+  <input type="hidden" name="meta_title" id="hMetaTitle">
+  <input type="hidden" name="meta_desc" id="hMetaDesc">
+  <input type="hidden" name="meta_keywords" id="hMetaKw">
+  <input type="hidden" name="status" id="hStatus">
+  <input type="hidden" name="language" id="hLanguage">
+  <input type="hidden" name="category_id" id="hCategory">
+  <input type="hidden" name="tags" id="hTags">
+  <input type="hidden" name="author" id="hAuthor">
+  <input type="hidden" name="co_author" id="hCoAuthor">
+  <input type="hidden" name="canonical_url" id="hCanonical">
+  <input type="hidden" name="is_featured" id="hFeatured">
+  <input type="hidden" name="is_breaking" id="hBreaking">
+</form>
 
-    <!-- FEATURED IMAGE -->
-    <div class="card">
-      <div class="card-header"><div class="card-title"><i class="bi bi-image"></i> Featured Image</div></div>
-      <div class="card-body">
-        <% if(post && post.featured_image){ %>
-          <img src="<%= post.featured_image %>" style="width:100%;border-radius:8px;margin-bottom:0.75rem" alt="Featured">
-        <% } %>
-        <input type="file" name="featured_image" class="form-control" accept="image/*">
+<!-- FOCUS MODE -->
+<div class="focus-overlay" id="focusOverlay" onclick="if(event.target===this)closeFocus()">
+  <div class="focus-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
+      <span style="font-weight:600;font-size:13px;color:var(--text1)">Focus Writing Mode</span>
+      <div style="display:flex;gap:8px">
+        <span id="focusWC" style="font-size:12px;color:var(--text3)">0 words</span>
+        <button type="button" class="btn btn-xs btn-primary" onclick="applyFocusContent()"><i class="bi bi-check"></i> Apply</button>
+        <button type="button" class="btn btn-xs" onclick="closeFocus()"><i class="bi bi-x-lg"></i></button>
       </div>
     </div>
+    <div class="rich-toolbar" style="border-top:none">
+      <button class="rtb-btn" onclick="document.getElementById('focusArea').focus();document.execCommand('bold')"><i class="bi bi-type-bold"></i></button>
+      <button class="rtb-btn" onclick="document.getElementById('focusArea').focus();document.execCommand('italic')"><i class="bi bi-type-italic"></i></button>
+      <button class="rtb-btn" onclick="document.getElementById('focusArea').focus();document.execCommand('insertUnorderedList')"><i class="bi bi-list-ul"></i></button>
+      <button class="rtb-btn" onclick="document.getElementById('focusArea').focus();document.execCommand('insertOrderedList')"><i class="bi bi-list-ol"></i></button>
+    </div>
+    <div class="rich-editor-area" id="focusArea" contenteditable="true" spellcheck="true"
+      data-placeholder="Write freely..."
+      style="flex:1;min-height:380px;overflow-y:auto;max-height:60vh"
+      oninput="var t=this.innerText||'';var w=t.trim().split(/\s+/).filter(x=>x.length).length;document.getElementById('focusWC').textContent=w+' words'"></div>
   </div>
 </div>
-</form>
-</main></div>
+
+<!-- NOTIFICATION -->
+<div class="pnotif" id="pnotif"><i class="bi bi-check-circle-fill"></i> <span id="pnotifMsg">Done</span></div>
 
 <script>
-function addCustomField(){
-  const container = document.getElementById('customFields');
-  const div = document.createElement('div');
-  div.className = 'custom-field-row';
-  div.style.cssText = 'display:grid;grid-template-columns:1fr 120px 1fr 36px;gap:0.5rem;margin-bottom:0.75rem;align-items:start';
-  div.innerHTML = `
-    <input type="text" name="custom_labels[]" class="form-control" placeholder="Field Label (e.g. Price, Duration)">
-    <select name="custom_types[]" class="form-control">
-      <option value="text">Text</option><option value="textarea">Textarea</option>
-      <option value="number">Number</option><option value="url">URL</option><option value="date">Date</option>
-    </select>
-    <input type="text" name="custom_values[]" class="form-control" placeholder="Field Value">
-    <button type="button" class="btn btn-xs btn-danger" onclick="this.closest('.custom-field-row').remove()"><i class="bi bi-trash"></i></button>
-  `;
-  container.appendChild(div);
+// ────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────
+var _tags = [];
+var _revisions = [];
+var _mediaFiles = [];
+var _cfCount = 0;
+var _autoSaveTimer = null;
+var _activePanel = 'write';
+
+// ── INIT ──────────────────────────────
+document.addEventListener('DOMContentLoaded', function(){
+  buildTablePickerGrid();
+  generateSchema();
+  onTitleInput(document.getElementById('titleInput').value);
+  onDescInput(document.getElementById('descInput').value);
+  onEditorChange();
+  updateSERP();
+  // load existing tags
+  var existingTags = document.getElementById('tagsHidden').value;
+  if(existingTags){ existingTags.split(',').forEach(function(t){ t=t.trim(); if(t) addTag(t); }); }
+  addRevision('Initial load');
+});
+
+// ── PANEL SWITCH ───────────────────────
+function switchPanel(name, iconBtn, tabId){
+  document.querySelectorAll('.post-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.ptab').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.pin-btn').forEach(function(b){ b.classList.remove('active'); });
+  var panel = document.getElementById('panel-'+name);
+  if(panel) panel.classList.add('active');
+  if(tabId) document.getElementById(tabId).classList.add('active');
+  if(iconBtn) iconBtn.classList.add('active');
+  _activePanel = name;
 }
-function switchTab(btn, tab){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+
+function switchRTab(name, btn){
+  document.querySelectorAll('.rpanel-c').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.rtab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('rp-'+name).classList.add('active');
   btn.classList.add('active');
-  document.getElementById(tab).classList.add('active');
+}
+
+function toggleSection(hdr){
+  var body = hdr.nextElementSibling;
+  var ic = hdr.querySelector('i:last-child');
+  var col = body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', !col);
+  if(ic){ ic.className = col ? 'bi bi-chevron-down' : 'bi bi-chevron-up'; ic.style.cssText='font-size:12px;color:var(--text3)'; }
+}
+
+// ── RICH EDITOR ────────────────────────
+function execRich(cmd, val){
+  var activeEd = document.getElementById(_activePanel==='write' ? 'richEditorEN' : 'richEditorEN');
+  activeEd.focus();
+  document.execCommand(cmd, false, val || null);
+  onEditorChange();
+}
+function insertLink(){
+  var url = prompt('Enter URL (include https://):', 'https://');
+  if(url){ document.getElementById('richEditorEN').focus(); document.execCommand('createLink', false, url); }
+}
+function insertBlockquote(){ execRich('formatBlock','blockquote'); }
+function insertHR(){
+  document.getElementById('richEditorEN').focus();
+  document.execCommand('insertHTML', false, '<hr style="border:none;border-top:2px solid var(--border);margin:1.5em 0"><p></p>');
+}
+function insertCodeBlock(){
+  document.getElementById('richEditorEN').focus();
+  document.execCommand('insertHTML', false, '<pre><code>// paste code here</code></pre><p></p>');
+}
+
+function onEditorChange(){
+  var ed = document.getElementById('richEditorEN');
+  var text = ed.innerText || '';
+  var words = text.trim().split(/\s+/).filter(function(w){ return w.length > 0; });
+  var wc = words.length;
+  var chars = text.replace(/\s/g,'').length;
+  var paras = ed.querySelectorAll('p,h1,h2,h3,h4,li').length || 1;
+  var imgs = ed.querySelectorAll('img').length;
+  var rt = Math.max(1, Math.round(wc / 200));
+  document.getElementById('wcWords').textContent = wc + ' words';
+  document.getElementById('wcChars').textContent = chars.toLocaleString() + ' chars';
+  document.getElementById('wcParas').textContent = paras + ' paras';
+  document.getElementById('wcRead').textContent = rt + ' min read';
+  document.getElementById('wcImgs').textContent = imgs + ' images';
+  document.getElementById('readTimeTop').textContent = rt + ' min';
+  document.getElementById('lastModifiedField').value = new Date().toLocaleString('en-IN');
+  scheduleAutoSave();
+}
+
+// ── TITLE ──────────────────────────────
+function onTitleInput(v){
+  var slug = v.toLowerCase().replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-').substring(0,80);
+  document.getElementById('slugPreview').textContent = slug || 'post-slug';
+  document.getElementById('serpTitle').textContent = (v||'Post Title Here').substring(0,60);
+  document.getElementById('ogTitle').textContent = v || 'Post Title';
+  var pct = Math.min(100, v.length/70*100);
+  var fill = document.getElementById('titleCharFill');
+  fill.style.width = pct+'%';
+  fill.style.background = pct>100?'#dc2626':pct>85?'#b45309':'#16a34a';
+  document.getElementById('titleCharCount').textContent = v.length+'/70';
+  document.getElementById('serpSlug').textContent = slug;
+  generateSchema();
+  scheduleAutoSave();
+}
+function editSlug(){
+  var cur = document.getElementById('slugPreview').textContent;
+  var ns = prompt('Edit slug (lowercase, hyphens only):', cur);
+  if(ns){ document.getElementById('slugPreview').textContent = ns.toLowerCase().replace(/[^a-z0-9-]/g,'-'); }
+}
+
+// ── DESC ───────────────────────────────
+function onDescInput(v){
+  var pct = Math.min(100, v.length/160*100);
+  var fill = document.getElementById('descCharFill');
+  fill.style.width = pct+'%';
+  fill.style.background = pct>100?'#dc2626':pct>85?'#b45309':'#16a34a';
+  document.getElementById('descCharCount').textContent = v.length+'/160';
+  document.getElementById('serpDesc').textContent = v || 'Your meta description will appear here.';
+  document.getElementById('ogDesc').textContent = v || 'Post description...';
+}
+
+// ── LANG ───────────────────────────────
+function switchTitleLang(l, btn){
+  document.getElementById('titleEN-wrap').style.display = l==='en'?'block':'none';
+  document.getElementById('titleHI-wrap').style.display = l==='hi'?'block':'none';
+  btn.parentElement.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+function switchDescLang(l, btn){
+  document.getElementById('descEN-wrap').style.display = l==='en'?'block':'none';
+  document.getElementById('descHI-wrap').style.display = l==='hi'?'block':'none';
+  btn.parentElement.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+function switchContentLang(l){
+  document.getElementById('editorEN-wrap').style.display = l==='en'?'block':'none';
+  document.getElementById('editorHI-wrap').style.display = l==='hi'?'block':'none';
+  document.getElementById('contentLangEN').classList.toggle('active', l==='en');
+  document.getElementById('contentLangHI').classList.toggle('active', l==='hi');
+}
+
+// ── SERP ───────────────────────────────
+function updateSERP(){
+  var t = document.getElementById('metaTitle').value || document.getElementById('titleInput').value || 'Post Title Here';
+  var d = document.getElementById('metaDesc').value || document.getElementById('descInput').value || 'Your description...';
+  document.getElementById('serpTitle').textContent = t.substring(0,60);
+  document.getElementById('serpDesc').textContent = d.substring(0,160);
+  document.getElementById('ogTitle').textContent = t;
+  document.getElementById('ogDesc').textContent = d;
+}
+
+// ── SEO ANALYSIS ───────────────────────
+function runSEOAnalysis(){
+  var title = document.getElementById('titleInput').value;
+  var desc = document.getElementById('descInput').value || document.getElementById('metaDesc').value;
+  var kw = (document.getElementById('focusKw').value||'').toLowerCase().trim();
+  var ed = document.getElementById('richEditorEN');
+  var text = ed.innerText || '';
+  var wc = text.trim().split(/\s+/).filter(function(w){ return w.length>0; }).length;
+  var hasH = ed.querySelector('h1,h2,h3') !== null;
+  var hasImg = ed.querySelector('img') !== null;
+  var hasLinks = ed.querySelectorAll('a').length > 0;
+
+  var checks = [
+    {l:'Title length (50-70 chars)', ok:title.length>=50&&title.length<=70, warn:title.length>0&&(title.length<50||title.length>70), info:title.length+' chars'},
+    {l:'Meta description present', ok:desc.length>0, info:desc.length>0?'✓':'Missing'},
+    {l:'Meta desc length (120-160)', ok:desc.length>=120&&desc.length<=160, warn:desc.length>0&&(desc.length<120||desc.length>160), info:desc.length+' chars'},
+    {l:'Focus keyword set', ok:kw.length>0, info:kw||'Not set'},
+    {l:'Keyword in title', ok:kw&&title.toLowerCase().includes(kw), info:kw?'':'Set keyword first'},
+    {l:'Keyword in description', ok:kw&&desc.toLowerCase().includes(kw), info:kw?'':'Set keyword first'},
+    {l:'Content 300+ words', ok:wc>=300, warn:wc>0&&wc<300, info:wc+' words'},
+    {l:'Has headings (H2/H3)', ok:hasH, info:hasH?'✓':'Add structure'},
+    {l:'Has images', ok:hasImg, info:hasImg?'✓':'Add visuals'},
+    {l:'Has internal links', ok:hasLinks, info:hasLinks?'✓':'Add links'},
+  ];
+
+  var good = checks.filter(function(c){ return c.ok; }).length;
+  var pct = Math.round(good / checks.length * 100);
+  var circ = 100.5;
+  var offset = circ - (circ * pct / 100);
+  var ring = document.getElementById('seoRing');
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = pct>=70?'#16a34a':pct>=40?'#b45309':'#dc2626';
+  document.getElementById('seoRingNum').textContent = pct;
+
+  var badge = document.getElementById('seoBadge');
+  if(pct>=70){ badge.style.background='#f0fdf4';badge.style.color='#16a34a';badge.style.border='1px solid #16a34a';badge.textContent='Good'; }
+  else if(pct>=40){ badge.style.background='#fffbeb';badge.style.color='#b45309';badge.style.border='1px solid #b45309';badge.textContent='Needs Work'; }
+  else{ badge.style.background='#fef2f2';badge.style.color='#dc2626';badge.style.border='1px solid #dc2626';badge.textContent='Poor'; }
+
+  document.getElementById('seoCheckList').innerHTML = checks.map(function(c){
+    var ic, cls;
+    if(c.ok){ ic='bi-check-circle-fill';cls='color:#16a34a'; }
+    else if(c.warn){ ic='bi-exclamation-circle-fill';cls='color:#b45309'; }
+    else{ ic='bi-x-circle-fill';cls='color:#dc2626'; }
+    return '<div class="seo-check-row"><i class="bi '+ic+'" style="font-size:14px;flex-shrink:0;margin-top:1px;'+cls+'"></i><div><div>'+c.l+'</div><div style="font-size:11px;color:var(--text3)">'+c.info+'</div></div></div>';
+  }).join('');
+}
+
+// ── TABLE PICKER ───────────────────────
+function buildTablePickerGrid(){
+  var g = document.getElementById('tablePickerGrid');
+  for(var r=1;r<=5;r++){
+    for(var c=1;c<=6;c++){
+      var cell = document.createElement('div');
+      cell.className='tpc';
+      cell.dataset.r=r; cell.dataset.c=c;
+      cell.addEventListener('mouseover', (function(er,ec){
+        return function(){
+          document.querySelectorAll('.tpc').forEach(function(tc){
+            tc.classList.toggle('hov', +tc.dataset.r<=er && +tc.dataset.c<=ec);
+          });
+          document.getElementById('tablePickerSize').textContent = er+' × '+ec;
+        };
+      })(r,c));
+      cell.addEventListener('click', (function(er,ec){ return function(){ doInsertTable(er,ec); }; })(r,c));
+      g.appendChild(cell);
+    }
+  }
+}
+function showTablePicker(){
+  var popup = document.getElementById('tablePickerPopup');
+  var btn = document.getElementById('tablePickerBtn');
+  var rect = btn.getBoundingClientRect();
+  var isOpen = popup.style.display==='block';
+  popup.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen){
+    popup.style.position='fixed'; popup.style.top=(rect.bottom+4)+'px'; popup.style.left=rect.left+'px';
+    setTimeout(function(){
+      document.addEventListener('click', function h(e){
+        if(!popup.contains(e.target)&&e.target!==btn){ popup.style.display='none'; document.removeEventListener('click',h); }
+      });
+    },10);
+  }
+}
+function doInsertTable(rows, cols){
+  document.getElementById('tablePickerPopup').style.display='none';
+  var thead='<thead><tr>'+Array(cols).fill().map(function(_,i){ return '<th>Header '+(i+1)+'</th>'; }).join('')+'</tr></thead>';
+  var tbody='<tbody>'+Array(rows).fill().map(function(){ return '<tr>'+Array(cols).fill('<td>Cell</td>').join('')+'</tr>'; }).join('')+'</tbody>';
+  document.getElementById('richEditorEN').focus();
+  document.execCommand('insertHTML', false, '<table>'+thead+tbody+'</table><p></p>');
+}
+
+// ── IMAGE UPLOAD ───────────────────────
+function handleImgUpload(input){
+  var f=input.files[0]; if(!f)return;
+  var reader=new FileReader();
+  reader.onload=function(e){ showImagePreview(e.target.result, f); };
+  reader.readAsDataURL(f);
+}
+function handleImgDrop(e){
+  e.preventDefault();
+  document.getElementById('imgDropzone').classList.remove('dragover');
+  var f=e.dataTransfer.files[0];
+  if(!f||!f.type.startsWith('image/'))return;
+  var reader=new FileReader();
+  reader.onload=function(ev){ showImagePreview(ev.target.result, f); };
+  reader.readAsDataURL(f);
+}
+function showImagePreview(src, file){
+  var prev=document.getElementById('featImgPreview');
+  prev.src=src; prev.classList.add('show');
+  document.getElementById('imgDropMsg').style.display='none';
+  document.getElementById('imgMetaSection').style.display='block';
+  document.getElementById('imgFileSize').value=(file.size/1024).toFixed(1)+' KB';
+  document.getElementById('imgFormat').value=file.type.split('/')[1].toUpperCase();
+  var img=new Image();
+  img.onload=function(){ document.getElementById('imgW').value=this.width+'px'; document.getElementById('imgH').value=this.height+'px'; };
+  img.src=src;
+  var ogBox=document.getElementById('ogImgBox');
+  ogBox.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:cover">';
+  _mediaFiles.push({src:src, name:file.name});
+  renderMediaLib();
+  showNotif('Image uploaded!','success');
+}
+function removeFeatImg(){
+  document.getElementById('featImgPreview').classList.remove('show');
+  document.getElementById('featImgPreview').src='';
+  document.getElementById('imgDropMsg').style.display='block';
+  document.getElementById('imgMetaSection').style.display='none';
+  document.getElementById('ogImgBox').innerHTML='<i class="bi bi-image" style="font-size:32px"></i>';
+}
+function insertFeatImgIntoContent(){
+  var src=document.getElementById('featImgPreview').src;
+  var alt=document.getElementById('imgAlt').value||'';
+  var cap=document.getElementById('imgCaption').value||'';
+  var html='<figure><img src="'+src+'" alt="'+alt+'" style="max-width:100%;border-radius:8px"><figcaption>'+cap+'</figcaption></figure><p></p>';
+  document.getElementById('richEditorEN').focus();
+  document.execCommand('insertHTML', false, html);
+  switchPanel('write', null, 'tab-write');
+  showNotif('Image inserted into content','success');
+}
+function renderMediaLib(){
+  var g=document.getElementById('mediaLibGrid');
+  document.getElementById('mediaLibEmpty').style.display=_mediaFiles.length?'none':'block';
+  g.innerHTML=_mediaFiles.map(function(f,i){
+    return '<div class="media-item" onclick="this.classList.toggle(\'sel\')"><img src="'+f.src+'" alt="'+f.name+'"><div class="media-check"><i class="bi bi-check"></i></div></div>';
+  }).join('');
+}
+
+// ── CUSTOM FIELDS ──────────────────────
+function addCustomField(){
+  _cfCount++;
+  document.getElementById('cfEmpty').style.display='none';
+  var d=document.createElement('div');
+  d.className='cf-row'; d.id='cf-'+_cfCount;
+  d.innerHTML='<i class="bi bi-grip-vertical cf-grip"></i>'+
+    '<input type="text" name="custom_labels[]" class="form-control" placeholder="Label" oninput="renderCFPreview()" style="font-size:12px">'+
+    '<select name="custom_types[]" class="form-control" style="font-size:12px"><option>Text</option><option>Number</option><option>URL</option><option>Date</option><option>Textarea</option></select>'+
+    '<input type="text" name="custom_values[]" class="form-control" placeholder="Value" oninput="renderCFPreview()" style="font-size:12px">'+
+    '<button type="button" class="btn btn-xs btn-danger" style="padding:0;width:28px;height:28px;justify-content:center" onclick="this.closest(\'.cf-row\').remove();renderCFPreview()"><i class="bi bi-trash"></i></button>';
+  document.getElementById('cfContainer').appendChild(d);
+  renderCFPreview();
+  if(window.Sortable) Sortable.create(document.getElementById('cfContainer'),{handle:'.cf-grip'});
+}
+function renderCFPreview(){
+  var rows=document.querySelectorAll('.cf-row');
+  if(!rows.length){ document.getElementById('cfLivePreview').innerHTML='<span style="color:var(--text3)">No fields yet</span>'; return; }
+  var html='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  rows.forEach(function(row){
+    var ins=row.querySelectorAll('input[type=text]');
+    var label=ins[0]?ins[0].value:'', val=ins[1]?ins[1].value:'';
+    if(!label&&!val) return;
+    html+='<tr><td style="padding:6px 0;color:var(--text3);font-weight:600;width:40%;border-bottom:1px solid var(--border)">'+label+'</td><td style="padding:6px 0;border-bottom:1px solid var(--border)">'+val+'</td></tr>';
+  });
+  html+='</table>';
+  document.getElementById('cfLivePreview').innerHTML=html;
+}
+
+// ── TAGS ───────────────────────────────
+function handleTagInput(e){
+  if(e.key!=='Enter'&&e.key!==',') return;
+  e.preventDefault();
+  var v=e.target.value.trim().replace(/,$/,'');
+  if(v) addTag(v);
+  e.target.value='';
+}
+function addTag(name){
+  if(_tags.includes(name)) return;
+  _tags.push(name);
+  renderTags();
+}
+function removeTag(i){ _tags.splice(i,1); renderTags(); }
+function renderTags(){
+  document.getElementById('tagsHidden').value=_tags.join(',');
+  document.getElementById('tagDisplay').innerHTML=_tags.map(function(t,i){
+    return '<span class="tag-chip">'+t+'<button type="button" onclick="removeTag('+i+')">×</button></span>';
+  }).join('');
+}
+
+// ── REVISIONS ──────────────────────────
+function addRevision(label){
+  var snap={time:new Date(),label:label,title:document.getElementById('titleInput').value,content:document.getElementById('richEditorEN').innerHTML};
+  _revisions.unshift(snap);
+  if(_revisions.length>25) _revisions.pop();
+  renderRevisions();
+}
+function renderRevisions(){
+  document.getElementById('revisionList').innerHTML=_revisions.map(function(r,i){
+    return '<div class="rev-item" onclick="restoreRev('+i+')">'+
+      '<div class="rev-dot'+(i===0?' current':'')+'"></div>'+
+      '<div style="flex:1;font-size:12px"><strong style="color:var(--text1)">'+r.label+'</strong><br><span style="color:var(--text3)">'+r.time.toLocaleTimeString('en-IN')+'</span></div>'+
+      '<i class="bi bi-arrow-counterclockwise" style="color:var(--text3);font-size:13px"></i></div>';
+  }).join('');
+}
+function restoreRev(i){
+  if(!confirm('Restore this revision? Current content will be replaced.')) return;
+  var r=_revisions[i];
+  document.getElementById('richEditorEN').innerHTML=r.content;
+  document.getElementById('titleInput').value=r.title;
+  onTitleInput(r.title);
+  onEditorChange();
+  showNotif('Revision restored','success');
+}
+
+// ── AUTO SAVE ──────────────────────────
+function scheduleAutoSave(){
+  clearTimeout(_autoSaveTimer);
+  document.getElementById('autoSaveDot').style.background='#f59e0b';
+  document.getElementById('autoSaveLabel').textContent='Saving...';
+  _autoSaveTimer=setTimeout(function(){
+    addRevision('Auto-save');
+    document.getElementById('autoSaveDot').style.background='#16a34a';
+    document.getElementById('autoSaveLabel').textContent='Saved';
+    setTimeout(function(){ document.getElementById('autoSaveDot').style.background='var(--border)'; document.getElementById('autoSaveLabel').textContent='All changes saved'; },2000);
+  },2000);
+}
+function saveDraft(){
+  addRevision('Manual save');
+  showNotif('Draft saved!','success');
+  document.getElementById('autoSaveDot').style.background='#16a34a';
+  document.getElementById('autoSaveLabel').textContent='Saved';
+}
+
+function publishPost(){
+  var title = document.getElementById('titleInput').value;
+  if(!title){ showNotif('Please add a title first','info'); return; }
+  
+  // Saari values copy karo hidden form mein
+  document.getElementById('hiddenContent').value = document.getElementById('richEditorEN').innerHTML;
+  document.getElementById('hiddenContentHI').value = document.getElementById('richEditorHI').innerHTML;
+  document.getElementById('hTitle').value = document.getElementById('titleInput').value;
+  document.getElementById('hTitleHi').value = document.getElementById('titleHiInput').value;
+  document.getElementById('hDesc').value = document.getElementById('descInput').value;
+  document.getElementById('hMetaTitle').value = document.getElementById('metaTitle').value;
+  document.getElementById('hMetaDesc').value = document.getElementById('metaDesc').value;
+  document.getElementById('hMetaKw').value = document.getElementById('metaKw').value;
+  document.getElementById('hStatus').value = document.getElementById('postStatus').value;
+  document.getElementById('hLanguage').value = document.querySelector('select[name="language"]').value;
+  document.getElementById('hCategory').value = document.querySelector('select[name="category_id"]').value;
+  document.getElementById('hTags').value = document.getElementById('tagsHidden').value;
+  document.getElementById('hAuthor').value = document.querySelector('input[name="author"]').value;
+  document.getElementById('hCoAuthor').value = document.querySelector('input[name="co_author"]').value;
+  document.getElementById('hCanonical').value = document.querySelector('input[name="canonical_url"]').value;
+  document.getElementById('hFeatured').value = document.querySelector('input[name="is_featured"]').checked ? '1' : '';
+  document.getElementById('hBreaking').value = document.querySelector('input[name="is_breaking"]').checked ? '1' : '';
+  
+  addRevision('Published');
+  showNotif('Post published!','success');
+  document.getElementById('postForm').submit();
+}
+
+// ── STATUS ─────────────────────────────
+function onStatusChange(v){
+  document.getElementById('scheduleRow').style.display = v==='scheduled'?'block':'none';
+}
+
+// ── FOCUS MODE ─────────────────────────
+function toggleFocusMode(){
+  document.getElementById('focusArea').innerHTML=document.getElementById('richEditorEN').innerHTML;
+  document.getElementById('focusOverlay').classList.add('show');
+  document.getElementById('focusArea').focus();
+}
+function closeFocus(){ document.getElementById('focusOverlay').classList.remove('show'); }
+function applyFocusContent(){
+  document.getElementById('richEditorEN').innerHTML=document.getElementById('focusArea').innerHTML;
+  onEditorChange();
+  closeFocus();
+  showNotif('Content updated','success');
+}
+
+// ── SCHEMA ─────────────────────────────
+function generateSchema(){
+  var type=document.getElementById('schemaTypeSelect').value;
+  var title=document.getElementById('titleInput').value||'Post Title';
+  var schema={'@context':'https://schema.org','@type':type,'headline':title,'datePublished':new Date().toISOString().split('T')[0],'dateModified':new Date().toISOString().split('T')[0],'author':{'@type':'Person','name':'Admin'},'publisher':{'@type':'Organization','name':'Dreams'},'inLanguage':'en'};
+  document.getElementById('schemaOutput').textContent=JSON.stringify(schema,null,2);
+}
+function copySchema(){
+  navigator.clipboard.writeText(document.getElementById('schemaOutput').textContent);
+  showNotif('Schema copied!','success');
+}
+
+// ── AI ─────────────────────────────────
+function aiQuick(prefix){ document.getElementById('aiPromptInput').value=prefix; switchPanel('ai',null,'tab-ai'); document.getElementById('aiPromptInput').focus(); }
+function runAIWrite(){
+  var prompt=document.getElementById('aiPromptInput').value.trim();
+  if(!prompt)return;
+  document.getElementById('aiResultCard').style.display='block';
+  document.getElementById('aiResultText').innerHTML='<span style="color:var(--text3)">Generating...</span>';
+  // Simulate - replace with actual API call
+  setTimeout(function(){
+    document.getElementById('aiResultText').textContent='Here is AI-generated content based on your prompt: "'+prompt.substring(0,60)+'...". Connect to the AI API in your controller to get real responses. This placeholder shows where the result appears.';
+  },1200);
+}
+function copyAI(){ navigator.clipboard.writeText(document.getElementById('aiResultText').textContent); showNotif('Copied!','success'); }
+function insertAIToEditor(){
+  var txt=document.getElementById('aiResultText').textContent;
+  document.getElementById('richEditorEN').focus();
+  document.execCommand('insertText',false,txt);
+  switchPanel('write',null,'tab-write');
+  showNotif('Inserted into editor','success');
+}
+
+// ── NOTIFY ─────────────────────────────
+function showNotif(msg, type){
+  var n=document.getElementById('pnotif');
+  n.className='pnotif pnotif-'+(type||'success')+' show';
+  document.getElementById('pnotifMsg').textContent=msg;
+  n.querySelector('i').className='bi bi-'+(type==='success'?'check-circle-fill':'info-circle-fill');
+  setTimeout(function(){ n.classList.remove('show'); },3000);
 }
 </script>
 <%- include('../partials/scripts') %>
-</body></html>
+</body>
+</html>

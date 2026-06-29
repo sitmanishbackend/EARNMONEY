@@ -72,7 +72,12 @@ const BlogPost = sequelize.define('BlogPost', {
   views: { type: DataTypes.INTEGER, defaultValue: 0 },
   is_featured: DataTypes.BOOLEAN, is_breaking: DataTypes.BOOLEAN,
   meta_title: DataTypes.STRING, meta_desc: DataTypes.TEXT, meta_keywords: DataTypes.TEXT,
-  published_at: DataTypes.DATE
+  published_at: DataTypes.DATE,
+  scheduled_at: DataTypes.DATE, no_index: {type:  DataTypes.BOOLEAN, defaultValue: false },
+allow_comments:  { type: DataTypes.BOOLEAN, defaultValue: true },
+canonical_url:  DataTypes.STRING(500) ,
+co_author:  DataTypes.STRING(200) ,                       
+author:  DataTypes.STRING(200) ,
 }, { tableName: 'blog_posts' });
 
 const PostCustomField = sequelize.define('PostCustomField', {
@@ -159,11 +164,41 @@ const Page = sequelize.define('Page', {
   is_active: DataTypes.BOOLEAN, template: DataTypes.STRING
 }, { tableName: 'pages' });
 
+const Notification = sequelize.define('Notification', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+ 
+    // Who receives this notification (null = broadcast to all admins)
+    user_id: { type: DataTypes.INTEGER, allowNull: true },
+ 
+    // Title shown in bold
+    title: { type: DataTypes.STRING(200), allowNull: false },
+ 
+    // Full message text
+    message: { type: DataTypes.TEXT, allowNull: true },
+ 
+    // Type controls icon + color: post | user | finance | system | warning | danger | comment
+    type: {
+      type: DataTypes.ENUM('post','user','finance','system','warning','danger','comment'),
+      defaultValue: 'system'
+    },
+ 
+    // Optional deep-link inside the admin panel
+    link: { type: DataTypes.STRING(500), allowNull: true },
+ 
+    // Read state
+    is_read: { type: DataTypes.BOOLEAN, defaultValue: false },
+ 
+  }, {
+    tableName: 'notifications',
+    timestamps: true,
+  });
+
+
 // ASSOCIATIONS
 User.belongsTo(Role, { foreignKey: 'role_id', as: 'role' });
 Role.hasMany(User, { foreignKey: 'role_id' });
 BlogPost.belongsTo(BlogCategory, { foreignKey: 'category_id', as: 'category' });
-BlogPost.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
+// BlogPost.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
 BlogPost.hasMany(PostCustomField, { foreignKey: 'post_id', as: 'customFields' });
 BlogPost.hasMany(PostSuggestion, { foreignKey: 'post_id', as: 'suggestions' });
 BlogCategory.hasMany(BlogPost, { foreignKey: 'category_id' });
@@ -174,9 +209,12 @@ Transaction.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 AttendanceRecord.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 SalaryPayment.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
+Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+ User.hasMany(Notification, { foreignKey: 'user_id', as: 'notifications' });
+
 module.exports = {
   sequelize, Role, User, Theme, MenuItem, RoleMenuPermission,
   BlogCategory, BlogPost, PostCustomField, PostSuggestion,
   AdZone, Advertisement, BankAccount, ExpenseCategory, Transaction,
-  AttendanceRecord, SalaryPayment, Setting, SeoIndex, Page
+  AttendanceRecord, SalaryPayment, Setting, SeoIndex, Page, Notification
 };

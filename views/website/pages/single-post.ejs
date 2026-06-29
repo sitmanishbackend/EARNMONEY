@@ -4,7 +4,7 @@
   <div class="breadcrumb">
     <a href="/">Home</a><span class="sep">/</span>
     <a href="/blog">Blog</a><span class="sep">/</span>
-    <% if(post.category){ %><a href="/category/<%= post.category.slug %>"><%= post.category.name_hi||post.category.name %></a><span class="sep">/</span><% } %>
+    <% if(post.category){ %><a href="/category/<%= post.category.slug %>"><%= post.category_name_hi||post.category_name %></a><span class="sep">/</span><% } %>
     <span><%= (post.title_hi||post.title).substring(0,40) %>...</span>
   </div>
 
@@ -15,7 +15,7 @@
       <div style="margin-bottom:1.5rem">
         <% if(post.category){ %>
         <a href="/category/<%= post.category.slug %>" style="display:inline-block;padding:0.25rem 0.85rem;border-radius:20px;font-size:0.72rem;font-weight:700;background:var(--accent-light);color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem">
-          <%= post.category.icon||'' %> <%= post.category.name_hi||post.category.name %>
+          <%= post.category.icon||'' %> <%= post.category_name_hi||post.category_name %>
         </a>
         <% } %>
         <h1 style="font-size:1.8rem;font-weight:800;line-height:1.3;font-family:var(--font-hi);color:var(--heading,var(--text));margin-bottom:0.75rem">

@@ -21,12 +21,26 @@
       --font-hi: 'Noto Sans Devanagari','Hind',sans-serif;
       --font-en: 'Poppins','Hind',sans-serif;
     }
+
+    /* ---- DARK MODE TOKENS ---- */
+    html[data-theme="dark"] {
+      --bg: #0d1420; --bg2: #131c2b; --bg3: #1a2536;
+      --nav-bg: #131c2b;
+      --card-bg: #131c2b; --border: #233047;
+      --text: #eef2f7; --text2: #b8c2d4; --text3: #6f7d93;
+      --accent-light: #16301f;
+    }
+
     * { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior:smooth; }
-    body { background:var(--bg); color:var(--text); font-family:var(--font-en); line-height:1.7; overflow-x:hidden; }
+    body { background:var(--bg); color:var(--text); font-family:var(--font-en); line-height:1.7; overflow-x:hidden; transition:background .25s,color .25s; }
     a { text-decoration:none; color:inherit; }
     img { max-width:100%; display:block; }
     ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:var(--accent); border-radius:3px; }
+    button { font-family:inherit; }
+
+    /* ---- SCROLL PROGRESS BAR ---- */
+    .scroll-progress { position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0%; z-index:9999; transition:width .1s linear; }
 
     /* TICKER */
     .ticker-bar { background:var(--accent); padding:0.35rem 0; overflow:hidden; position:relative; }
@@ -36,6 +50,13 @@
     .ticker-item { font-size:0.78rem; color:#fff; padding:0 2rem; font-family:var(--font-hi); }
     @keyframes tickscroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 
+    /* ---- MARKET TICKER (mini, sample data) ---- */
+    .market-bar { background:var(--bg3); border-bottom:1px solid var(--border); overflow:hidden; }
+    .market-track { display:flex; white-space:nowrap; animation:tickscroll 28s linear infinite; padding:0.32rem 0; }
+    .market-track:hover { animation-play-state:paused; }
+    .market-item { font-size:0.72rem; font-weight:600; color:var(--text2); padding:0 1.4rem; display:inline-flex; align-items:center; gap:0.3rem; border-right:1px solid var(--border); }
+    .market-item .mi-up { color:#16a34a; } .market-item .mi-down { color:#dc2626; }
+
     /* NAVBAR */
     .navbar { background:var(--nav-bg); border-bottom:2px solid var(--accent); position:sticky; top:0; z-index:500; box-shadow:0 2px 8px rgba(0,0,0,0.07); }
     .nav-top { max-width:1300px; margin:0 auto; padding:0 1.25rem; display:flex; align-items:center; justify-content:space-between; height:64px; gap:1rem; }
@@ -44,21 +65,95 @@
     .nav-logo-text { font-family:var(--font-en); font-weight:800; font-size:1.25rem; line-height:1; }
     .nav-logo-text .em { color:var(--accent); }
     .nav-logo-text .sub { display:block; font-size:0.6rem; font-weight:400; color:var(--text3); letter-spacing:0.04em; }
-    .nav-search-bar { flex:1; max-width:420px; position:relative; }
-    .nav-search-bar input { width:100%; background:#f0f4f8; border:1.5px solid var(--border); color:var(--text); padding:0.5rem 1rem 0.5rem 2.5rem; border-radius:24px; font-size:0.85rem; font-family:var(--font-hi); transition:border 0.2s; }
-    .nav-search-bar input:focus { outline:none; border-color:var(--accent); background:#fff; }
-    .nav-search-bar .si { position:absolute; left:0.8rem; top:50%; transform:translateY(-50%); color:var(--text3); }
-    .nav-actions { display:flex; align-items:center; gap:0.6rem; }
+
+    /* ---- AI SMART SEARCH ---- */
+    .nav-search-bar { flex:1; max-width:440px; position:relative; }
+    .nav-search-bar input { width:100%; background:var(--bg3); border:1.5px solid var(--border); color:var(--text); padding:0.5rem 1rem 0.5rem 2.5rem; border-radius:24px; font-size:0.85rem; font-family:var(--font-hi); transition:border 0.2s; }
+    .nav-search-bar input:focus { outline:none; border-color:var(--accent); background:var(--card-bg); }
+    .nav-search-bar .si { position:absolute; left:0.8rem; top:50%; transform:translateY(-50%); color:var(--text3); pointer-events:none; }
+    .search-dropdown { position:absolute; top:calc(100% + 8px); left:0; right:0; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 36px rgba(0,0,0,0.18); max-height:420px; overflow-y:auto; display:none; z-index:600; }
+    .search-dropdown.open { display:block; }
+    .sd-section-label { font-size:0.66rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--text3); padding:0.7rem 1rem 0.3rem; }
+    .sd-item { display:flex; align-items:center; gap:0.6rem; padding:0.55rem 1rem; cursor:pointer; transition:background .15s; }
+    .sd-item:hover { background:var(--accent-light); }
+    .sd-item .sd-icon { width:30px; height:30px; border-radius:7px; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:0.9rem; color:var(--accent); flex-shrink:0; }
+    .sd-item .sd-text { font-size:0.82rem; font-family:var(--font-hi); color:var(--text); line-height:1.3; }
+    .sd-item .sd-text small { display:block; font-size:0.68rem; color:var(--text3); font-family:var(--font-en); margin-top:0.1rem; }
+    .sd-empty { padding:1.2rem 1rem; text-align:center; font-size:0.8rem; color:var(--text3); font-family:var(--font-hi); }
+
+    .nav-actions { display:flex; align-items:center; gap:0.55rem; }
+
+    /* ---- LANG TOGGLE (Google Translate powered) ---- */
     .lang-toggle { display:flex; border:1.5px solid var(--border); border-radius:20px; overflow:hidden; font-size:0.75rem; }
     .lang-btn { padding:0.3rem 0.7rem; background:transparent; border:none; color:var(--text2); cursor:pointer; font-weight:600; font-family:var(--font-en); transition:all 0.2s; }
     .lang-btn.active { background:var(--accent); color:#fff; }
-    .subscribe-btn { background:var(--accent2); color:#fff; border:none; padding:0.45rem 1.1rem; border-radius:20px; font-size:0.8rem; font-weight:700; cursor:pointer; font-family:var(--font-en); transition:all 0.2s; }
+
+    /* ---- DARK MODE TOGGLE ---- */
+    .icon-toggle { width:36px; height:36px; border-radius:50%; border:1.5px solid var(--border); background:var(--bg3); color:var(--text2); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; position:relative; transition:all .2s; flex-shrink:0; }
+    .icon-toggle:hover { border-color:var(--accent); color:var(--accent); }
+
+    /* ---- NOTIFICATION BELL ---- */
+    .notif-wrap { position:relative; }
+    .notif-badge { position:absolute; top:-2px; right:-2px; width:16px; height:16px; background:#dc2626; color:#fff; border-radius:50%; font-size:0.6rem; font-weight:700; display:flex; align-items:center; justify-content:center; border:2px solid var(--nav-bg); }
+    .notif-dropdown { position:absolute; top:calc(100% + 10px); right:0; width:320px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 36px rgba(0,0,0,0.18); display:none; z-index:600; overflow:hidden; }
+    .notif-dropdown.open { display:block; }
+    .notif-head { padding:0.85rem 1rem; border-bottom:1px solid var(--border); font-weight:700; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center; }
+    .notif-head a { font-size:0.7rem; color:var(--accent); font-weight:600; }
+    .notif-item { display:flex; gap:0.6rem; padding:0.7rem 1rem; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s; }
+    .notif-item:last-child { border-bottom:none; }
+    .notif-item:hover { background:var(--accent-light); }
+    .notif-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:0.4rem; flex-shrink:0; }
+    .notif-text { font-size:0.78rem; font-family:var(--font-hi); color:var(--text2); line-height:1.4; }
+    .notif-text strong { color:var(--text); }
+    .notif-time { font-size:0.66rem; color:var(--text3); margin-top:0.2rem; font-family:var(--font-en); }
+    .notif-empty-state { padding:1.5rem 1rem; text-align:center; color:var(--text3); font-size:0.8rem; font-family:var(--font-hi); }
+
+    .subscribe-btn { background:var(--accent2); color:#fff; border:none; padding:0.45rem 1.1rem; border-radius:20px; font-size:0.8rem; font-weight:700; cursor:pointer; font-family:var(--font-en); transition:all 0.2s; white-space:nowrap; }
     .subscribe-btn:hover { background:#c87d10; }
-    .nav-menu { background:var(--nav-bg); border-bottom:1px solid var(--border); }
+
+    /* ---- MEGA MENU NAV ---- */
+    .nav-menu { background:var(--nav-bg); border-bottom:1px solid var(--border); position:relative; }
     .nav-menu-inner { max-width:1300px; margin:0 auto; padding:0 1.25rem; display:flex; align-items:center; gap:0.15rem; height:42px; overflow-x:auto; scrollbar-width:none; }
     .nav-menu-inner::-webkit-scrollbar { display:none; }
-    .nav-item { padding:0.35rem 0.85rem; border-radius:6px; font-size:0.82rem; font-weight:600; color:var(--text2); cursor:pointer; white-space:nowrap; transition:all 0.2s; font-family:var(--font-hi); border:none; background:transparent; }
+    .nav-item { padding:0.35rem 0.85rem; border-radius:6px; font-size:0.82rem; font-weight:600; color:var(--text2); cursor:pointer; white-space:nowrap; transition:all 0.2s; font-family:var(--font-hi); border:none; background:transparent; display:inline-flex; align-items:center; gap:0.25rem; }
     .nav-item:hover, .nav-item.active { color:var(--accent); background:var(--accent-light); }
+    .nav-item .chev { font-size:0.6rem; transition:transform .2s; }
+    .nav-has-mega:hover .chev { transform:rotate(180deg); }
+
+    .mega-panel { position:absolute; top:100%; left:0; right:0; background:var(--card-bg); border-bottom:1px solid var(--border); box-shadow:0 16px 40px rgba(0,0,0,0.16); opacity:0; visibility:hidden; transform:translateY(-8px); transition:all .2s ease; z-index:550; }
+    .nav-has-mega:hover .mega-panel { opacity:1; visibility:visible; transform:translateY(0); }
+    .mega-inner { max-width:1300px; margin:0 auto; padding:1.5rem 1.25rem; display:grid; grid-template-columns:repeat(5,1fr); gap:1.25rem; }
+    .mega-col h5 { font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--accent); margin-bottom:0.65rem; font-family:var(--font-en); }
+    .mega-col a { display:block; font-size:0.8rem; color:var(--text2); padding:0.3rem 0; font-family:var(--font-hi); transition:color .15s; }
+    .mega-col a:hover { color:var(--accent); }
+    .mega-feature { grid-column:span 1; border-radius:10px; overflow:hidden; background:var(--bg3); cursor:pointer; }
+    .mega-feature img { width:100%; height:90px; object-fit:cover; }
+    .mega-feature .mf-body { padding:0.65rem 0.75rem; }
+    .mega-feature .mf-cat { font-size:0.62rem; font-weight:700; color:var(--accent); text-transform:uppercase; }
+    .mega-feature .mf-title { font-size:0.76rem; font-weight:700; font-family:var(--font-hi); margin-top:0.2rem; line-height:1.35; }
+
+    /* ---- TRENDING DROPDOWN ---- */
+    .trend-dropdown { position:absolute; top:calc(100% + 0px); left:0; width:300px; background:var(--card-bg); border:1px solid var(--border); border-radius:0 0 10px 10px; box-shadow:0 16px 40px rgba(0,0,0,0.16); opacity:0; visibility:hidden; transform:translateY(-8px); transition:all .2s ease; z-index:550; }
+    .nav-has-trend:hover .trend-dropdown { opacity:1; visibility:visible; transform:translateY(0); }
+    .trend-row { display:flex; align-items:center; gap:0.6rem; padding:0.6rem 1rem; border-bottom:1px solid var(--border); }
+    .trend-row:last-child { border-bottom:none; }
+    .trend-rank { font-size:0.85rem; font-weight:800; color:var(--accent2); width:18px; flex-shrink:0; }
+    .trend-row .tr-text { font-size:0.78rem; font-family:var(--font-hi); color:var(--text2); line-height:1.3; }
+    .trend-row .tr-meta { font-size:0.65rem; color:var(--text3); margin-top:0.15rem; font-family:var(--font-en); }
+
+    /* ---- TOOLS DROPDOWN ---- */
+    .tools-dropdown { position:absolute; top:calc(100% + 0px); left:0; width:230px; background:var(--card-bg); border:1px solid var(--border); border-radius:0 0 10px 10px; box-shadow:0 16px 40px rgba(0,0,0,0.16); opacity:0; visibility:hidden; transform:translateY(-8px); transition:all .2s ease; z-index:550; padding:0.5rem; }
+    .nav-has-tools:hover .tools-dropdown { opacity:1; visibility:visible; transform:translateY(0); }
+    .tool-row { display:flex; align-items:center; gap:0.6rem; padding:0.55rem 0.6rem; border-radius:8px; font-size:0.8rem; font-family:var(--font-hi); color:var(--text2); transition:background .15s; }
+    .tool-row:hover { background:var(--accent-light); color:var(--accent); }
+    .tool-row i { font-size:1rem; width:20px; text-align:center; color:var(--accent); }
+
+    /* ---- QUICK ACTION BAR ---- */
+    .quick-actions { background:var(--accent-light); border-bottom:1px solid var(--border); }
+    .qa-inner { max-width:1300px; margin:0 auto; padding:0.5rem 1.25rem; display:flex; gap:0.5rem; overflow-x:auto; scrollbar-width:none; }
+    .qa-inner::-webkit-scrollbar { display:none; }
+    .qa-chip { display:inline-flex; align-items:center; gap:0.35rem; padding:0.35rem 0.85rem; background:var(--card-bg); border:1px solid var(--border); border-radius:18px; font-size:0.74rem; font-weight:600; color:var(--text2); white-space:nowrap; transition:all .15s; font-family:var(--font-hi); }
+    .qa-chip:hover { border-color:var(--accent); color:var(--accent); transform:translateY(-1px); }
 
     /* WRAPPER */
     .wrapper { max-width:1300px; margin:0 auto; padding:0 1.25rem; }
@@ -98,7 +193,7 @@
     .rp-item:hover .rp-title { color:var(--accent); }
     .rp-date { font-size:0.68rem; color:var(--text3); }
     .tag-cloud { display:flex; flex-wrap:wrap; gap:0.4rem; padding:1rem; }
-    .tag { padding:0.3rem 0.75rem; border-radius:16px; font-size:0.75rem; font-weight:600; background:#eef2f7; color:var(--text2); border:1px solid var(--border); cursor:pointer; transition:all 0.2s; font-family:var(--font-hi); }
+    .tag { padding:0.3rem 0.75rem; border-radius:16px; font-size:0.75rem; font-weight:600; background:var(--bg3); color:var(--text2); border:1px solid var(--border); cursor:pointer; transition:all 0.2s; font-family:var(--font-hi); }
     .tag:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
     .nl-widget { background:linear-gradient(135deg,var(--accent),var(--accent-dark)); border-radius:var(--radius); padding:1.25rem; color:#fff; }
     .nl-widget h4 { font-size:0.95rem; font-weight:700; margin-bottom:0.4rem; font-family:var(--font-hi); }
@@ -156,13 +251,26 @@
     /* AD PLACEHOLDER */
     .ad-slot { background:var(--bg3); border:1px dashed var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.72rem; color:var(--text3); padding:0.5rem; min-height:90px; margin:1rem 0; }
 
-    @media(max-width:1024px){ .main-layout{ grid-template-columns:1fr; } .sidebar-section{ position:static; } }
-    @media(max-width:768px){ .hero-grid{grid-template-columns:1fr;} .hero-main{height:250px;} .footer-grid{grid-template-columns:1fr 1fr;} .cards-grid{grid-template-columns:1fr;} }
-    @media(max-width:480px){ .footer-grid{grid-template-columns:1fr;} .nav-search-bar{display:none;} }
+    /* ---- GOOGLE TRANSLATE WIDGET CLEANUP ---- */
+    /* Google injects its own banner/iframe; we hide the default UI since we drive it via our own buttons */
+    #google_translate_element { display:none !important; }
+    body { top:0 !important; }
+    .goog-te-banner-frame { display:none !important; }
+    .skiptranslate iframe { display:none !important; }
+
+    @media(max-width:1024px){ .main-layout{ grid-template-columns:1fr; } .sidebar-section{ position:static; } .mega-inner{ grid-template-columns:repeat(3,1fr); } }
+    @media(max-width:768px){ .hero-grid{grid-template-columns:1fr;} .hero-main{height:250px;} .footer-grid{grid-template-columns:1fr 1fr;} .cards-grid{grid-template-columns:1fr;} .mega-inner{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:480px){ .footer-grid{grid-template-columns:1fr;} .nav-search-bar{display:none;} .notif-dropdown{width:280px;right:-60px;} }
   </style>
   <% if(siteSettings && siteSettings.header_script){ %><%- siteSettings.header_script %><% } %>
 </head>
 <body>
+<!-- SCROLL PROGRESS BAR -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- Hidden Google Translate mount point (free, no API key) -->
+<div id="google_translate_element"></div>
+
 <!-- BREAKING NEWS TICKER -->
 <% if(typeof breaking !== 'undefined' && breaking && breaking.length){ %>
 <div class="ticker-bar">
@@ -177,6 +285,11 @@
 </div>
 <% } %>
 
+<!-- LIVE MARKET MINI-TICKER (sample data — wire to a real market API later) -->
+<div class="market-bar">
+  <div class="market-track" id="marketTrack"></div>
+</div>
+
 <!-- NAVBAR -->
 <nav class="navbar">
   <div class="nav-top">
@@ -184,28 +297,367 @@
       <div class="nav-logo-icon">EM</div>
       <div class="nav-logo-text"><span class="em">Earn</span>Money.com<span class="sub">पैसे कमाएं Online</span></div>
     </a>
+
+    <!-- AI SMART SEARCH -->
     <div class="nav-search-bar">
-      <form action="/search" method="GET">
+      <form action="/search" method="GET" id="smartSearchForm" autocomplete="off">
         <i class="bi bi-search si"></i>
-        <input type="text" name="q" placeholder="🔍 Search posts... खोजें..." value="<%= typeof q !== 'undefined' ? q : '' %>">
+        <input type="text" name="q" id="smartSearchInput" placeholder="🔍 ghar baithe paisa kaise kamaye... खोजें..." value="<%= typeof q !== 'undefined' ? q : '' %>">
       </form>
+      <div class="search-dropdown" id="searchDropdown"></div>
     </div>
+
     <div class="nav-actions">
+      <!-- LANG TOGGLE -->
       <div class="lang-toggle">
-        <button class="lang-btn active" onclick="setLang('hi')">हिं</button>
-        <button class="lang-btn" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="langBtnHi" onclick="setLang('hi')">हिं</button>
+        <button class="lang-btn" id="langBtnEn" onclick="setLang('en')">EN</button>
       </div>
+
+      <!-- DARK MODE TOGGLE -->
+      <button class="icon-toggle" id="darkModeBtn" onclick="toggleDarkMode()" aria-label="Toggle dark mode" title="Dark / Light mode">
+        <i class="bi bi-moon-stars" id="darkModeIcon"></i>
+      </button>
+
+      <!-- NOTIFICATION BELL -->
+      <div class="notif-wrap">
+        <button class="icon-toggle" id="notifBtn" onclick="toggleNotifDropdown(event)" aria-label="Notifications" title="Notifications">
+          <i class="bi bi-bell"></i>
+          <span class="notif-badge" id="notifBadge">3</span>
+        </button>
+        <div class="notif-dropdown" id="notifDropdown">
+          <div class="notif-head">
+            <span>🔔 Notifications</span>
+            <a href="javascript:void(0)" onclick="markAllNotifRead()">Mark all read</a>
+          </div>
+          <div id="notifList">
+            <!-- Demo data — replace with real notifications from your backend (see TODO below) -->
+            <div class="notif-item">
+              <div class="notif-dot"></div>
+              <div class="notif-text">
+                <strong>नई पोस्ट:</strong> SIP से 1 करोड़ कैसे बनाएं?
+                <div class="notif-time">2 घंटे पहले</div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot"></div>
+              <div class="notif-text">
+                <strong>Freelancing:</strong> टॉप 5 स्किल्स जो 2026 में डिमांड में हैं
+                <div class="notif-time">5 घंटे पहले</div>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot"></div>
+              <div class="notif-text">
+                <strong>Daily Tip:</strong> आज का पैसा कमाने का आइडिया
+                <div class="notif-time">कल</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <button class="subscribe-btn" onclick="openSubscribeModal()">📬 Subscribe</button>
       <% if(isLoggedIn){ %><a href="/admin/dashboard" class="subscribe-btn" style="background:var(--accent)"><i class="bi bi-speedometer2"></i> Admin</a><% } %>
     </div>
   </div>
+
+  <!-- QUICK ACTION BAR -->
+  <div class="quick-actions">
+    <div class="qa-inner">
+      <a href="/category/online-earning" class="qa-chip">💰 Make Money</a>
+      <a href="/category/freelancing" class="qa-chip">💼 Freelancing</a>
+      <a href="/category/investing" class="qa-chip">📈 Investing</a>
+      <a href="/category/govt-jobs" class="qa-chip">🏦 Govt Jobs</a>
+      <a href="/category/ai-tools" class="qa-chip">🤖 AI Tools</a>
+    </div>
+  </div>
+
+  <!-- MEGA MENU NAV -->
   <div class="nav-menu">
     <div class="nav-menu-inner">
       <a href="/" class="nav-item <%= typeof currentPage !== 'undefined' && currentPage==='home'?'active':'' %>">🏠 Home</a>
       <a href="/blog" class="nav-item">📝 Blog</a>
-      <% if(typeof categories !== 'undefined'){ categories.slice(0,6).forEach(c=>{ %><a href="/category/<%= c.slug %>" class="nav-item"><%= c.icon||'' %> <%= c.name_hi||c.name %></a><% }) } %>
+
+      <!-- MEGA MENU: Online Earning -->
+      <div class="nav-item nav-has-mega" style="position:relative">
+        💰 Online Earning <i class="bi bi-chevron-down chev"></i>
+        <div class="mega-panel">
+          <div class="mega-inner">
+            <div class="mega-col">
+              <h5>Popular Ways</h5>
+              <a href="/category/youtube">YouTube से कमाई</a>
+              <a href="/category/blogging">Blogging</a>
+              <a href="/category/affiliate">Affiliate Marketing</a>
+              <a href="/category/freelancing">Freelancing</a>
+              <a href="/category/ai-reselling">AI Reselling</a>
+            </div>
+            <div class="mega-col">
+              <h5>Investing</h5>
+              <a href="/category/sip">SIP / Mutual Funds</a>
+              <a href="/category/stocks">शेयर बाजार</a>
+              <a href="/category/gold">Gold / Sovereign Bonds</a>
+              <a href="/category/crypto">Crypto Basics</a>
+            </div>
+            <div class="mega-col">
+              <h5>Jobs &amp; Govt</h5>
+              <a href="/category/govt-jobs">सरकारी नौकरी अपडेट</a>
+              <a href="/category/banking">Banking Jobs</a>
+              <a href="/category/result">परीक्षा परिणाम</a>
+            </div>
+            <div class="mega-feature">
+              <img src="https://images.unsplash.com/photo-1611926653458-09294b3142bf?w=400&q=60" alt="">
+              <div class="mf-body">
+                <div class="mf-cat">Trending</div>
+                <div class="mf-title">YouTube Shorts से महीने के ₹50,000 कैसे कमाएं</div>
+              </div>
+            </div>
+            <div class="mega-feature">
+              <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=60" alt="">
+              <div class="mf-body">
+                <div class="mf-cat">Guide</div>
+                <div class="mf-title">Freelancing शुरू करने की पूरी गाइड (2026)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRENDING DROPDOWN -->
+      <div class="nav-item nav-has-trend" style="position:relative">
+        🔥 Trending <i class="bi bi-chevron-down chev"></i>
+        <div class="trend-dropdown">
+          <div class="trend-row"><span class="trend-rank">01</span><div><div class="tr-text">SIP से रिटायरमेंट तक ₹1 करोड़ का प्लान</div><div class="tr-meta">12.4K पढ़ रहे हैं</div></div></div>
+          <div class="trend-row"><span class="trend-rank">02</span><div><div class="tr-text">घर बैठे डेटा एंट्री जॉब — सच या झूठ?</div><div class="tr-meta">9.1K पढ़ रहे हैं</div></div></div>
+          <div class="trend-row"><span class="trend-rank">03</span><div><div class="tr-text">2026 में सबसे ज्यादा डिमांड वाली Freelance स्किल्स</div><div class="tr-meta">7.8K पढ़ रहे हैं</div></div></div>
+          <div class="trend-row"><span class="trend-rank">04</span><div><div class="tr-text">GST रिटर्न फाइल करने का आसान तरीका</div><div class="tr-meta">6.2K पढ़ रहे हैं</div></div></div>
+        </div>
+      </div>
+
+      <!-- TOOLS DROPDOWN -->
+      <div class="nav-item nav-has-tools" style="position:relative">
+        🧮 Tools <i class="bi bi-chevron-down chev"></i>
+        <div class="tools-dropdown">
+          <a href="/tools/sip-calculator" class="tool-row"><i class="bi bi-graph-up-arrow"></i> SIP Calculator</a>
+          <a href="/tools/emi-calculator" class="tool-row"><i class="bi bi-cash-coin"></i> EMI Calculator</a>
+          <a href="/tools/fd-calculator" class="tool-row"><i class="bi bi-piggy-bank"></i> FD Calculator</a>
+          <a href="/tools/gst-calculator" class="tool-row"><i class="bi bi-receipt"></i> GST Calculator</a>
+          <a href="/tools/freelance-rate-calculator" class="tool-row"><i class="bi bi-calculator"></i> Freelance Rate Calculator</a>
+        </div>
+      </div>
+
+      <% if(typeof categories !== 'undefined'){ categories.slice(0,4).forEach(c=>{ %><a href="/category/<%= c.slug %>" class="nav-item"><%= c.icon||'' %> <%= c.name_hi||c.name %></a><% }) } %>
       <a href="/page/about-us" class="nav-item">ℹ️ About</a>
       <a href="/page/contact-us" class="nav-item">📞 Contact</a>
     </div>
   </div>
 </nav>
+
+<script>
+/* =========================================================
+   1) SCROLL PROGRESS BAR
+   ========================================================= */
+(function(){
+  const bar = document.getElementById('scrollProgress');
+  function updateProgress(){
+    const h = document.documentElement;
+    const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    bar.style.width = (isFinite(scrolled) ? scrolled : 0) + '%';
+  }
+  window.addEventListener('scroll', updateProgress, { passive:true });
+  updateProgress();
+})();
+
+/* =========================================================
+   2) DARK MODE TOGGLE (persisted in localStorage)
+   ========================================================= */
+function applyDarkModeIcon(isDark){
+  const icon = document.getElementById('darkModeIcon');
+  icon.className = isDark ? 'bi bi-sun' : 'bi bi-moon-stars';
+}
+function toggleDarkMode(){
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('em_theme', next);
+  applyDarkModeIcon(next === 'dark');
+}
+(function(){
+  const saved = localStorage.getItem('em_theme');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = saved || (prefersDark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+  applyDarkModeIcon(theme === 'dark');
+})();
+
+/* =========================================================
+   3) NOTIFICATION DROPDOWN
+   TODO (backend): replace demo notifList markup with a fetch to
+   GET /api/notifications and POST /api/notifications/read-all
+   ========================================================= */
+function toggleNotifDropdown(e){
+  e.stopPropagation();
+  document.getElementById('notifDropdown').classList.toggle('open');
+}
+function markAllNotifRead(){
+  document.getElementById('notifBadge').style.display = 'none';
+  document.getElementById('notifDropdown').classList.remove('open');
+}
+document.addEventListener('click', function(e){
+  const dd = document.getElementById('notifDropdown');
+  if(dd.classList.contains('open') && !dd.contains(e.target) && e.target.id !== 'notifBtn'){
+    dd.classList.remove('open');
+  }
+});
+
+/* =========================================================
+   4) AI SMART SEARCH — live dropdown
+   TODO (backend): replace SAMPLE_INDEX with a real endpoint, e.g.
+   fetch('/api/search/suggest?q=' + encodeURIComponent(query))
+     .then(r => r.json()).then(renderResults)
+   For now this filters a small in-memory sample index so the UI
+   is fully functional and demo-able without a server change.
+   ========================================================= */
+const SAMPLE_INDEX = {
+  posts: [
+    { title: 'SIP से रिटायरमेंट तक ₹1 करोड़ कैसे बनाएं', slug: 'sip-1-crore-plan', cat: 'Investing' },
+    { title: 'घर बैठे पैसे कमाने के 15 तरीके (2026)', slug: 'ghar-baithe-paisa-kamaye', cat: 'Online Earning' },
+    { title: 'Freelancing शुरू करने की पूरी गाइड', slug: 'freelancing-guide', cat: 'Freelancing' },
+    { title: 'YouTube Shorts से कमाई कैसे करें', slug: 'youtube-shorts-earning', cat: 'YouTube' },
+    { title: 'GST रिटर्न फाइल करने का तरीका', slug: 'gst-return-filing', cat: 'Tax' },
+  ],
+  categories: [
+    { name: 'Online Earning', slug: 'online-earning' },
+    { name: 'Freelancing', slug: 'freelancing' },
+    { name: 'Investing', slug: 'investing' },
+    { name: 'Govt Jobs', slug: 'govt-jobs' },
+  ],
+  faqs: [
+    { q: 'SIP में निवेश कैसे शुरू करें?', slug: 'faq-sip-start' },
+    { q: 'Freelancing के लिए कौन सी स्किल सीखें?', slug: 'faq-freelance-skill' },
+  ]
+};
+
+const searchInput = document.getElementById('smartSearchInput');
+const searchDropdown = document.getElementById('searchDropdown');
+
+function renderSearchResults(query){
+  if(!query || query.trim().length < 2){
+    searchDropdown.classList.remove('open');
+    searchDropdown.innerHTML = '';
+    return;
+  }
+  const q = query.trim().toLowerCase();
+  const posts = SAMPLE_INDEX.posts.filter(p => p.title.toLowerCase().includes(q));
+  const cats = SAMPLE_INDEX.categories.filter(c => c.name.toLowerCase().includes(q));
+  const faqs = SAMPLE_INDEX.faqs.filter(f => f.q.toLowerCase().includes(q));
+
+  if(!posts.length && !cats.length && !faqs.length){
+    searchDropdown.innerHTML = '<div class="sd-empty">कोई परिणाम नहीं मिला "' + query + '" के लिए</div>';
+    searchDropdown.classList.add('open');
+    return;
+  }
+
+  let html = '';
+  if(posts.length){
+    html += '<div class="sd-section-label">Posts</div>';
+    posts.forEach(p => {
+      html += `<a href="/blog/${p.slug}" class="sd-item"><div class="sd-icon"><i class="bi bi-file-text"></i></div><div class="sd-text">${p.title}<small>${p.cat}</small></div></a>`;
+    });
+  }
+  if(cats.length){
+    html += '<div class="sd-section-label">Categories</div>';
+    cats.forEach(c => {
+      html += `<a href="/category/${c.slug}" class="sd-item"><div class="sd-icon"><i class="bi bi-grid"></i></div><div class="sd-text">${c.name}</div></a>`;
+    });
+  }
+  if(faqs.length){
+    html += '<div class="sd-section-label">FAQs</div>';
+    faqs.forEach(f => {
+      html += `<a href="/faq/${f.slug}" class="sd-item"><div class="sd-icon"><i class="bi bi-question-circle"></i></div><div class="sd-text">${f.q}</div></a>`;
+    });
+  }
+  searchDropdown.innerHTML = html;
+  searchDropdown.classList.add('open');
+}
+
+let searchDebounce;
+searchInput.addEventListener('input', function(){
+  clearTimeout(searchDebounce);
+  const val = this.value;
+  searchDebounce = setTimeout(() => renderSearchResults(val), 150);
+});
+searchInput.addEventListener('focus', function(){ renderSearchResults(this.value); });
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.nav-search-bar')) searchDropdown.classList.remove('open');
+});
+
+/* =========================================================
+   5) LIVE MARKET MINI-TICKER — REAL DATA
+   Pulls from our own cached backend endpoint GET /api/market
+   (see routes/market.js). The backend refreshes its cache every
+   15s in the background, so this fetch is cheap and rate-limit-safe
+   no matter how many visitors hit the page at once.
+   ========================================================= */
+async function loadMarketData(){
+  try {
+    const res = await fetch('/api/market');
+    const json = await res.json();
+    const items = json.data || [];
+
+    const track = document.getElementById('marketTrack');
+    if(!items.length){
+      track.innerHTML = '<span class="market-item" style="color:var(--text3)">Market data unavailable</span>';
+      return;
+    }
+
+    const doubled = [...items, ...items];
+    track.innerHTML = doubled.map(m => `
+      <span class="market-item">
+        ${m.label} <strong>${m.value}</strong>
+        ${m.change ? `<span class="${m.up ? 'mi-up' : 'mi-down'}"><i class="bi bi-caret-${m.up ? 'up' : 'down'}-fill"></i> ${m.change}</span>` : ''}
+      </span>
+    `).join('');
+  } catch(e){
+    console.error('Market data load failed:', e);
+  }
+}
+loadMarketData();
+setInterval(loadMarketData, 10000);
+
+/* =========================================================
+   6) HINDI ⇄ ENGLISH FULL-PAGE TRANSLATE
+   Uses Google's free Website Translator widget (no API key).
+   Clicking "हिं" restores the original page language.
+   Clicking "EN" auto-translates the whole page to English.
+   ========================================================= */
+function googleTranslateElementInit(){
+  new google.translate.TranslateElement({
+    pageLanguage: '<%= typeof currentLang !== "undefined" ? currentLang : "hi" %>',
+    includedLanguages: 'hi,en',
+    autoDisplay: false
+  }, 'google_translate_element');
+}
+
+function setGoogTransCookie(lang){
+  const pageLang = '<%= typeof currentLang !== "undefined" ? currentLang : "hi" %>';
+  const value = (lang === pageLang) ? '' : '/' + pageLang + '/' + lang;
+  document.cookie = 'googtrans=' + value + ';path=/';
+  document.cookie = 'googtrans=' + value + ';path=/;domain=.' + window.location.hostname.replace(/^www\./,'');
+}
+
+function setLang(lang){
+  setGoogTransCookie(lang);
+  localStorage.setItem('em_lang', lang);
+  window.location.reload();
+}
+
+(function(){
+  const pageLang = '<%= typeof currentLang !== "undefined" ? currentLang : "hi" %>';
+  const saved = localStorage.getItem('em_lang') || pageLang;
+  document.getElementById('langBtnHi').classList.toggle('active', saved === 'hi');
+  document.getElementById('langBtnEn').classList.toggle('active', saved === 'en');
+})();
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
