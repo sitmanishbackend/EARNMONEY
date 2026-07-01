@@ -1,29 +1,104 @@
+/* ============================================================
+   MARKUP: add this ONE line right after </div> that closes .sidebar
+   (only needs to exist once, anywhere in the body):
+
+   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+   ============================================================ */
+
 <script>
   // Sidebar
-  let collapsed = localStorage.getItem('sidebarCollapsed')==='true';
-  function applyCollapsed(){ document.getElementById('sidebar').classList.toggle('collapsed',collapsed); document.getElementById('mainContent').classList.toggle('expanded',collapsed); }
+  const MOBILE_BREAKPOINT = 900; // must match the CSS @media max-width used for off-canvas mode
+  let collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+  let mobileOpen = false;
+
+  function isMobile() {
+    return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
+  }
+
+  function applyCollapsed() {
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('mainContent');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    if (isMobile()) {
+      // On mobile, "collapsed" state is irrelevant — sidebar is either
+      // fully open as a drawer, or fully hidden off-canvas.
+      sidebar.classList.remove('collapsed');
+      main.classList.remove('expanded');
+      sidebar.classList.toggle('mobile-open', mobileOpen);
+      if (overlay) overlay.classList.toggle('show', mobileOpen);
+    } else {
+      // On desktop/tablet, "collapsed" toggles icon-only rail.
+      sidebar.classList.remove('mobile-open');
+      if (overlay) overlay.classList.remove('show');
+      sidebar.classList.toggle('collapsed', collapsed);
+      main.classList.toggle('expanded', collapsed);
+    }
+  }
   applyCollapsed();
-  function toggleSidebar(){ collapsed=!collapsed; localStorage.setItem('sidebarCollapsed',collapsed); applyCollapsed(); }
+
+  function toggleSidebar() {
+    if (isMobile()) {
+      mobileOpen = !mobileOpen;
+    } else {
+      collapsed = !collapsed;
+      localStorage.setItem('sidebarCollapsed', collapsed);
+    }
+    applyCollapsed();
+  }
+
+  // Close the mobile drawer automatically if the viewport crosses the
+  // breakpoint (e.g. rotating a tablet, or resizing a browser window).
+  window.addEventListener('resize', () => {
+    if (!isMobile() && mobileOpen) mobileOpen = false;
+    applyCollapsed();
+  });
+
+  // Close drawer when a nav link is tapped on mobile (better UX — otherwise
+  // the drawer stays open after navigating to the new page).
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.addEventListener('click', () => {
+      if (isMobile() && mobileOpen) { mobileOpen = false; applyCollapsed(); }
+    });
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && mobileOpen) { mobileOpen = false; applyCollapsed(); }
+  });
+
   // Highlight active nav
   const cp = window.location.pathname;
-  document.querySelectorAll('.nav-link').forEach(l=>{
-    const h=l.getAttribute('href');
-    if(h&&h!=='#'&&h!=='/admin/logout'&&h!=='/'&&cp.startsWith(h)&&h.length>1) l.classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => {
+    const h = l.getAttribute('href');
+    if (h && h !== '#' && h !== '/admin/logout' && h !== '/' && cp.startsWith(h) && h.length > 1) l.classList.add('active');
   });
+
   // Auto-hide alerts
-  setTimeout(()=>{ document.querySelectorAll('.alert').forEach(a=>{ a.style.transition='opacity 0.5s'; a.style.opacity='0'; setTimeout(()=>a.remove(),500); }); },4000);
+  setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(a => {
+      a.style.transition = 'opacity 0.5s';
+      a.style.opacity = '0';
+      setTimeout(() => a.remove(), 500);
+    });
+  }, 4000);
+
   // Modal helpers
-  function openModal(id){ document.getElementById(id).classList.add('show'); }
-  function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-  document.querySelectorAll('.modal-overlay').forEach(m=>{ m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); }); });
+  function openModal(id) { document.getElementById(id).classList.add('show'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });
+  });
+
   // Tab switch
-  function switchTab(btn, tab, scope){
+  function switchTab(btn, tab, scope) {
     const p = scope ? document.getElementById(scope) : document;
-    p.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    p.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    p.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    p.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
-    const el=document.getElementById(tab); if(el) el.classList.add('active');
+    const el = document.getElementById(tab); if (el) el.classList.add('active');
   }
+
   // Confirm delete
-  function confirmDelete(form, msg){ if(confirm(msg||'Are you sure you want to delete this?')) form.submit(); }
+  function confirmDelete(form, msg) { if (confirm(msg || 'Are you sure you want to delete this?')) form.submit(); }
 </script>
